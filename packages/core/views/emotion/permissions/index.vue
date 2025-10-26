@@ -2,7 +2,7 @@
   <PageWrapper :sidebarWidth="230">
     <template #sidebar>
       <BasicTree
-        :title="t('公司')"
+        :title="t('部职别')"
         :search="true"
         :toolbar="true"
         :showIcon="true"
@@ -11,18 +11,17 @@
         v-model:selectedKeys="treeCodes"
       />
     </template>
-    <div>内容</div>
+    <ListView v-model:treeCodes="treeCodes" />
   </PageWrapper>
 </template>
-<script lang="ts" setup>
+<script lang="ts" setup name="ViewsSysCompanyIndex">
   import { ref } from 'vue';
   import { useI18n } from '@jeesite/core/hooks/web/useI18n';
   import { PageWrapper } from '@jeesite/core/components/Page';
   import { BasicTree } from '@jeesite/core/components/Tree';
   import { companyTreeData } from '@jeesite/core/api/sys/company';
-
+  import ListView from './list.vue';
 
   const { t } = useI18n('sys.company');
   const treeCodes = ref<string[]>([]);
 </script>
-

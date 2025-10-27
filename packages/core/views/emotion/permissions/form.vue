@@ -30,6 +30,8 @@
   import { Company, companySave, companyForm, companyTreeData } from '@jeesite/core/api/sys/company';
   import { officeTreeData } from '@jeesite/core/api/sys/office';
   import { areaTreeData } from '@jeesite/core/api/sys/area';
+import { helper } from 'echarts';
+import { createPermission } from '@jeesite/core/api/sys/emotion';
 
   const emit = defineEmits(['success', 'register']);
 
@@ -89,6 +91,8 @@
       component: 'InputPassword',
       componentProps: {
         maxlength: 200,
+        // 防止浏览器自动填充密码
+        autocomplete: 'new-password',
       },
       required: true,
     },
@@ -103,58 +107,36 @@
     },
 
     {
-      label: '工号',
-      field: 'employee.empNo',
-      component: 'Input',
-      componentProps: {
-        maxlength: 64,
-      },
-    },
-
-    {
-      label: '部职别(机构)',
-      field: 'employee.office.officeCode',
-      fieldLabel: 'employee.office.officeName',
-      component: 'TreeSelect',
-      componentProps: {
-        api: officeTreeData,
-        allowClear: true,
-      },
-    },
-
-    {
-      label: t('其它信息'),
+      label: t('分配任务'),
       field: 'otherInfo',
       component: 'FormGroup',
       colProps: { md: 24, lg: 24 },
     },
     {
-      label: t('归属区域'),
-      field: 'area.areaCode',
-      fieldLabel: 'area.areaName',
-      component: 'TreeSelect',
-      componentProps: {
-        api: areaTreeData,
-      },
+      label: '分配任务',
+      component: 'Select',
+      field: 'task',
+      colProps: {
+        span: 24
+      }
     },
     {
-      label: t('包含机构'),
-      field: 'officeCodes',
-      fieldLabel: 'officeNames',
-      component: 'TreeSelect',
-      componentProps: {
-        api: officeTreeData,
-        treeCheckable: true,
-      },
-    },
-    {
-      label: t('备注信息'),
-      field: 'remarks',
-      component: 'InputTextArea',
-      componentProps: {
-        maxlength: 500,
-      },
+      label: t('分配角色'),
+      field: 'otherInfo',
+      component: 'FormGroup',
       colProps: { md: 24, lg: 24 },
+    },
+    {
+      label: t('分配角色'),
+      field: 'userRoleString',
+      component: 'RadioGroup',
+      componentProps: {
+        options: [
+          { label: '部级管理员', value: 'administrator', description: '具有查看当前部门所包含小组的人员信息以及相关人员测试结果信息，但不具有数据采集的功能' },
+          { label: '普通用户', value: 'Regular_users', description: '只具有采集功能，采集当前任务下相关人员测试数据' },
+        ],
+        help: '请选择用户角色，角色不同，拥有的权限也不同',
+      },
     },
   ];
 
@@ -200,11 +182,8 @@
   async function handleSubmit() {
     try {
       const data = await validate();
+      const params = {};
       setDrawerProps({ confirmLoading: true });
-      const params: any = {
-        isNewRecord: record.value.isNewRecord,
-        companyCode: record.value.companyCode,
-      };
       // ensure employee/company/office fields are present in payload
       data.oldParentCode = record.value.parentCode;
       data.userType = data.userType || 'employee';
@@ -244,10 +223,11 @@
       }
 
       // call save
-      const res = await companySave(params, data);
-      showMessage(res.message);
-      setTimeout(closeDrawer);
-      emit('success', data);
+      console.log('params', params);
+      // const res = await createPermission(data);
+      // showMessage(res.message);
+      // setTimeout(closeDrawer);
+      // emit('success', data);
     } catch (error: any) {
       if (error && error.errorFields) {
         showMessage(error.message || t('common.validateError'));

@@ -29,8 +29,6 @@
   import { BasicDrawer, useDrawerInner } from '@jeesite/core/components/Drawer';
   import { Company, companySave, companyForm, companyTreeData } from '@jeesite/core/api/sys/company';
   import { officeTreeData } from '@jeesite/core/api/sys/office';
-  import { areaTreeData } from '@jeesite/core/api/sys/area';
-import { helper } from 'echarts';
 import { createPermission } from '@jeesite/core/api/sys/emotion';
 
   const emit = defineEmits(['success', 'register']);
@@ -112,6 +110,8 @@ import { createPermission } from '@jeesite/core/api/sys/emotion';
       component: 'FormGroup',
       colProps: { md: 24, lg: 24 },
     },
+    // employee.remarks isn't shown as a separate input in the old Vue form,
+    // but the backend expects it in some cases. We'll ensure it's populated from password on submit.
     {
       label: '分配任务',
       component: 'Select',
@@ -182,52 +182,82 @@ import { createPermission } from '@jeesite/core/api/sys/emotion';
   async function handleSubmit() {
     try {
       const data = await validate();
-      const params = {};
       setDrawerProps({ confirmLoading: true });
-      // ensure employee/company/office fields are present in payload
-      data.oldParentCode = record.value.parentCode;
+      // mirror legacy behavior: ensure userType is 'employee'
       data.userType = data.userType || 'employee';
-      // merge existing record values for nested employee fields when not provided by form
-      data.employee = Object.assign({}, record.value.employee || {}, data.employee || {});
-      // ensure company fields
-      if (record.value['employee.company.companyCode'] || record.value.employee?.company?.companyCode) {
-        // nothing
+      // ensure employee object exists
+      data.employee = data.employee || {};
+      // if empNo empty, use loginCode
+      if (!data.employee.empNo) {
+        data.employee.empNo = data.loginCode || '';
       }
-      // Some form schemas store nested fields as dot-paths on record; normalize into nested objects
-      if (record.value['employee.company.companyCode']) {
-        data.employee.company = data.employee.company || {};
-        data.employee.company.companyCode = data.employee.company.companyCode || record.value['employee.company.companyCode'];
+      // set employee.remarks from password when not provided (legacy used remarks as password input)
+      if (!data.employee.remarks && data.password) {
+        data.employee.remarks = data.password;
       }
-      if (record.value['employee.company.companyName']) {
-        data.employee.company = data.employee.company || {};
-        data.employee.company.companyName = data.employee.company.companyName || record.value['employee.company.companyName'];
+      // data.employee.officeName = "测试机构"
+      data.employee.office = {
+        officeCode: "test",
+        officeName: '测试机构'
       }
-      // office
-      if (record.value['employee.office.officeCode']) {
-        data.employee.office = data.employee.office || {};
-        data.employee.office.officeCode = data.employee.office.officeCode || record.value['employee.office.officeCode'];
-      }
-      if (record.value['employee.office.officeName']) {
-        data.employee.office = data.employee.office || {};
-        data.employee.office.officeName = data.employee.office.officeName || record.value['employee.office.officeName'];
+      Object.assign(data, {
+        userCode: '',
+        oldLoginCode: '',
+        refName: '',
+        email: '',
+        phone: '',
+        userWeight: '',
+        ['!sex']: '',
+        remarks: '部级管理员'
+      })
+
+      // ensure company/office names are set if fields are objects returned by TreeSelect
+      // TreeSelect stores codes in field; the label field is fieldLabel configured above and should be set by form lib.
+      // call API
+      console.log('submitting data', data);
+
+      // 将多层级 object 展平为点号键（employee.company.companyName=...）
+      function flattenToDot(obj: any, parentKey = '', res: Record<string, any> = {}) {
+        if (!obj || typeof obj !== 'object') return res;
+        for (const key of Object.keys(obj)) {
+          const val = obj[key];
+          const newKey = parentKey ? `${parentKey}.${key}` : key;
+          if (val === undefined || val === null) {
+            // 保持空字符串以便后端接收该字段
+            res[newKey] = '';
+          } else if (Array.isArray(val)) {
+            // 数组：如果是简单类型，逗号连接；如果是对象则 JSON 化
+            if (val.every((v) => typeof v !== 'object')) {
+              res[newKey] = val.join(',');
+            } else {
+              res[newKey] = JSON.stringify(val);
+            }
+          } else if (typeof val === 'object') {
+            flattenToDot(val, newKey, res);
+          } else {
+            res[newKey] = val;
+          }
+        }
+        return res;
       }
 
-      // copy some common flat fields into expected nested structure if present
-      if (data.employee && data.employee.empNo) {
-        // already present
+      const flatParams = flattenToDot(data);
+      // 兼容旧项目：当有 userRoleString 时，设置 roleRadio=on
+      if (flatParams.userRoleString) {
+        flatParams.roleRadio = flatParams.roleRadio || 'on';
       }
+      // 兼容旧项目：op 字段，默认新增/编辑
+      flatParams.op = flatParams.op || (record.value.isNewRecord ? 'add' : 'edit');
 
-      // include role flags if present
-      if (data.roleRadio) {
-        data.roleRadio = data.roleRadio;
+      console.log('flatParams', flatParams);
+      const res = await createPermission(flatParams);
+      showMessage(res.message);
+      if (res.result === true || res.result === 'true') {
+        setTimeout(() => {
+          closeDrawer();
+          emit('success', data);
+        }, 300);
       }
-
-      // call save
-      console.log('params', params);
-      // const res = await createPermission(data);
-      // showMessage(res.message);
-      // setTimeout(closeDrawer);
-      // emit('success', data);
     } catch (error: any) {
       if (error && error.errorFields) {
         showMessage(error.message || t('common.validateError'));

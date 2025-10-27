@@ -5,18 +5,12 @@
 -->
 <template>
   <div>
-    <BasicTable @register="registerTable" @fetch-success="fetchSuccess">
+    <BasicTable @register="registerTable">
       <template #tableTitle>
         <Icon :icon="getTitle.icon" class="m-1 pr-1" />
         <span> {{ getTitle.value }} </span>
       </template>
       <template #toolbar>
-        <a-button @click="expandAll" :title="t('展开一级')">
-          <Icon icon="i-bi:chevron-double-down" /> {{ t('展开') }}
-        </a-button>
-        <a-button @click="collapseAll" :title="t('折叠全部')">
-          <Icon icon="i-bi:chevron-double-up" /> {{ t('折叠') }}
-        </a-button>
         <a-button type="primary" @click="handleForm({})" v-auth="'sys:company:edit'">
           <Icon icon="i-fluent:add-12-filled" /> {{ t('新增') }}
         </a-button>
@@ -134,7 +128,7 @@ import { getPermissionList } from '@jeesite/core/api/sys/emotion';
       {
         icon: 'i-clarity:note-edit-line',
         title: t('编辑部职别'),
-        onClick: handleForm.bind(this, { companyCode: record.companyCode }),
+        onClick: handleForm.bind(this,  record),
         auth: 'sys:company:edit',
       },
       {
@@ -151,7 +145,7 @@ import { getPermissionList } from '@jeesite/core/api/sys/emotion';
   };
 
   const [registerDrawer, { openDrawer }] = useDrawer();
-  const [registerTable, { reload, expandAll, collapseAll, expandCollapse }] = useTable({
+  const [registerTable, { reload, expandCollapse }] = useTable({
     api: getPermissionList,
     beforeFetch: (params) => {
       params['employee.company.companyCode'] = !isEmpty(props.treeCodes) ? props.treeCodes[0] : '';
@@ -180,11 +174,11 @@ import { getPermissionList } from '@jeesite/core/api/sys/emotion';
     },
   );
 
-  function fetchSuccess() {
-    if (!isEmpty(props.treeCodes)) {
-      nextTick(expandAll);
-    }
-  }
+  // function fetchSuccess() {
+  //   if (!isEmpty(props.treeCodes)) {
+  //     nextTick(expandAll);
+  //   }
+  // }
 
   function handleForm(record: Recordable) {
     openDrawer(true, record);

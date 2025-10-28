@@ -41,12 +41,12 @@ export interface PersonQueryParams {
 // 分页结果
 export interface PersonPageResult {
   total: number;
-  rows: PersonInfo[];
+  list: PersonInfo[];
 }
 
 // 查询人员列表
 export const getPersonList = (params: PersonQueryParams) => {
-  return defHttp.get<PersonPageResult>({
+  return defHttp.post<PersonPageResult>({
     url: adminPath + '/subject/subjectInformation/listData1',
     params,
   });
@@ -78,7 +78,7 @@ export const updatePositionAndName = (pidCard: string, pPosition: string, pPosit
 
 // 获取人员统计信息
 export const getPersonStatistics = (pidcard: string) => {
-  return defHttp.get({
+  return defHttp.post({
     url:adminPath + '/subject/subjectInformation/findPersonInformation',
     params: { pidcard },
   });

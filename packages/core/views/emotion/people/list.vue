@@ -36,7 +36,7 @@
   import { useDrawer } from '@jeesite/core/components/Drawer';
   import { FormProps } from '@jeesite/core/components/Form';
   import { isEmpty } from '@jeesite/core/utils/is';
-import { getPersonList } from '@jeesite/core/api/emption/people';
+import { getPersonList, getPersonStatistics } from '@jeesite/core/api/emption/people';
 
   const props = defineProps({
     treeCodes: Array as PropType<String[]>,
@@ -57,28 +57,18 @@ import { getPersonList } from '@jeesite/core/api/emption/people';
     labelWidth: 90,
     schemas: [
       {
-        label: t('登录账号'),
-        field: 'loginCode',
+        label: t('编号'),
+        field: 'pidcard',
         component: 'Input',
       },
       {
-        label: t('责任人'),
-        field: 'refName',
+        label: t('姓名'),
+        field: 'pname',
         component: 'Input',
       },
-      // {
-      //   label: t('状态'),
-      //   field: 'status',
-      //   component: 'Select',
-      //   componentProps: {
-      //     dictType: 'sys_search_status',
-      //     allowClear: true,
-      //     onChange: handleSuccess,
-      //   },
-      // },
       {
-        label: t('手机号'),
-        field: 'mobile',
+        label: t('性别'),
+        field: 'pgender',
         component: 'Input',
       },
     ],
@@ -89,32 +79,56 @@ import { getPersonList } from '@jeesite/core/api/emption/people';
 
   const tableColumns: BasicColumn[] = [
     {
-      title: t('登录账号'),
-      dataIndex: 'loginCode',
+      title: t('编号'),
+      dataIndex: 'pidcard',
       width: 230,
       align: 'left'
     },
     {
-      title: t('责任人'),
-      dataIndex: 'userName',
+      title: t('姓名'),
+      dataIndex: 'pname',
       width: 130,
       align: 'left',
     },
     {
-      title: t('责任权限'),
-      dataIndex: 'employee.company.companyName',
+      title: t('年龄'),
+      dataIndex: 'age',
       width: 90,
       align: 'center',
     },
     {
-      title: t('手机号码'),
-      dataIndex: 'mobile',
+      title: t('性别'),
+      dataIndex: 'pgender',
       width: 100,
       align: 'center',
     },
     {
-      title: t('更新时间'),
-      dataIndex: 'updateDate',
+      title: t('部别'),
+      dataIndex: 'ppositionName',
+      width: 80,
+      align: 'center',
+    },
+      {
+      title: t('正常'),
+      dataIndex: 'normal',
+      width: 80,
+      align: 'center',
+    },
+    {
+      title: t('一般'),
+      dataIndex: 'attention',
+      width: 80,
+      align: 'center',
+    },
+    {
+      title: t('关注'),
+      dataIndex: 'emphasis',
+      width: 80,
+      align: 'center',
+    },
+    {
+      title: t('建模'),
+      dataIndex: 'modelingStatus',
       width: 80,
       align: 'center',
     }
@@ -134,14 +148,45 @@ import { getPersonList } from '@jeesite/core/api/emption/people';
 
   const [registerDrawer, { openDrawer }] = useDrawer();
   const [registerTable, { reload, expandCollapse }] = useTable({
-    api: getPersonList,
+    api: async (params) => {
+      // 先获取分页列表
+      const page = await getPersonList(params);
+      const rows = Array.isArray(page?.list) ? page.list : [];
+      // 并行拉取每行统计信息并合并
+      const enriched = await Promise.all(
+        rows.map(async (row: any) => {
+          try {
+            const statsRes = await getPersonStatistics(row.pidcard);
+            // 兼容返回为数组的结构
+            const stat = Array.isArray(statsRes) ? statsRes[0] : statsRes;
+            return {
+              ...row,
+              normal: stat?.normalCount ?? 0,
+              attention: stat?.attentionCount ?? 0,
+              emphasis: stat?.emphasisAttentionCount ?? 0,
+              modelingStatus: stat?.modelingStatus ?? row?.modelingStatus ?? 0,
+            };
+          } catch (e) {
+            // 失败时保持原值或设为 0
+            return {
+              ...row,
+              normal: row?.normal ?? 0,
+              attention: row?.attention ?? 0,
+              emphasis: row?.emphasis ?? 0,
+              modelingStatus: row?.modelingStatus ?? 0,
+            };
+          }
+        })
+      );
+
+      return { ...page, list: enriched };
+    },
     beforeFetch: (params) => {
-      params['employee.company.companyCode'] = !isEmpty(props.treeCodes) ? props.treeCodes[0] : '';
-      params['employee.company.companyName'] = ''
-      params.ctrlPermi = 2
-      params.loginCode = params.loginCode || ''
-      params.refName = params.refName || ''
-      params.mobile = params.mobile || ''
+      params.pposition = !isEmpty(props.treeCodes) ? props.treeCodes[0] : '';
+      params.ppositionName = ''
+      params.pidcard = params.pidcard || ''
+      params.pname = params.pname || ''
+      params.pgender = params.pgender || ''
       return params;
     },
     columns: tableColumns,

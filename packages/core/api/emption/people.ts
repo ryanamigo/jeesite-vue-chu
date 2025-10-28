@@ -114,6 +114,27 @@ export const importFile = (file: File) => {
   });
 };
 
+// 导入数据库（多文件上传）
+export const importDatabaseData = (files: File[]) => {
+  const formData = new FormData();
+  files.forEach((f) => formData.append('multipartFiles', f));
+  return defHttp.post({
+    url: adminPath + '/subject/resultExport/importDatabaseData',
+    data: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+};
+
+// 全体建模
+export const requestAllModeling = (companyCode: string, companyName: string) => {
+  return defHttp.post({
+    url: adminPath + '/subject/subjectInformation/requestAllModeling',
+    params: { companyCode, companyName },
+  });
+};
+
 // 批量操作
 export const batchOperation = (params: {
   type: 'modeling' | 'export' | 'delete';

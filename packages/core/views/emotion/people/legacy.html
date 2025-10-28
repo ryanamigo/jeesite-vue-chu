@@ -1,0 +1,1180 @@
+<% layout('/layouts/default.html', {title: '人员管理', libs: ['dataGrid']}){ %>
+<!--//////////////////dududuudududududud//////////////////-->
+<style>
+    #panel{
+        width:100%;
+        height:100%;
+        background-color:#000;
+        opacity:0.4;
+        /*解决IE兼容透明度*/
+        filter: alpha(opacity:40);
+        position:absolute;
+        left:0;
+        top:0;
+        display:none;
+    }
+    #login{
+        width:50%;
+        height:45%;
+        background: #1a1a1a;
+        -webkit-border-radius: 5px;
+        -moz-border-radius: 5px;
+        border-radius: 5px;
+        position: fixed;
+        left:40%;
+        top:40%;
+        margin: -150px 0 0 -150px;
+        display:none;
+        border: 1px solid black; /* 设置边框宽度为2px，样式为实线，颜色为黑色 */
+        padding: 10px; /* 添加内边距以避免内容紧贴边框 */
+    }
+
+    #yesAndNo{
+        position: relative;
+        top: 10%;
+    }
+    #userMarking{
+        background-color: #262626;
+        color: rgba(255, 255, 255, 0.8);
+        position: relative;
+        max-width: 79%;
+        top: 5%;
+        left: 9.5%;
+        width: 80%;
+        height: 70%;
+        white-space: pre-wrap;
+        word-break: break-word;
+        border:0;
+        outline:0;
+        border: solid 1px #494640;
+        box-shadow: 0 0 10px #3c8dbc;
+        border-radius: 4px;
+        background-color:transparent;
+    }
+    button {
+        cursor: pointer; /* 显示鼠标指针为手型 */
+    }
+    button:active {
+        transform: translateY(2px); /* 按下时按钮向下移动2px */
+    }
+    .yesOrNo{
+        position: relative;
+        top: 80%;
+        /*height: 100%;*/
+        border:0;
+        border-radius: 22px;
+        background-color:#494640;
+        box-shadow: 0 0 15px #97bdd4;
+        color:#FFFFFF;
+        font-size: 15px;
+        margin-left: 25px;
+    }
+    #yes{
+        position: relative;
+        left: 15%;
+        width: 20%;
+        background-color: #1e5edb;
+        color: rgba(255, 255, 255, 0.8);
+    }
+    #no{
+        position: relative;
+        left: 30%;
+        width: 20%;
+        background-color: #444444;
+        color: rgba(255, 255, 255, 0.8);
+    }
+    /* 模态框的基础样式 */
+    .uploadFile {
+        display: none; /* 默认隐藏 */
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.4); /* 半透明背景 */
+    }
+
+    /* 模态框内容的样式 */
+    .upload-content {
+        /*background-color: #fefefe;*/
+        background: radial-gradient(circle, #4F86EC, rgba(79, 134, 236, 0.3));
+        color: white; /* 文本颜色，确保在深色背景上可读 */
+        margin: 15% auto; /* 15% 从顶部开始 */
+        padding: 20px;
+        border: 1px solid #888;
+        width: 29%; /* 可根据需要调整宽度 */
+        height: 25%;
+        border-radius: 10px;
+    }
+
+    /* 关闭按钮的样式 */
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+
+    .close:hover,
+    .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    /* 确认和取消按钮的样式（可选） */
+    #confirmButton, #cancelButton {
+        padding: 10px 20px;
+        margin: 10px 5px;
+        cursor: pointer;
+    }
+
+    #confirmButton {
+        background-color: #4CAF50; /* 绿色 */
+        color: white;
+        border: none;
+    }
+
+    #confirmButton:hover {
+        background-color: #45a049;
+    }
+
+    #cancelButton {
+        background-color: #f44336; /* 红色 */
+        color: white;
+        border: none;
+        position:absolute;
+        right: 38%;
+    }
+
+    #cancelButton:hover {
+        background-color: #da190b;
+    }
+</style>
+<!--//////////////////dududuudududududud//////////////////-->
+<div class="main-content">
+    <div class="box box-main">
+        <div class="box-header">
+            <div class="box-title">
+                <i class="fa icon-notebook"></i> ${text('人员管理')}
+            </div>
+            <div class="box-tools pull-right">
+                <a href="#" class="btn btn-default" id="btnSearch" title="${text('查询')}"><i class="fa fa-filter"></i> ${text('查询')}</a>
+                <!--                <% if(hasPermi('subject:subjectInformation:edit')){ %>-->
+                <!--                <a href="${ctx}/subject/subjectInformation/form" class="btn btn-default btnTool" title="${text('新增subject_information')}"><i class="fa fa-plus"></i> ${text('新增')}</a>-->
+                <!--                <% } %>-->
+                <a href="#" class="btn btn-default" id="btnSetting" title="${text('设置')}"><i class="fa fa-navicon"></i></a>
+            </div>
+        </div>
+        <div class="box-body">
+            <#form:form id="searchForm" model="${subjectInformation}" action="${ctx}/subject/subjectInformation/listData1" method="post" class="form-inline"
+            data-page-no="${parameter.pageNo}" data-page-size="${parameter.pageSize}" data-order-by="${parameter.orderBy}">
+            <div class="form-group">
+                <label class="control-label">${text('编号')}：</label>
+                <div class="control-inline">
+                    <#form:input path="pidcard" maxlength="18" class="form-control width-120"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label">${text('姓名')}：</label>
+                <div class="control-inline">
+                    <#form:input path="pname" maxlength="20" class="form-control width-120"/>
+                </div>
+            </div>
+            <div class="form-group" style="display: none">
+                <label class="control-label">${text('部别')}：</label>
+                <div class="control-inline">
+                    <#form:input id="pposition" path="pposition" maxlength="20" class="form-control width-120"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label">${text('性别')}：</label>
+                <div class="control-inline">
+                    <#form:input path="pgender" maxlength="＇男＇" class="form-control width-120"/>
+                </div>
+            </div>
+            <div class="form-group" style="display: none">
+                <label class="control-label">${text('部别')}：</label>
+                <div class="control-inline">
+                    <#form:input id="ppositionName" path="ppositionName" maxlength="20" class="form-control width-120"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary btn-sm"><i class="glyphicon glyphicon-search"></i> ${text('查询')}</button>
+                <button type="reset" class="btn btn-default btn-sm isQuick"><i class="glyphicon glyphicon-repeat"></i> ${text('重置')}</button>
+            </div>
+        </#form:form>
+        <div>
+            <div class="form-group" style="display: flex; align-items: center;float: left;">
+                <!--                <label class="control-label" style="margin-left: 0.5%;">${text('导入数据库')}：</label>-->
+                <input type="file" id="fileInput" style="display:none;width: 37.5%;" accept=".csv, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" multiple>
+                <button id="uploadButton" class="btn btn-primary btn-sm" style="margin-left: 6%;margin-right: 2%;" onclick="document.getElementById('fileInput').click()">导入数据库</button>
+                <button id="exportDatabase" class="btn btn-primary btn-sm"style="margin-left: 0.5%;margin-right:-3%;" >导出数据库</button>
+                <input type="file" id="fileInput2" style="display:none;width: 37.5%;" accept=".csv, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" multiple>
+                <button id="uploadButton2" class="btn btn-primary btn-sm" style="margin-left: 6%;" onclick="document.getElementById('fileInput2').click()">上传人员信息</button>
+            </div>
+            <div style="text-align: right;margin-right: 20px;margin-bottom: 20px;">
+                <button id="allModeling" class="btn btn-success btn-sm"><i class="icon-graph"></i> 全体建模 </button>
+                <button id="batchExport" class="btn btn-primary btn-sm"><i class="glyphicon glyphicon-export"></i> 批量导出个人报告</button>
+                <button id="batchModeling" class="btn btn-primary btn-sm"><i class="icon-graph"></i> 批量建模 </button>
+                <button id="batchDelete" class="btn btn-danger btn-sm"><i class="glyphicon glyphicon-trash"></i> 批量删除个人结果</button>
+                <button class="btn btn-primary btn-sm" id="batchModify" ><i class=" icon-note"></i>批量修改部别</button>
+                <button id="selectAll" class="btn btn-default" >全选</button>
+            </div>
+            <table id="dataGrid" style="margin-top: 10px;"></table>
+            <div id="dataGridPage"></div>
+        </div>
+    </div>
+</div>
+<!--//////////////////dududududududududu///////////////-->
+<div id="panel"></div>
+<div id="login" style="width: 400px;height: 150px;">
+    <!--    <input>-->
+    <label htmlFor="jobTitle"style="width: 20%;margin-right: 5%;font-size: 120%"> 修改部别 </label>
+    <#form:treeselect id="company" title="${text('部职别选择')}" style="height:40px"
+    path="employee.company.companyCode" labelPath="employee.company.companyName"
+    url="${ctx}/sys/company/treeData?ctrlPermi=2" callbackFuncName="treeselectCallback"
+    btnClass="" allowClear="true" canSelectRoot="true" canSelectParent="true"/>
+    <div id="yesAndNo">
+        <button id="yes" class="yesOrNo">确定</button>
+        <button id="no" class="yesOrNo">取消</button>
+    </div>
+</div>
+<!-- 上传文件弹窗 -->
+<div id="uploadFile" class="uploadFile">
+    <div class="upload-content">
+        <span class="close">&times;</span>
+        <div style="display: flex">
+            <label id="importLabel" style="font-size:20px;height: 82px;padding-left: 18px;padding-right: 18px;"  class="control-label" style="margin-left: 0.5%;display: flex;justify-content: center;align-items: center;"></label>
+            <!--        <input type="file" id="fileInput" style="width: 42.5%;display: flex;justify-content: center;align-items: center;" accept=".csv, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" multiple>-->
+        </div>
+        <!-- 确认按钮 -->
+        <button id="confirmButton" class="btn">确认上传</button>
+        <!-- 取消按钮 -->
+        <button id="cancelButton" class="btn">取消</button>
+    </div>
+</div>
+<!--//////////////////dududududududududu///////////////-->
+<% } %>
+<script src="${ctxStatic}/js/toastr.min.js"></script>
+<link href="${ctxStatic}/css/toastr.min.css" rel="stylesheet">
+<script src="${ctxStatic}/js/sweetalert2.js"></script>
+
+<script>
+    document.getElementById('fileInput').addEventListener('change', function(event) {
+
+        const files = event.target.files; // 获取选中的文件列表
+        if (files.length > 0) {
+            console.log(files.length,'已选择文件:');
+            console.log(files[0].name);
+            document.getElementById("uploadFile").style.display = "block";
+            // var name='';
+            // var length;
+            // if(files.length>7){
+            //     length = 7
+            // }else{
+            //     length = files.length;
+            // }
+            // for (var i = 0; i < length; i++) {
+            //     name = name + files[i].name
+            // }
+            // if(length>7){
+            //     name = name +"..."
+            // }
+            document.getElementById('importLabel').innerText ="确定上传这"+files.length+"个文件?";
+        } else {
+            console.log('未选择任何文件');
+        }
+
+    });
+    //上传数据库_emotion_param.csv 上传单个表格
+    document.getElementById('fileInput2').addEventListener('change', function(event) {
+        var formData2 = new FormData();
+        var files = $('#fileInput2')[0].files; // 获取所有选中的文件
+        // var files = event.target.files; // 获取选中的文件列表
+        var file = files[0];
+        var fileName = file.name;
+        var fileExtension = fileName.split('.').pop().toLowerCase(); // 获取文件扩展名并转换为小写
+        if (files.length > 0) {
+            console.log(files.length,'已选择文件:');
+            console.log(files[0].name);
+            var validFileNames = [ "_emotion_param.csv"];
+            var isValid = true;
+            // var fileIsValid = validFileNames.some(function(v) { return fileName.indexOf(v) >= 0; });
+            if (['xls', 'xlsx', 'xlsm'].includes(fileExtension)) {
+                isValid = true;
+            }
+            if (!isValid) {
+                toastr.warning(InvalidFile.join(", ") + '文件名称不符合要求，请重新命名后提交')
+                $('#fileInput')[0].value = '';
+
+                return;
+            }else{
+                formData2.append('file', files[0]);
+                $.ajax({
+                    url: '${ctx}/face/faceInformation/insertFile',
+                    type: 'POST',
+                    data: formData2,
+                    contentType : false,
+                    processData : false,
+                    success: function(data) {
+                        // location.reload();
+                        toastr.success(data);
+                        $('#fileInput2')[0].value = '';
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        // console.error('There was a problem with the AJAX operation:', textStatus, errorThrown);
+                    }
+                });
+            }
+        } else {
+            console.log('未选择任何文件');
+        }
+    });
+    // 监听文件上传按钮的点击事件
+    //  document.getElementById('uploadButton').addEventListener('click', function() {
+    //
+    //     document.getElementById("uploadFile").style.display = "block";
+    // var files = $('#fileInput')[0].files; // 获取所有选中的文件
+    // var formData = new FormData();
+    // var fileCount = files.length; // 获取文件数量
+    // if (fileCount !== 7) {
+    //     toastr.warning("上传文件数目不正确")
+    //     return;
+    // }
+    // var validFileNames = ["_js_sys_user.csv", "_test_number.csv", "_js_sys_employee.csv", "_js_sys_company.csv", "_emotion_result.csv", "_emotion_video.csv", "_subject_information.csv"];
+    // var isValid = true;
+    // var InvalidFile = [];
+    // var fileNames = [];
+    //
+    // for (var i = 0; i < files.length; i++) {
+    //     var fileName = files[i].name;
+    //     if (fileNames.includes(fileName)) {
+    //         toastr.warning('文件名重复：' + fileName)
+    //         return;
+    //     }
+    //     fileNames.push(fileName);
+    //
+    //     var fileIsValid = validFileNames.some(function(v) { return fileName.indexOf(v) >= 0; });
+    //     if (!fileIsValid) {
+    //         InvalidFile.push(fileName);
+    //         isValid = false;
+    //     }
+    // }
+    //
+    // if (!isValid) {
+    //     toastr.warning(InvalidFile.join(", ") + '文件名称不符合要求，请重新命名后提交')
+    //     return;
+    // } else {
+    //     var duplicateFiles = findDuplicateFiles(files, validFileNames);
+    //     if (duplicateFiles.length > 0) {
+    //         toastr.warning('以下文件包含相同的合法文件名，请重新上传：' + duplicateFiles.join(", "));
+    //         return;
+    //     } else {
+    //         // 将所有文件添加到 formData 对象中
+    //         for (var i = 0; i < files.length; i++) {
+    //             formData.append('multipartFiles', files[i]);
+    //         }
+    //         $.ajax({
+    //             url: '${ctx}/subject/resultExport/importDatabaseData',
+    //             type: 'POST',
+    //             data: formData,
+    //             contentType : false,
+    //             processData : false,
+    //             success: function(data) {
+    //                 // location.reload();
+    //                 toastr.success(data);
+    //             },
+    //             error: function(jqXHR, textStatus, errorThrown) {
+    //                 // console.error('There was a problem with the AJAX operation:', textStatus, errorThrown);
+    //             }
+    //         });
+    //     }
+    // }
+    // });
+    //             当点击关闭按钮时关闭模态框
+    document.getElementsByClassName("close")[0].onclick = function() {
+        document.getElementById("uploadFile").style.display = "none";
+    }
+    // 当点击确认按钮时执行某些操作并关闭模态框
+    document.getElementById("confirmButton").onclick = function() {
+        // alert("你点击了确认！"); // 这里可以替换为实际的操作
+        document.getElementById("uploadFile").style.display = "none";
+
+        var files = $('#fileInput')[0].files; // 获取所有选中的文件
+        console.log(files.length,'确认')
+        var formData = new FormData();
+        var fileCount = files.length; // 获取文件数量
+        if (fileCount !== 7) {
+            toastr.warning("上传文件数目不正确")
+            $('#fileInput')[0].value = '';
+            return;
+        }
+        var validFileNames = ["_js_sys_user.csv", "_test_number.csv", "_js_sys_employee.csv", "_js_sys_company.csv", "_emotion_result.csv", "_emotion_video.csv", "_subject_information.csv"];
+        var isValid = true;
+        var InvalidFile = [];
+        var fileNames = [];
+
+        for (var i = 0; i < files.length; i++) {
+            var fileName = files[i].name;
+            if (fileNames.includes(fileName)) {
+                toastr.warning('文件名重复：' + fileName)
+                $('#fileInput')[0].value = '';
+                return;
+            }
+            fileNames.push(fileName);
+
+            var fileIsValid = validFileNames.some(function(v) { return fileName.indexOf(v) >= 0; });
+            if (!fileIsValid) {
+                InvalidFile.push(fileName);
+                isValid = false;
+            }
+        }
+
+        if (!isValid) {
+            toastr.warning(InvalidFile.join(", ") + '文件名称不符合要求，请重新命名后提交')
+            $('#fileInput')[0].value = '';
+
+            return;
+        } else {
+            var duplicateFiles = findDuplicateFiles(files, validFileNames);
+            if (duplicateFiles.length > 0) {
+                toastr.warning('以下文件包含相同的合法文件名，请重新上传：' + duplicateFiles.join(", "));
+                $('#fileInput')[0].value = '';
+
+                return;
+            } else {
+                // 将所有文件添加到 formData 对象中
+                for (var i = 0; i < files.length; i++) {
+                    formData.append('multipartFiles', files[i]);
+                }
+                $.ajax({
+                    url: '${ctx}/subject/resultExport/importDatabaseData',
+                    type: 'POST',
+                    data: formData,
+                    contentType : false,
+                    processData : false,
+                    success: function(data) {
+                        // location.reload();
+                        toastr.success(data);
+                        $('#fileInput')[0].value = '';
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        // console.error('There was a problem with the AJAX operation:', textStatus, errorThrown);
+                    }
+                });
+            }
+        }
+    }
+    // 当点击取消按钮时关闭模态框
+    document.getElementById("cancelButton").onclick = function() {
+        document.getElementById("uploadFile").style.display = "none";
+    }
+
+
+    function findDuplicateFiles(files, validFileNames) {
+        var duplicateFiles = [];
+        var fileMap = {};
+        for (var i = 0; i < files.length; i++) {
+            var fileName = files[i].name;
+            var validFileName = validFileNames.find(function(v) { return fileName.indexOf(v) >= 0; });
+            if (validFileName) {
+                if (fileMap[validFileName]) {
+                    duplicateFiles.push(fileName);
+                } else {
+                    fileMap[validFileName] = true;
+                }
+            }
+        }
+        return duplicateFiles;
+    }
+    let compName='';
+    let compCode='';
+    function treeselectCallback(id, act, index, layero, nodes){
+        if (id === 'company' && (act === 'ok' || act === 'clear')){
+            var win = layero.iframeWindow();
+            log(nodes);  // 选择的节点数据
+            compName = nodes[0].name;
+            compCode = nodes[0].code;
+            console.log(compName);
+            console.log(compCode);
+
+
+        }
+    }
+    $(document).ready(function() {
+        toastr.options = {
+            positionClass: 'toast-bottom-right'
+        };
+
+        /**
+         * @Description: 全体建模功能
+         * @Author: lpf
+         * @Date: 2024/6/15 9:32
+         **/
+        document.getElementById('allModeling').addEventListener('click', function (){
+            const pposition = document.getElementById('pposition').value;
+            const ppositionName = document.getElementById('ppositionName').value;
+            var formData = new FormData();
+            if (pposition){
+                formData.append('companyName', ppositionName);
+                formData.append('companyCode', pposition);
+                $.ajax({
+                    url: '${ctx}/subject/subjectInformation/requestAllModeling',
+                    type: 'POST',
+                    contentType: false,
+                    processData: false,
+                    data: formData,
+                    error: function () {
+                        toastr.error("操作失败！");
+                        return;
+                    },
+                    success: function (dataForm) {
+                        toastr.success("操作成功！");
+                        setTimeout(function () {
+                            location.reload();
+                        },1000)
+                    }
+                })
+            }else {
+                toastr.warning("请选择部门")
+            }
+        })
+        /**
+         * @Description: 批量建模功能
+         * @Author: lpf
+         * @Date: 2024/6/15 9:32
+         **/
+        document.getElementById('batchModeling').addEventListener('click', function() {
+            var data = Array.from(document.querySelectorAll('.rowCheckbox:checked')).map(cb => cb.id);
+            var  pidcards = [];
+            var pposition = [];
+            data.forEach(str => {
+                const parts = str.split('-'); // 分割字符串
+                if (parts.length > 1) { // 如果分割后有多于一个部分，说明包含'd'
+                    pidcards.push(parts[0]); // 添加'd'之前的部分
+                    if (parts[1]) { // 如果'd'之后还有内容
+                        pposition.push(parts[1]); // 添加'd'之后的部分
+                    }
+                }
+            });
+            if (pidcards.length > 0) {
+                for (let i = 0; i < pidcards.length; i++) {
+                    $.ajax({
+                        url: '${ctx}/subject/subjectInformation/requestIndividualModeling?pidcards=' + pidcards[i],
+                        dataType: 'JSON',
+                        contentType: 'application/json', // 设置内容类型为JSON
+                        type: "POST",
+                        error: function () {
+                            toastr.error("操作失败！");
+                            return;
+                        },
+                        success: function (dataForm) {
+                            if(i === pidcards.length-1){
+                                toastr.success("操作成功！")
+                            }
+                        }
+                    })
+                }
+            } else {
+                toastr.warning("请选择要建模的行")
+            }
+        });
+        /**
+         * @Description: 批量修改功能
+         * @Author: yzz
+         * @Date: 2024/8/14 17:03
+         **/
+        document.getElementById('batchModify').addEventListener('click', function() {
+            var data = Array.from(document.querySelectorAll('.rowCheckbox:checked')).map(cb => cb.id);
+            var pidcard = [];
+            var pposition = [];
+            if (data.length === 0) {
+                toastr.warning("请选择要删除的行")
+                return
+            }else{
+                data.forEach(str => {
+                    const parts = str.split('-'); // 分割字符串
+                    if (parts.length > 1) { // 如果分割后有多于一个部分，说明包含'd'
+                        pidcard.push(parts[0]); // 添加'd'之前的部分
+                        if (parts[1]) { // 如果'd'之后还有内容
+                            pposition.push(parts[1]); // 添加'd'之后的部分
+                        }
+                    }
+                });
+                if (pposition.length <= 1) {
+                    //1.1显示面板和蒙版
+                    document.querySelector("#panel").style.display="block";
+                    document.querySelector("#login").style.display="block";
+                    //当出现蒙版时,去除body的滚动条
+                    document.body.style.overflow="hidden";
+                    //2.点击文档
+                    document.onclick=function (event) {
+                        var e=event||window.event;
+                        //2.1获取点击的标签
+                        var targetId=e.target?e.target.id:e.srcElement.id;
+                        if(targetId =='no'){
+                            document.querySelector("#panel").style.display="none";
+                            document.querySelector("#login").style.display="none";
+                            //当出现蒙版时,去除body的滚动条
+                            document.body.style.overflow="visible";
+                        }
+                    };
+                    // 2. 监听确定按钮的点击
+                    document.querySelector("#yes").onclick = function() {if (pidcard.length > 0) {
+                        console.log(pidcard)
+                        console.log('开始调用')
+                        ModifyData(0); // 开始修改数据
+
+                    } }
+                    function ModifyData(index) {
+                        console.log(pidcard)
+                        if (index < pidcard.length) {
+                            $.ajax({
+                                url: '${ctx}/subject/subjectInformation/updatePositionAndName?pidCard=' + pidcard[index] + '&pPosition=' + compCode + '&pPositionName=' + compName ,
+                                type: 'POST',
+                                // dataType: 'JSON',
+                                success: function(data) {
+                                    ModifyData(index + 1); // 递归调用删除下一条数据
+                                },
+                                error: function(jqXHR, textStatus, errorThrown) {
+                                    console.error('There was a problem with the AJAX operation:', textStatus, errorThrown);
+                                }
+                            });
+                        } else {
+                            $("#panel").hide();
+                            $("#login").hide();
+                            $("body").css("overflow", "visible");
+                            toastr.success("所有数据已修改")
+                            location.reload();
+                        }
+                    }
+
+                }
+                // 假设第一个字符串是我们要比较的标准
+                const firstString = pposition[0];
+                console.log(pposition)
+                // 遍历数组中的每个字符串（从第二个开始）
+                for (let i = 1; i < pposition.length; i++) {
+                    // 如果发现任何一个字符串与第一个字符串不相等，则返回false
+                    if (pposition[i] !== firstString) {
+                        Swal.fire({
+                            title: '提示',
+                            text: '请选择相同部门',
+                            icon: 'warning',
+                            showCancelButton: false, // 可选
+                            confirmButtonText: '确定'
+                            // 没有.then()调用，因为不需要处理确认后的结果
+                        });
+                        return;
+                    }
+                }
+                //1.1显示面板和蒙版
+                document.querySelector("#panel").style.display="block";
+                document.querySelector("#login").style.display="block";
+                //当出现蒙版时,去除body的滚动条
+                document.body.style.overflow="hidden";
+                //2.点击文档
+                document.onclick=function (event) {
+                    var e=event||window.event;
+                    //2.1获取点击的标签
+                    var targetId=e.target?e.target.id:e.srcElement.id;
+                    if(targetId =='no'){
+                        document.querySelector("#panel").style.display="none";
+                        document.querySelector("#login").style.display="none";
+                        //当出现蒙版时,去除body的滚动条
+                        document.body.style.overflow="visible";
+                    }
+                };
+                // 2. 监听确定按钮的点击
+                document.querySelector("#yes").onclick = function() {if (pidcard.length > 0) {
+                    console.log(pidcard)
+                    console.log('开始调用')
+                    ModifyData(0); // 开始修改数据
+
+                } }
+                function ModifyData(index) {
+                    console.log(pidcard)
+                    if (index < pidcard.length) {
+                        $.ajax({
+                            url: '${ctx}/subject/subjectInformation/updatePositionAndName?pidCard=' + pidcard[index] + '&pPosition=' + compCode + '&pPositionName=' + compName ,
+                            type: 'POST',
+                            // dataType: 'JSON',
+                            success: function(data) {
+                                ModifyData(index + 1); // 递归调用删除下一条数据
+                            },
+                            error: function(jqXHR, textStatus, errorThrown) {
+                                console.error('There was a problem with the AJAX operation:', textStatus, errorThrown);
+                            }
+                        });
+                    } else {
+                        $("#panel").hide();
+                        $("#login").hide();
+                        $("body").css("overflow", "visible");
+                        toastr.success("所有数据已修改")
+                        location.reload();
+                    }
+                }
+
+
+            }
+        })
+
+
+
+        /**
+         * @Description: 批量删除功能
+         * @Author: lpf
+         * @Date: 2024/6/15 9:33
+         **/
+        document.getElementById('batchDelete').addEventListener('click', function() {
+            var data = Array.from(document.querySelectorAll('.rowCheckbox:checked')).map(cb => cb.id);
+            var  pidcards = [];
+            var pposition = [];
+            data.forEach(str => {
+                const parts = str.split('-'); // 分割字符串
+                if (parts.length > 1) { // 如果分割后有多于一个部分，说明包含'd'
+                    pidcards.push(parts[0]); // 添加'd'之前的部分
+                    if (parts[1]) { // 如果'd'之后还有内容
+                        pposition.push(parts[1]); // 添加'd'之后的部分
+                    }
+                }
+            });
+            if (pidcards.length === 0) {
+                toastr.warning("请选择要删除的行")
+                return
+            }
+            function deleteData(index) {
+                if (index < pidcards.length) {
+                    $.ajax({
+                        url: '${ctx}/emotion/emotionResult/deleteSubjectInformation',
+                        type: 'POST',
+                        dataType: 'JSON',
+                        data: {
+                            'pidcards': pidcards[index]
+                        },
+                        success: function(data) {
+                            deleteData(index + 1); // 递归调用删除下一条数据
+                        },
+                        error: function(jqXHR, textStatus, errorThrown) {
+                            console.error('There was a problem with the AJAX operation:', textStatus, errorThrown);
+                        }
+                    });
+                } else {
+                    location.reload();
+                    toastr.success("所有数据已删除")
+                }
+            }
+            Swal.fire({
+                title: '确认要删除选中的人员信息吗？',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: '是的，删除它！',
+                cancelButtonText: '取消'
+            }).then((result) => {
+                if (pidcards.length > 0) {
+                    deleteData(0); // 开始删除数据
+                }
+            });
+        });
+// 批量导出按钮逻辑
+
+        document.getElementById('batchExport').addEventListener('click', async function() {
+            var data = Array.from(document.querySelectorAll('.rowCheckbox:checked')).map(cb => cb.id);
+            var pidcard = [];
+            var pposition = [];
+            data.forEach(str => {
+                const parts = str.split('-'); // 分割字符串
+                if (parts.length > 1) { // 如果分割后有多于一个部分，说明包含'-'
+                    pidcard.push(parts[0]); // 添加'-'之前的部分
+                    if (parts[1]) { // 如果'-'之后还有内容
+                        pposition.push(parts[1]); // 添加'-'之后的部分
+                    }
+                }
+            });
+            var selectedIds;
+            selectedIds = pidcard;
+            console.log(selectedIds,'ss')
+            if (selectedIds.length > 0) {
+                for (let i = 0; i < selectedIds.length; i++) {
+                    await exportFile(selectedIds[i]);
+                }
+
+            } else {
+                toastr.warning("请选择要导出的行")
+            }
+        });
+        // 定义一个异步函数来处理文件导出
+        async function exportFile(pidcard) {
+            return new Promise((resolve, reject) => {
+                $.ajax({
+                    url: '${ctx}/subject/pdfExport/exportPdfFile?pidCard=' + pidcard,
+                    // dataType: "json",
+                    type: "GET",
+                    error: function () {
+                        toastr.error('操作失败');
+                        reject('下载失败'); // 拒绝 Promise，表示下载过程中出现问题
+                    },
+                    success: function (dataForm) {
+                        toastr.success('成功导出！');
+                        resolve(); // 解析 Promise，表示文件已成功下载
+                    }
+                })
+                // $(".PreventDuplication").attr("disabled", true).css("pointer-events", "none");
+                // let xhr = new XMLHttpRequest();
+                // xhr.open('GET', '${ctx}/subject/pdfExport/exportPdfFile?pidCard=' + pidcard, true);
+                // xhr.responseType = 'blob';
+                // xhr.onload = function() {
+                //     if (this.status === 200) {
+                //         var blob = new Blob([this.response], { type: 'application/pdf' });
+                //         var link = document.createElement('a');
+                //         link.href = window.URL.createObjectURL(blob);
+                //         link.download = pidcard + '-' + '导出报告.pdf';
+                //         link.click();
+                //         $(".PreventDuplication").attr("disabled", false).css("pointer-events", "auto");
+                //         resolve(); // 解析 Promise，表示文件已成功下载
+                //     } else {
+                //         reject('下载失败'); // 拒绝 Promise，表示下载过程中出现问题
+                //     }
+                // };
+                // xhr.onerror = function() {
+                //     reject('网络或服务器错误'); // 拒绝 Promise，表示网络或服务器错误
+                // };
+                // xhr.send(null);
+            });
+        }
+    });
+    //# // 初始化DataGrid对象
+    $('#dataGrid').dataGrid({
+        searchForm: $("#searchForm"),
+        columnModel: [
+            {header:'${text("编号")}', name:'pidcard', index:'a.pidcard', width:200, align:"center", frozen:true,},
+            {header:'${text("姓名")}', name:'pname', index:'a.pname', width:100, align:"center"},
+            {header:'${text("年龄")}', name:'age', index:'a.age', width:80, align:"center", editable:false},
+            {header:'${text("性别")}', name:'pgender', index:'a.pgender', width:80, align:"center"},
+            {header:'${text("部别")}', name:'ppositionName', index:'a.pposition_name', width:150, align:"center"},
+            {header:'${text("正常")}', name:'normal', width:80, align:"center", sortable : false,formatter: function (val, obj, row, act){
+                    var actions = [];
+                    actions.push('<a  id="normal-' + row.sid + '"  style="color: #03cb6e"></a>&nbsp;');
+                    return actions.join('');
+                }},
+            {header:'${text("一般")}', name:'attention', width:80, align:"center", sortable : false,formatter: function (val, obj, row, act){
+                    var actions = [];
+                    actions.push('<a  id="attention-' + row.sid + '"  style="color: #c09d00"></a>&nbsp;');
+                    return actions.join('');
+                }},
+            {header:'${text("关注")}', name:'emphasis', width:80, align:"center", sortable : false, formatter: function (val, obj, row, act){
+                    var actions = [];
+                    actions.push('<a  id="emphasis-' + row.sid + '"  style="color: #f37c01"></a>&nbsp;');
+                    return actions.join('');
+                }},
+            // {header:'${text("标注")}', name:'annotationType', width:80, align:"center", sortable : false,formatter: function (val, obj, row, act){
+            //         var actions = [];
+            //         actions.push('<a  id="annotationType-' + row.sid + '" style="color: rgb(255,255,255)" ></a>&nbsp;');
+            //         return actions.join('');
+            //     }},
+            // {header:'${text("标注类型")}', name:'annotationType', index:'a.annotation_type', width:150, align:"center"},
+            // {header:'${text("标注时间")}', name:'annotationAt', index:'a.annotation_at', width:150, align:"center"},
+            {header:'${text("建模")}', name:'modelingStatus', index:'a.modeling_status', width:80, align:"center",sortable : false, formatter: function(val, obj, row, act){
+                    var actions = [];
+                    actions.push('<a  id="modelingStatus-' + row.sid + '" style=";color: rgb(255,255,255)"></a>&nbsp;');
+                    return actions.join('');
+                }},
+            // {header:'${text("建模时间")}', name:'modelingAt', index:'a.modeling_at', width:150, align:"center"},
+            {header:'${text("操作")}', name:'action',width:270, align:"center",sortable : false, formatter: function(val, obj, row, act){
+                    var actions = [];
+                    actions.push('&nbsp;&nbsp;&nbsp;&nbsp;<a href="${ctx}/subject/subjectInformation/form?sid='+row.sid+'&pname='+row.pname+'&age='+row.age+'&ppositionName='+row.ppositionName+'&pidcard='+row.pidcard+'&pgender='+row.pgender+' " style="color:#00f4ff" class="btnList" title="${text("详情")}"><i class="icon-list">详情</i></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;');
+                    actions.push('<a id="modeling-' + row.pidcard + '" style="cursor: pointer;color:#dddddd"  title="${text("建模")}" ><i class="icon-graph" >建模</i></a>&nbsp;&nbsp;&nbsp;&nbsp;');
+                    // actions.push('<a  id="label-' + row.pidcard + '" title="${text("标注")}" ><i class=" icon-note" style="cursor: pointer">标注</i></a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;');
+                    actions.push('<a id="delete-' + row.pidcard + '" style="cursor: pointer;color: #d73925"  title="${text("删除")}" ><i class="fa fa-trash-o" >删除</i></a>&nbsp;&nbsp;&nbsp;&nbsp;');
+                    actions.push('<a  id="change-' + row.pidcard + '" title="${text("修改部别")}" style="color:#dddddd" ><i class=" icon-note" style="cursor: pointer;" >修改</i></a>&nbsp;&nbsp;&nbsp;');
+
+                    // actions.push('<a href="${ctx}/sys/company/form?companyCode='+row.pposition+'" class="btnList" title="${text("编辑公司")}"><i class="fa fa-wrench" >修改</i></a>&nbsp;&nbsp;&nbsp;&nbsp;');
+                    return actions.join('');
+                }},
+            // {header:'${text("添加视频")}', name:'addVideo', width:150, align:"center",sortable : false, formatter: function(val, obj, row, act){
+            //         var actions = [];
+            //         actions.push('<a  id="addVideo-' + row.sid + '" title="${text("添加")}" ><i class="icon-plus" style="cursor: pointer">添加</i></a>&nbsp;');
+            //         return actions.join('');
+            //     }},
+            {header:'${text("本地导出")}', name:'exportReport', width:110, align:"center", sortable : false,formatter: function(val, obj, row, act){
+                    var actions = [];
+                    actions.push('<a class="PreventDuplication" id="exportInfo-' + row.sid + '" title="${text("本地导出")}" ><i class=" icon-link" style="cursor: pointer">本地导出</i></a>&nbsp;');
+                    return actions.join('');
+                }},
+            {header: '${text("选择")}', name: 'select', width: 50, align: 'center', sortable: false, formatter: function(val, obj, row) {
+
+                    var actions = [];
+                    actions.push('<input type="checkbox"  class="rowCheckbox" id= "'+row.pidcard+''+'-'+''+row.pposition+'" >');
+
+                    return actions.join('');
+                }}
+        ],
+
+        //# // 加载成功后执行事件
+        ajaxSuccess: function(data){
+            // 获取导出数据库按钮元素
+            var exportDatabaseButton = document.getElementById('exportDatabase');
+// 监听导出数据库按钮的点击事件
+            exportDatabaseButton.addEventListener('click', function() {
+                $.ajax({
+                    url: '${ctx}/subject/resultExport/exportDatabaseData?path='+'D:/481Develop/exportDatabase',
+                    type: 'POST',
+                    success: function(data) {
+                        toastr.success(data)
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        console.error('There was a problem with the AJAX operation:', textStatus, errorThrown);
+                    }
+                });
+            });
+
+
+
+
+
+            var flag = false;//标志位，如果为真，就取消全选
+            document.getElementById('selectAll').addEventListener('click', function() {
+                for (let i = 0; i < data.list.length; i++) {
+                    checkbox = document.getElementById(data.list[i].pidcard+'-'+data.list[i].pposition)
+                    checkbox.checked = true
+                }
+                if (flag){
+                    for (let i = 0; i < data.list.length; i++) {
+                        checkbox = document.getElementById(data.list[i].pidcard+'-'+data.list[i].pposition)
+                        checkbox.checked = false
+                    }
+                }
+                flag = !flag;
+            });
+            for (let i = 0; i < data.list.length; i++) {
+
+                /**
+                 * @Description: 删除信息
+                 * @Author: lpf
+                 * @Date: 2024/5/14 15:14
+                 **/
+                var deleteElement = document.getElementById('delete-' + data.list[i].pidcard)
+                deleteElement.addEventListener('click', function (){
+                    Swal.fire({
+                        title: '确认要删除' + data.list[i].pname + '的人员信息吗？',
+                        text: "此操作不可撤销",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: '是的，删除它！',
+                        cancelButtonText: '取消'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            $.ajax({
+                                url: '${ctx}/emotion/emotionResult/deleteSubjectInformation',
+                                type: 'POST',
+                                data: {
+                                    'pidcards':data.list[i].pidcard
+                                },
+                                success: function(data) {
+                                    $('#dataGrid').dataGrid('reloadGrid');
+                                },
+                                error: function(jqXHR, textStatus, errorThrown) {
+                                    console.error('There was a problem with the AJAX operation:', textStatus, errorThrown);
+                                }
+                            });
+                        }
+                    });
+                })
+
+                /**
+                 * @Description: 判断建模状态，是否建模
+                 * @Author: lpf
+                 * @Date: 2024/4/15 20:42
+                 **/
+                let a = document.getElementById('modelingStatus-' + data.list[i].sid)
+                //判断是否建模
+                // 先判断是否为2 是2的话就显示建模中
+                if (data.list[i].modelingStatus === 2 ){
+                    a.innerHTML = "建模中"
+                }else if (data.list[i].modelingStatus === 1 ){
+                    a.innerHTML = "建模完成"
+                }else if (data.list[i].modelingStatus === 0){
+                    a.innerHTML = "未建模"
+                }
+                /**
+                 * @Description: 建模
+                 * @Author: lpf
+                 * @Date: 2024/5/22 16:19
+                 **/
+                var deleteElement = document.getElementById('modeling-' + data.list[i].pidcard)
+                deleteElement.addEventListener('click', function (){
+                    $.ajax({
+                        url: '${ctx}/subject/subjectInformation/requestIndividualModeling?pidcards=' +data.list[i].pidcard,
+                        dataType: 'JSON',
+                        contentType: 'application/json', // 设置内容类型为JSON
+                        type: "POST",
+                        error: function () {
+                            toastr.error('操作失败');
+                            return;
+                        },
+                        success: function (dataForm) {
+                            if(dataForm === 0){
+                                toastr.error('数据过少，建模失败')
+                            }else if(dataForm ===1 ){
+                                toastr.success('已开始建模')
+                            }
+                        }
+                    })
+
+                })
+                /**
+                 * @Description: 修改部门
+                 * @Author: yzz
+                 * @Date: 2024/8/8 20:36
+                 **/
+                var annotateElement = document.getElementById('change-' + data.list[i].pidcard);
+                annotateElement.addEventListener('click', function() {
+                    // 在这里编写处理点击事件的逻辑，例如显示模态框或执行其他操作
+                    ///////////////////////duduudududud////////////////////
+                    //上面还把注释按钮的id从sid改成了pidcard
+                    //1.1显示面板和蒙版
+                    document.querySelector("#panel").style.display="block";
+                    document.querySelector("#login").style.display="block";
+                    //当出现蒙版时,去除body的滚动条
+                    document.body.style.overflow="hidden";
+                    //2.点击文档
+                    document.onclick=function (event) {
+                        var e=event||window.event;
+                        //2.1获取点击的标签
+                        var targetId=e.target?e.target.id:e.srcElement.id;
+                        if(targetId =='no'){
+                            document.querySelector("#panel").style.display="none";
+                            document.querySelector("#login").style.display="none";
+                            //当出现蒙版时,去除body的滚动条
+                            document.body.style.overflow="visible";
+                        }
+                    };
+                    // 2. 监听确定按钮的点击
+                    document.querySelector("#yes").onclick = function() {
+                        // 检测输入框是否为空
+                        if (compName.trim() === '') {
+                            toastr.error("部别不能为空！");
+                            return;
+                        }
+                        //定义一遍身份证和注释
+                        var pidcard = data.list[i].pidcard;
+                        // var userMessage = document.getElementById('userMarking').value;
+                        console.log(data.list[i]);
+                        console.log(compName+'ww1');
+                        console.log(compCode+'ww2');
+                        // 创建一个要发送的对象
+                        // 发送请求到后端
+                        $.ajax({
+                            url: '${ctx}/subject/subjectInformation/updatePositionAndName?pidCard=' + pidcard + '&pPosition=' + compCode + '&pPositionName=' + compName ,
+                            type: 'POST',
+                            success: function(data) {
+                                location.reload();
+                                $("#panel").hide();
+                                $("#login").hide();
+                                $("body").css("overflow", "visible");
+                            },
+                            error: function(jqXHR, textStatus, errorThrown) {
+                                console.error('There was a problem with the AJAX operation:', textStatus, errorThrown);
+                            }
+                        });
+                    };
+                    /////////////////////dudududududududu////////////////////
+                });
+                /**
+                 * @Description: 获取评价状态，正常，一般，关注次数，以及获取是否标注
+                 * @Author: lpf
+                 * @Date: 2024/4/15 20:43
+                 **/
+                var string = data.list[i].pidcard
+                $.ajax({
+                    url: '${ctx}/subject/subjectInformation/findPersonInformation?pidcard=' + string,
+                    dataType: "json",
+                    type: "POST",
+                    error: function () {
+                        toastr.error('操作失败');
+                        return;
+                    },
+                    success: function (dataForm) {
+                        if (dataForm.length === 0){
+                            let p = document.getElementById( 'normal-' + data.list[i].sid)
+                            p.innerHTML = '0'
+                            let q = document.getElementById( 'attention-' + data.list[i].sid)
+                            q.innerHTML = '0'
+                            let r = document.getElementById( 'emphasis-' + data.list[i].sid)
+                            r.innerHTML = '0'
+                            // let a = document.getElementById('annotationType-' + data.list[i].sid)
+                            // a.innerHTML = "否"
+                        }else {
+                            let p = document.getElementById( 'normal-' + data.list[i].sid)
+                            p.innerHTML = dataForm[0].normalCount
+                            let q = document.getElementById( 'attention-' + data.list[i].sid)
+                            q.innerHTML = dataForm[0].attentionCount
+                            let r = document.getElementById( 'emphasis-' + data.list[i].sid)
+                            r.innerHTML = dataForm[0].emphasisAttentionCount
+                            // let a = document.getElementById('annotationType-' + data.list[i].sid)
+                            // if (dataForm[0].annotationType === 0) {
+                            //     a.innerHTML = "否"
+                            // } else {a.innerHTML = "是"}
+                        }
+                    }
+                })
+
+                /**
+                 * @Description: 导出报告功能
+                 * @Author: lpf
+                 * @Date: 2024/4/15 20:45
+                 **/
+                    //导出报告
+                var exportInfoElement = document.getElementById('exportInfo-' + data.list[i].sid )
+                // 添加点击事件监听器
+                exportInfoElement.addEventListener('click', function () {
+                    $.ajax({
+                        url: '${ctx}/subject/pdfExport/exportPdfFile?pidCard='+ data.list[i].pidcard,
+                        // dataType: "json",
+                        type: "POST",
+                        error: function () {
+                            toastr.error('操作失败');
+                        },
+                        success: function (dataForm) {
+                            toastr.success('成功导出！');
+                        }
+                    })
+                    //  document.getElementById('exportInfo-' + data.list[i].sid ).innerHTML = '<i class=" icon-refresh" style="cursor: pointer">正在导出</i>'
+                    // // 禁用超链接防止重复提交下载 disabled和events必须一起使用
+                    // $(".PreventDuplication").attr("disabled",true).css("pointer-events","none");
+                    // let xhr = new XMLHttpRequest();
+                    // console.log(data.list[i].pidcard)
+                    // xhr.open('POST', '${ctx}/subject/pdfExport/exportPdfFile?pidCard='+ data.list[i].pidcard, true);
+                    //  xhr.responseType = 'blob';
+                    // // 处理响应结果
+                    // xhr.onload = function() {
+                    //     if (this.status === 200) {
+                    //         var blob = new Blob([this.response], { type: 'application/pdf' });
+                    //         var link = document.createElement('a');
+                    //         link.href = window.URL.createObjectURL(blob);
+                    //         link.download = data.list[i].pidcard+'-'+data.list[i].pname+ '-'+  '导出报告.pdf';
+                    //         link.click();
+                    //         //下载完成恢复超链接
+                    //         $(".PreventDuplication").attr("disabled",false).css("pointer-events","auto");
+                    //         setTimeout(function () {
+                    //             document.getElementById('exportInfo-' + data.list[i].sid ).innerHTML = '<i class=" icon-link" style="cursor: pointer">本地导出</i>'
+                    //         },1100)
+                    //         document.getElementById('exportInfo-' + data.list[i].sid ).innerHTML = '<i class=" icon-link" id="fade" style="cursor: pointer">导出成功</i>'
+                    //         $('#fade').fadeOut(1000)
+                    //     }
+                    // };
+                    // xhr.send(null);
+
+                })
+            }
+        }
+    });
+
+</script>

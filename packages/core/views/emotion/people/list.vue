@@ -10,10 +10,18 @@
         <Icon :icon="getTitle.icon" class="m-1 pr-1" />
         <span> {{ getTitle.value }} </span>
       </template>
-      <template #toolbar>
-        <a-button type="primary" @click="handleForm({})" v-auth="'sys:company:edit'">
-          <Icon icon="i-fluent:add-12-filled" /> {{ t('新增') }}
-        </a-button>
+      <template #tableTop>
+        <div style="display: flex;column-gap: 10px">
+         <a-button type="primary">导入数据库</a-button>
+         <a-button type="primary">导出数据库</a-button>
+         <a-button type="primary">上传人员信息</a-button>
+         <a-button type="primary" style="background: green;">全体建模</a-button>
+         <a-button type="primary">批量导出个人报告</a-button>
+         <a-button type="primary">批量建模</a-button>
+         <a-button type="primary" danger>批量删除个人结果</a-button>
+         <a-button type="primary">批量修改部别</a-button>
+        </div>
+
       </template>
       <template #firstColumn="{ record }">
         <span class="cursor-pointer" @click="expandCollapse(record)"> ( {{ record.viewCode }} ) </span>
@@ -78,6 +86,12 @@ import { getPersonList, getPersonStatistics } from '@jeesite/core/api/emption/pe
   };
 
   const tableColumns: BasicColumn[] = [
+    // 第一列可勾选
+    {
+      title: t('选择'),
+    },
+      
+    
     {
       title: t('编号'),
       dataIndex: 'pidcard',
@@ -135,19 +149,39 @@ import { getPersonList, getPersonStatistics } from '@jeesite/core/api/emption/pe
   ];
 
   const actionColumn: BasicColumn = {
-    width: 160,
+    width: 260,
     actions: (record: Recordable) => [
       {
-        icon: 'i-clarity:note-edit-line',
-        title: t('修改部职别'),
+        label: t('详情'),
+        // TODO 
         onClick: handleForm.bind(this,  record),
         auth: 'sys:company:edit',
       },
+      {
+        label: t('建模'),
+        onClick: handleForm.bind(this,  record),
+        auth: 'sys:company:edit',
+      },
+      {
+        label: t('修改'),
+        onClick: handleForm.bind(this,  record),
+        auth: 'sys:company:edit',
+      },
+      {
+        label: t('删除'),
+        onClick: handleForm.bind(this,  record),
+        auth: 'sys:company:edit',
+      },
+      {
+        label: t('本地导出'),
+        onClick: handleForm.bind(this,  record),
+        auth: 'sys:company:edit',
+      }
     ],
   };
 
   const [registerDrawer, { openDrawer }] = useDrawer();
-  const [registerTable, { reload, expandCollapse }] = useTable({
+  const [registerTable, { reload, expandCollapse, setSelectedRowKeys }] = useTable({
     api: async (params) => {
       // 先获取分页列表
       const page = await getPersonList(params);
@@ -196,6 +230,7 @@ import { getPersonList, getPersonStatistics } from '@jeesite/core/api/emption/pe
     useSearchForm: true,
     pagination: true,
     canResize: true,
+    rowSelection: {}
   });
 
   watch(

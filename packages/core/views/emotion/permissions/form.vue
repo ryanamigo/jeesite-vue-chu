@@ -27,9 +27,8 @@
   import { Icon } from '@jeesite/core/components/Icon';
   import { BasicForm, FormSchema, useForm } from '@jeesite/core/components/Form';
   import { BasicDrawer, useDrawerInner } from '@jeesite/core/components/Drawer';
-  import { Company, companySave, companyForm, companyTreeData } from '@jeesite/core/api/sys/company';
-  import { officeTreeData } from '@jeesite/core/api/sys/office';
-import { createPermission } from '@jeesite/core/api/sys/emotion';
+  import { Company, companyForm, companyTreeData } from '@jeesite/core/api/sys/company';
+  import { createPermission } from '@jeesite/core/api/emption/permissions';
 
   const emit = defineEmits(['success', 'register']);
 

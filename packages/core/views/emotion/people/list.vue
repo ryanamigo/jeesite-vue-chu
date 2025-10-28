@@ -22,7 +22,6 @@
         </a>
       </template>
     </BasicTable>
-    <InputForm @register="registerDrawer" @success="handleSuccess" />
   </div>
 </template>
 <script lang="ts" setup name="ViewsSysCompanyList">
@@ -37,8 +36,7 @@
   import { useDrawer } from '@jeesite/core/components/Drawer';
   import { FormProps } from '@jeesite/core/components/Form';
   import { isEmpty } from '@jeesite/core/utils/is';
-  import InputForm from './form.vue';
-  import { permissionsListData } from '@jeesite/core/api/emption/permissions';
+import { getPersonList } from '@jeesite/core/api/emption/people';
 
   const props = defineProps({
     treeCodes: Array as PropType<String[]>,
@@ -127,26 +125,16 @@
     actions: (record: Recordable) => [
       {
         icon: 'i-clarity:note-edit-line',
-        title: t('编辑部职别'),
+        title: t('修改部职别'),
         onClick: handleForm.bind(this,  record),
         auth: 'sys:company:edit',
       },
-      {
-        icon: 'i-ant-design:delete-outlined',
-        color: 'error',
-        title: t('删除部职别'),
-        popConfirm: {
-          title: t('是否确认删除部职别'),
-          confirm: handleDelete.bind(this, record),
-        },
-        auth: 'sys:company:edit',
-      }
     ],
   };
 
   const [registerDrawer, { openDrawer }] = useDrawer();
   const [registerTable, { reload, expandCollapse }] = useTable({
-    api: permissionsListData,
+    api: getPersonList,
     beforeFetch: (params) => {
       params['employee.company.companyCode'] = !isEmpty(props.treeCodes) ? props.treeCodes[0] : '';
       params['employee.company.companyName'] = ''

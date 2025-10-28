@@ -26,7 +26,7 @@ export const permissionsListData = (params?: Permissions | any) =>
   defHttp.get<Permissions[]>({ url: adminPath + '/sys/empUser/listData', params });
 
 // 删除权限
-export const companyDelete = (params?: any) =>
+export const permissionsDelete = (params?: any) =>
   defHttp.post({ url: adminPath + '/sys/empUser/delete', params });
 
 // 禁用权限

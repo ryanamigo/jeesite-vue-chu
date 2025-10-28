@@ -38,7 +38,7 @@
   import { FormProps } from '@jeesite/core/components/Form';
   import { isEmpty } from '@jeesite/core/utils/is';
   import InputForm from './form.vue';
-  import { permissionsListData } from '@jeesite/core/api/emption/permissions';
+  import { permissionsListData, permissionsDelete } from '@jeesite/core/api/emption/permissions';
 
   const props = defineProps({
     treeCodes: Array as PropType<String[]>,
@@ -182,6 +182,7 @@
 
   function handleForm(record: Recordable) {
     openDrawer(true, record);
+
   }
 
   async function handleDisable(record: Recordable) {
@@ -199,8 +200,8 @@
   }
 
   async function handleDelete(record: Recordable) {
-    const params = { companyCode: record.companyCode };
-    const res = await companyDelete(params);
+    const params = { userCode: record.userCode };
+    const res = await permissionsDelete(params);
     showMessage(res.message);
     handleSuccess(record);
   }

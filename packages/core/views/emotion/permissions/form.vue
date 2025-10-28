@@ -27,7 +27,7 @@
   import { Icon } from '@jeesite/core/components/Icon';
   import { BasicForm, FormSchema, useForm } from '@jeesite/core/components/Form';
   import { BasicDrawer, useDrawerInner } from '@jeesite/core/components/Drawer';
-  import { Company, companyForm, companyTreeData } from '@jeesite/core/api/sys/company';
+  import { companyTreeData } from '@jeesite/core/api/sys/company';
   import { createPermission } from '@jeesite/core/api/emption/permissions';
 
   const emit = defineEmits(['success', 'register']);
@@ -35,7 +35,7 @@
   const { t } = useI18n('sys.company');
   const { showMessage } = useMessage();
   const { meta } = unref(router.currentRoute);
-  const record = ref<Company>({} as Company);
+  const record = ref<Record<string, any>>({});
   const getTitle = computed(() => ({
     icon: meta.icon || 'ant-design:book-outlined',
     value: record.value.isNewRecord ? t('新增公司') : t('编辑公司'),
@@ -145,37 +145,47 @@
     baseColProps: { md: 24, lg: 12 },
   });
 
-  const [registerDrawer, { setDrawerProps, closeDrawer }] = useDrawerInner(async (data) => {
+  const [registerDrawer, { setDrawerProps, closeDrawer }] = useDrawerInner(async (data: Record<string, any>) => {
     setDrawerProps({ loading: true });
     await resetFields();
-    const res = await companyForm(data);
-    record.value = (res.company || {}) as Company;
-    record.value.officeCodes = res.officeCodes || '';
-    record.value.officeNames = res.officeNames || '';
-    if (data.parentCode && data.parentName) {
-      record.value.parentCode = data.parentCode;
-      record.value.parentName = data.parentName;
+
+    try {
+      // 判断是否编辑（有 userCode 或 id 视为编辑）
+      const isEdit = !!(data?.userCode || data?.id);
+      record.value.isNewRecord = !isEdit;
+
+      if (isEdit) {
+        // 直接使用传入的 data 进行回填
+        const res: any = data || {};
+        record.value = { ...res, isNewRecord: false };
+
+        // 角色映射：后端 remarks="部级管理员" => userRoleString='administrator'
+        const roleVal = res?.remarks === '部级管理员' ? 'administrator' : 'Regular_users';
+
+        setFieldsValue({
+          userName: res?.userName || '',
+          loginCode: res?.loginCode || '',
+          mobile: res?.mobile || '',
+          // TreeSelect 需要同时设置 code 与 label
+          'employee.company.companyCode': res?.employee?.company?.companyCode || res?.employee?.company?.viewCode || res?.employee?.company?.id || '',
+          'employee.company.companyName': res?.employee?.company?.companyName || res?.employee?.company?.fullName || '',
+          userRoleString: roleVal,
+        });
+      } else {
+        // 新增：根据传入 companyCode 预选
+        setFieldsValue({
+          userName: '',
+          loginCode: '',
+          mobile: '',
+          password: '',
+          'employee.company.companyCode': data?.companyCode || '',
+          'employee.company.companyName': data?.companyName || '',
+          userRoleString: 'Regular_users',
+        });
+      }
+    } finally {
+      setDrawerProps({ loading: false });
     }
-    setFieldsValue(record.value);
-    updateSchema([
-      {
-        field: 'parentCode',
-        componentProps: {
-          api: companyTreeData,
-          params: {
-            excludeCode: record.value.id,
-            isShowRawName: true,
-          },
-        },
-      },
-      {
-        field: 'viewCode',
-        componentProps: {
-          disabled: !record.value.isNewRecord,
-        },
-      },
-    ]);
-    setDrawerProps({ loading: false });
   });
 
   async function handleSubmit() {
@@ -200,15 +210,29 @@
         officeName: '测试机构'
       }
       Object.assign(data, {
-        userCode: '',
-        oldLoginCode: '',
+        // 编辑态需带上 userCode，新增态为空
+        userCode: record.value && record.value.isNewRecord === false ? (record.value.userCode || '') : '',
         refName: '',
         email: '',
         phone: '',
-        userWeight: '',
-        ['!sex']: '',
-        remarks: '部级管理员'
+        // userWeight 默认 0，避免空字符串
+        userWeight: data.userWeight ?? 0,
+        ['!sex']: ''
       })
+
+      // 根据所选角色同步 remarks，避免与列表上的角色不一致
+      if (data.userRoleString === 'administrator') {
+        data.remarks = '部级管理员';
+      } else if (data.userRoleString === 'Regular_users') {
+        data.remarks = '普通用户';
+      }
+
+      // 编辑时需要传递 oldLoginCode（原登录账号）；新增时为空
+      if (record.value && record.value.isNewRecord === false) {
+        data.oldLoginCode = record.value.loginCode || '';
+      } else {
+        data.oldLoginCode = '';
+      }
 
       // ensure company/office names are set if fields are objects returned by TreeSelect
       // TreeSelect stores codes in field; the label field is fieldLabel configured above and should be set by form lib.

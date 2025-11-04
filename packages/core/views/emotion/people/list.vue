@@ -89,9 +89,9 @@ import { getPersonList, getPersonStatistics, importDatabaseData, exportDatabase,
 
   const tableColumns: BasicColumn[] = [
     // 第一列可勾选
-    {
-      title: t('选择'),
-    },
+    // {
+    //   title: t('选择'),
+    // },
       
     
     {
@@ -156,27 +156,30 @@ import { getPersonList, getPersonStatistics, importDatabaseData, exportDatabase,
       {
         label: t('详情'),
         onClick: () => onRowDetail(record),
-        auth: 'sys:company:edit',
+        
       },
       {
         label: t('建模'),
         onClick: () => onRowModeling(record),
-        auth: 'sys:company:edit',
+ 
       },
       {
         label: t('修改'),
         onClick: () => onRowModifyPosition(record),
-        auth: 'sys:company:edit',
       },
       {
         label: t('删除'),
-        onClick: () => onRowDelete(record),
-        auth: 'sys:company:edit',
+        color: 'error',
+        popConfirm: {
+          title: '是否确认删除该人员？',
+          confirm: onRowDelete.bind(this, record),
+        },
+
       },
       {
         label: t('本地导出'),
         onClick: () => onRowExport(record),
-        auth: 'sys:company:edit',
+
       }
     ],
   };

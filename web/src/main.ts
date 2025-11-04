@@ -19,9 +19,13 @@ import { setupRouter, router } from '@jeesite/core/router';
 import { setupRouterGuard } from '@jeesite/core/router/guard';
 import { setupStore } from '@jeesite/core/store';
 import { setupDForm } from '@jeesite/dfm';
+import { Table } from 'ant-design-vue';
+import { Button } from 'ant-design-vue';
 
 async function bootstrap() {
   const app = createApp(App);
+  app.use(Table); // 全局注册表格组件
+app.use(Button); // 全局注册按钮组件
 
   // Configure store
   setupStore(app);

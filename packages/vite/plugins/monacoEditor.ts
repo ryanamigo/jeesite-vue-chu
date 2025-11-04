@@ -4,10 +4,11 @@
  * @author ThinkGem
  */
 import type { PluginOption } from 'vite';
-import monacoEditorPlugin from 'vite-plugin-monaco-editor';
+import monacoEditorPlugin from 'vite-plugin-monaco-editor'; // 已默认导出插件函数
 
 export function configMonacoEditorPlugin(): PluginOption {
-  return (monacoEditorPlugin as any).default({
+  // 直接调用插件函数，去掉多余的 .default
+  return monacoEditorPlugin({
     languageWorkers: ['editorWorkerService', 'json', 'html'],
     customDistPath: (root, buildOutDir) => `${buildOutDir}/monaco`,
     publicPath: 'monaco',

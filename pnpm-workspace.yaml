@@ -1,5 +1,6 @@
-# pnpm-workspace.yaml 正确配置（覆盖原内容）
+# pnpm-workspace.yaml（覆盖原内容）
 packages:
-  - 'packages/**'               # 包含packages下所有子包（如core、web）
-  - '!packages/**/node_modules' # 排除子包的node_modules
-  - '!packages/**/dist'         # 排除子包的dist构建目录
+  - 'web'                       # 新增：包含根目录下的 web 项目
+  - 'packages/**'               # 保留：包含 packages 下所有子包
+  - '!packages/**/node_modules' # 保留：排除子包的 node_modules
+  - '!packages/**/dist'         # 保留：排除子包的 dist 目录

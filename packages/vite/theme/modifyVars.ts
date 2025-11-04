@@ -4,9 +4,8 @@
  * @author ThinkGem
  */
 import { generateAntColors, primaryColor, darkPrimaryColor } from './themeConfig';
-// import { getThemeVariables } from 'ant-design-vue/dist/theme';
-
 import { theme } from 'ant-design-vue';
+// 导入 convertLegacyToken（默认导出的函数）
 import convertLegacyToken from 'ant-design-vue/lib/theme/convertLegacyToken';
 
 /**
@@ -16,34 +15,17 @@ export function generateModifyVars(dark = false) {
   const palettes = generateAntColors(primaryColor);
   const primary = dark ? darkPrimaryColor : palettes[5];
 
-  // const primaryColorObj: Record<string, string> = {};
-  // for (let index = 0; index < 10; index++) {
-  //   primaryColorObj[`primary-${index + 1}`] = palettes[index];
-  // }
-
-  // const modifyVars = getThemeVariables({ dark: false });
   const { darkAlgorithm, defaultAlgorithm, defaultSeed } = theme;
   const mapToken = dark ? darkAlgorithm(defaultSeed) : defaultAlgorithm(defaultSeed);
-  const modifyVars = (convertLegacyToken as any).default(mapToken);
-  // const modifyVars = convertLegacyToken(mapToken);
-  // !!dark && console.log('modifyVars', dark, modifyVars);
+  
+  // 修正：直接调用 convertLegacyToken 函数，去掉多余的 .default
+  const modifyVars = convertLegacyToken(mapToken);  // 核心修正行
 
   return {
     ...modifyVars,
-    // Used for global import to avoid the need to import each style file separately
-    // reference:  Avoid repeated references
-    // hack: `${modifyVars.hack} @import (reference) "${__dirname + '/../../core/design/var/index.less'}";`,
     hack: `true; @import (reference) "${__dirname + '/../../core/design/var/index.less'}";`,
-    // ...primaryColorObj,
     'primary-color': primary,
     'link-color': primary,
     'info-color': primary,
-    // 'processing-color': primary,
-    // 'success-color': '#55D187', //  Success color
-    // 'error-color': '#ED6F6F', //  False color
-    // 'warning-color': '#EFBD47', //   Warning color
-    // 'font-size-base': '14px', //  Main font size
-    // 'border-radius-base': '2px', //  Component/float fillet
-    // 'content-bg-striped': '#fafafa',
   };
 }

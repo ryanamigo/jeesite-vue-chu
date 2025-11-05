@@ -115,6 +115,7 @@
 </template>
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { faceRecognitionBySnapshot } from '../../../api/emption/vedio';
 
 const startBtnDisabled = ref(true);
 
@@ -459,10 +460,8 @@ const informationMatching = () => {
         ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
         canvas.toBlob(async (blob) => {
           if (!blob) return;
-          const fd = new FormData();
-          fd.append('multipartFile', blob, 'snapshot.png');
           try {
-            const resp = await fetchJSON(`${(window as any).ctx || ''}/face/faceWeb/faceRecognitionTest`, { method: 'POST', body: fd });
+            const resp = await faceRecognitionBySnapshot(blob);
             if (resp && resp[0] && resp[0].name) {
               stopSnapshotInterval();
               const statusInfo = getEl('statusInfo');
@@ -538,9 +537,24 @@ const handleSnapshot = () => {
   const context = Canvas?.getContext('2d');
   const video = document.getElementById('video') as HTMLVideoElement;
   if (!Canvas || !context || !video) return;
+  // 摄像头就绪校验
+  if (!video.videoWidth || !video.videoHeight) {
+    notifyWarn('摄像头未就绪，请稍后再试');
+    return;
+  }
+
+  // 画布尺寸与清空
   Canvas.width = video.videoWidth;
   Canvas.height = video.videoHeight;
   context.clearRect(0, 0, Canvas.width, Canvas.height);
+
+  // 先将当前帧即时绘制到预览（镜像以保持与视频一致的观感）
+  context.save();
+  context.scale(-1, 1);
+  context.drawImage(video, -Canvas.width, 0, Canvas.width, Canvas.height);
+  context.restore();
+
+  // 使用离屏画布生成上传用的 Blob
   const offscreenCanvas = document.createElement('canvas');
   const offscreenContext = offscreenCanvas.getContext('2d');
   if (!offscreenContext) return;
@@ -548,15 +562,15 @@ const handleSnapshot = () => {
   offscreenCanvas.height = video.videoHeight;
   offscreenContext.save();
   offscreenContext.scale(-1, 1);
-  offscreenContext.drawImage(video, -Canvas.width, 0, Canvas.width, Canvas.height);
+  offscreenContext.drawImage(video, -offscreenCanvas.width, 0, offscreenCanvas.width, offscreenCanvas.height);
   offscreenContext.restore();
+
   offscreenCanvas.toBlob(async (blob) => {
     if (!blob) return;
-    const fd = new FormData();
-    fd.append('multipartFile', blob, 'snapshot.png');
     try {
-      const resp = await fetchJSON(`${(window as any).ctx || ''}/face/faceWeb/faceRecognitionTest`, { method: 'POST', body: fd });
+      const resp = await faceRecognitionBySnapshot(blob);
       if (resp && resp.length) {
+        // 根据返回的人脸框，重绘更合适的预览
         const image = new Image();
         image.onload = () => {
           const rect = resp[0]?.rect || null;
@@ -576,10 +590,11 @@ const handleSnapshot = () => {
         };
         image.src = URL.createObjectURL(blob);
       } else {
-        context.clearRect(0, 0, Canvas.width, Canvas.height);
-        notifyWarn('照片不合格，请重新拍照');
+        // 接口未返回有效结果，保留本地预览
+        notifyWarn('照片不合格，请调整姿态后重试');
       }
     } catch (e) {
+      // 接口失败，保留本地预览
       notifyError('照片上传失败');
     }
   }, 'image/png');

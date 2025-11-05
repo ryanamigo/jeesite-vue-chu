@@ -1,6 +1,6 @@
 <template>
   <div class="content" style="flex: 1; display: flex; flex-direction: column">
-    <!-- 头部统计卡片区域 -->
+    <!-- 头部统计卡片区域（使用封装的组件） -->
     <div class="header">
       <!-- 总人数卡片 -->
       <DataStatCard 

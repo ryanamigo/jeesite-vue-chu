@@ -1,0 +1,1686 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>非接触式心理健康监测预警系统</title>
+  <!--设置是否为缩放模式 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="viewport"
+    content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=no">
+  <!-- 新 Bootstrap 核心 CSS 文件 -->
+  <link rel="stylesheet" type="text/css" href="${ctxStatic}/css/bootstrap.css">
+  <!-- <meta http-equiv="refresh" content="50;url='https://github.com/iGaoWei/BigDataView'"> -->
+  <!-- jQuery文件。务必在bootstrap.min.js 之前引入 -->
+  <script src="/js/static/jquery/jquery-3.7.0.min.js"></script>
+  <!-- 最新的 Bootstrap 核心 JavaScript 文件 -->
+  <script src="${ctxStatic}/js/bootstrap.min.js"></script>
+  <!--echarts JS-->
+  <script src="${ctxStatic}/js/echarts.min.js"></script>
+  <!-- 轮播swiper文件 -->
+  <link rel="stylesheet" type="text/css" href="${ctxStatic}/css/swiper.min.css">
+  <script src="${ctxStatic}/js/swiper.min.js"></script>
+  <!-- 时间处理 -->
+  <script src="${ctxStatic}/js/time.js"></script>
+  <!--界面样式-->
+  <!--    <script src="js/visual.js"></script>-->
+
+  <script src="${ctxStatic}/js/china.js"></script>
+  <script src="${ctxStatic}/js/chartMap.js"></script>
+  <link rel="stylesheet" type="text/css" href="${ctxStatic}/css/visual.css">
+
+</head>
+<style>
+  /* yzz415 */
+  .oddrowcolor {
+    box-shadow: inset 0px 0px 13px #4487d5;
+    height: 4vh;
+    border: 0;
+    font-size: 14px;
+  }
+
+  /* yzz415 */
+  .evenrowcolor {
+    background-color: transparent;
+    height: 4vh;
+    font-size: 14px;
+  }
+
+  #rollLinkk1 {
+    display: flex;
+    justify-content: center;
+    /* 水平居中 */
+    align-items: center;
+    /* 垂直居中 */
+  }
+
+  .head_top .time_filtering .button {
+    background-color: #052452;
+    color: white;
+    border-color: #052452;
+    border-radius: 8px;
+    transition: background-color 0.3s, border-color 0.3s, transform 0.3s;
+  }
+
+  .head_top .time_filtering .selected {
+    transform: scale(1.1);
+    /* 使按钮膨胀 */
+    border-color: white;
+  }
+</style>
+
+<body class="ksh">
+  <div id="load">
+    <div class="load_img"><!-- 加载动画 -->
+      <img class="jzxz1" src="${ctxStatic}/images/jzxz1.png">
+      <img class="jzxz2" src="${ctxStatic}/images/jzxz2.png">
+    </div>
+  </div>
+  <div class="head_top" style="cursor:pointer;">
+    <!--    加入时间筛选-->
+    <div class="time_filtering" style="position: absolute;top: 15px;left: 100px;">
+      <button id="button1" class="button selected" onclick="selectButton(this)">近一月</button>
+      <button id="button2" class="button" onclick="selectButton(this)">近三月</button>
+      <button id="button3" class="button" onclick="selectButton(this)">近六月</button>
+      <button id="button4" class="button" onclick="selectButton(this)">近一年</button>
+    </div>
+    <img class="img-responsive" src="${ctxStatic}/images/jcdsj_logo.png">
+    <div class="time_clock">
+      <div class="date">
+        <div class="week">
+          <span class="wek">星期三</span>
+          <span class="day">2023/5/11</span>
+          <span class="time">11:14:26</span>
+
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="visual">
+    <div class="visual_left">
+      <div class="visual_box">
+        <div class="visual_title">
+          <span id="testStatistics">近1月测试统计</span>
+        </div>
+        <div class="visual_chart" id="main2" style="height: 100%;"> </div>
+      </div>
+      <div class="visual_box">
+        <div class="visual_title">
+          <span>部门统计</span>
+
+        </div>
+        <div class="visual_chart" id="main3" style="height: 100%;"> </div>
+      </div>
+      <div class="visual_box">
+        <div class="visual_title">
+          <span>任务完成情况统计</span>
+        </div>
+        <div class="visual_chart" id="main9" style="height: 90%;"> </div>
+      </div>
+    </div>
+    <div class="visual_con">
+      <div class="visual_conTop">
+        <div class="visual_conTop_box visual_conTop1">
+          <div>
+            <h3>总人数</h3>
+            <p class="headcount"></p>
+            <div class="conTop_smil">
+              <a>今日人数:<span class="headcount_today"></span><i class="fa fa-long-arrow-up"></i></a>
+              <a>本周人数:<span class="headcount_week"></span><i class="fa fa-long-arrow-down"></i></a>
+            </div>
+          </div>
+        </div>
+        <div class="visual_conTop_box visual_conTop2">
+          <div>
+            <h3>总次数</h3>
+            <p class="totalTimes"></p>
+            <div class="conTop_smil">
+              <a>今日次数<span class="totalTimes_today"></span><i class="fa fa-long-arrow-up"></i></a>
+              <a>本周次数<span class="totalTimes_week"></span><i class="fa fa-long-arrow-down"></i></a>
+            </div>
+          </div>
+        </div>
+        <div class="visual_conTop_box visual_conTop1">
+          <div>
+            <h3>回访人数</h3>
+            <p class="returnVisitors"></p>
+            <div class="conTop_smil">
+              <a>今日人数:<span class="returnVisitors_today"></span><i class="fa fa-long-arrow-up"></i></a>
+              <a>本周人数:<span class="returnVisitors_week"></span><i class="fa fa-long-arrow-down"></i></a>
+            </div>
+          </div>
+        </div>
+        <div class="visual_conTop_box visual_conTop2">
+          <div>
+            <h3>建模人数</h3>
+            <p class="modelers"></p>
+            <div class="conTop_smil">
+              <a>今日人数:<span class="modelers_today"></span><i class="fa fa-long-arrow-up"></i></a>
+              <a>本周人数:<span class="modelers_week"></span><i class="fa fa-long-arrow-down"></i></a>
+            </div>
+          </div>
+        </div>
+        <div class="clear"></div>
+      </div>
+      <div class="visual_conBot">
+        <!-- <img class="visual_conBot_l" src="images/ksh42.png">
+            <img class="visual_conBot_2" src="images/ksh43.png"> -->
+        <!-- <img class="visual_conBot_3" src="images/ksh44.png">
+            <img class="visual_conBot_4" src="images/ksh45.png"> -->
+        <!-- <div class="visual_top_12">
+
+
+            </div> -->
+        <div class="visual_conBot_chart">
+          <div class="visual_box ">
+            <div class="visual_title">
+              <span>各类状态分布比例</span>
+
+            </div>
+
+            <div class="visual_chart" id="main4"> </div>
+          </div>
+          <div class="visual_box ">
+            <div class="visual_title">
+              <span>近15天心理状态统计</span>
+            </div>
+            <div class="visual_chart" id="main5"> </div>
+          </div>
+        </div>
+        <div class="visual_box tb_header" style="margin-bottom: 0rem">
+          <div class="visual_title">
+            <span>近15天关注人员列表</span>
+            <!-- <img src="images/tit02.png"> -->
+          </div>
+          <div class="visual_table">
+            <!--                    <div class="swiper_header">-->
+            <!--                        <div class="th">序号</div>-->
+            <!--                        <div class="th">姓名</div>-->
+            <!--                        <div class="th">部门</div>-->
+            <!--                        <div class="th">综合心理状态</div>-->
+            <!--                        <div class="th">跟踪预警状态 </div>-->
+            <!--                        <div class="th">时间</div>-->
+            <!--                    </div>-->
+            <div class="swiper-container visual_swiper2 " id="rollLinkk">
+              <div id="rollLinkk1">
+                <!-- yzz415 -->
+                <table style="width: 100%;">
+                  <tr class="swiper_header">
+                    <th>序号</th>
+                    <th>姓名</th>
+                    <th>部别</th>
+                    <th>综合心理状态</th>
+                    <th>跟踪预警状态</th>
+                    <th>时间</th>
+                  </tr>
+                  <!-- yzz415 -->
+                  <tbody class="rollLink" style="color: aliceblue; ">
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+    <div class="visual_right">
+      <div class="visual_box">
+        <div class="visual_title">
+          <span>测试次数统计</span>
+          <!-- <img src="images/ksh33.png"> -->
+        </div>
+        <div class="visual_chart" id="main1">
+          <!-- yzz -->
+          <!-- <div id="legend-scroll" style=" overflow-x: auto;">   -->
+          <!-- 图例将会被放置在这个滚动容器中 -->
+        </div>
+      </div>
+      <div class="visual_box">
+        <div class="visual_title">
+          <span>近15天性别统计</span>
+          <!-- <img src="images/ksh33.png"> -->
+        </div>
+        <div class="" style="display: flex;width: 100%;height:calc( 100% - .5rem )">
+          <div class=" " style="width:50%; height: 100%; ">
+            <div class="visual_chart" id="main7" style="width: 100%;height: 100%;"></div>
+          </div>
+          <div class="" style="width:50%;  height: 100%; ">
+            <div class="" id="main71" style="width: 100%;height: 100%;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="visual_box ">
+        <div class="visual_title">
+          <span>年龄比例</span>
+        </div>
+        <div class="visual_chart" id="main8" style="width: 100%;height: 100%;"> </div>
+        <div class="visual_table"> </div>
+      </div>
+      <!--        <div class="visual_box">-->
+      <!--            <div class="visual_title">-->
+      <!--                <span>任务完成情况统计</span>-->
+
+      <!--            </div>-->
+      <!--            <div class="visual_chart" id="main9" style="height: 100%;"> </div>-->
+      <!--        </div>-->
+      <!--        <div class="visual_box">-->
+      <!--            <div class="visual_title">-->
+      <!--                <span>近15天综合指数统计</span>-->
+      <!--                &lt;!&ndash; <img src="images/ksh33.png"> &ndash;&gt;-->
+      <!--            </div>-->
+      <!--            <div class="" style="display: flex; width: 100%;height:calc( 100% - .5rem )">-->
+      <!--                <div class="" style="width:50%;height: 100%; position: relative;">-->
+      <!--                    <div class="item_ti"> 综合心理状态</div>-->
+      <!--                    <div class="tip_title  tip_title9"> </div>-->
+      <!--                    <div class="visual_chart" id="main9" style="width: 100%;height: 100%;"></div>-->
+      <!--                </div>-->
+      <!--                <div class="" style="width:50%; height: 100%; position: relative;">-->
+      <!--                    <div class="item_ti geng"> 跟踪预警指数</div>-->
+      <!--                    <div class=" tip_title  tip_title91"> </div>-->
+      <!--                    <div class="visual_chart" id="main91" style="width: 100%;height: 100%;"></div>-->
+      <!--                </div>-->
+      <!--            </div>-->
+
+      <!--        </div>-->
+
+    </div>
+    <div class="clear"></div>
+  </div>
+
+  <script src="${ctxStatic}/js/jquery.numscroll.js" type="text/javascript" charset="utf-8"></script>
+  <script src="${ctxStatic}/js/newVisual.js"></script>
+  <script src="${ctxStatic}/js/desktop_ajax.js"></script>
+  <!-- yzz 近15天关注人员列表数据 已完成-->
+  <script>
+    $(document).ready(function () {
+
+      const buttons = document.querySelectorAll('.button');
+      if (buttons.length > 0) {
+        buttons[0].classList.add('selected'); // 确保第一个按钮被选中
+      }
+
+      // 定义要传递的type参数值
+      var tbody = window.document.getElementsByClassName("rollLink")[0]; // 获取tbody元素
+      // 发送Ajax请求调用后端
+      $.ajax({
+        url: '${ctx}/emotion/emotionResult/findFollowedInformation',
+        type: 'POST',
+        dataType: 'json',
+        success: function (response) {
+          var str = "";
+          for (var i = 0; i < response.length; i++) {
+            var rowColorClass = (i % 2 === 0) ? 'evenrowcolor' : 'oddrowcolor'; // 为偶数行添加框 yzz
+            var pname = response[i].pname;  //姓名
+            var psychologyStatus = response[i].psychologyStatus;  //综合心理状态
+            if (psychologyStatus === 0) {
+              psychologyStatus = "正常";
+            } else if (psychologyStatus === 1) {
+              psychologyStatus = "一般";
+            } else if (psychologyStatus === 2) {
+              psychologyStatus = "关注";
+            }
+            var createdAt = response[i].createdAt;  //时间
+            var ppositionName = response[i].ppositionName;  //部门
+            var alarmStatus = response[i].alarmStatus;  //跟踪预警状态
+            switch (alarmStatus) {
+              case 0:
+                alarmStatus = "未跟踪";
+                break;
+              case 1:
+                alarmStatus = "正常";
+                break;
+              case 2:
+                alarmStatus = "一般";
+                break;
+              case 3:
+                alarmStatus = "关注";
+                break;
+              default:
+                alarmStatus = "未知";
+            }
+            str += "<tr class='" + rowColorClass + "'>";
+            str += "<td style='width: calc(100% / 6); text-align: center;margin: 0 3px;'>" + (i + 1) + "</td>"; // 设置padding和文本对齐方式
+            str += "<td style='width: calc(100% / 6); text-align: center;margin: 0 3px;'>" + pname + "</td>";
+            str += "<td style='width: calc(100% / 6); text-align: center;margin: 0 3px;'>" + ppositionName + "</td>";
+            str += "<td style='width: calc(100% / 6); text-align: center;margin: 0 3px;'>" + psychologyStatus + "</td>";
+            str += "<td style='width: calc(100% / 6); text-align: center;margin: 0 3px;'>" + alarmStatus + "</td>";
+            str += "<td style='width: calc(100% / 6); text-align: center;margin: 0 3px;'>" + createdAt + "</td>";
+            str += "</tr>";
+          }
+          tbody.innerHTML = str; // 将数据写入tbody的innerHTML中
+        },
+        error: function (xhr, status, error) {
+          console.log("请求失败: " + error);
+        }
+      });
+    });
+    function selectButton(button) {
+      // 获取所有按钮元素
+      var buttons = document.querySelectorAll('.button');
+
+      // 移除所有按钮的'selected'类名
+      buttons.forEach(function (btn) {
+        btn.classList.remove('selected');
+      });
+
+      // 给当前点击的按钮添加'selected'类名
+      button.classList.add('selected');
+    }
+    var timeFilter = 1;
+    //测试次数
+    // 1.实例化对象
+    var myChart1 = echarts.init(document.getElementById("main1"));
+    // 2.指定配置项和数据
+    var option = {
+      tooltip: {
+        trigger: 'item',
+        formatter: '{a} <br/>{b} : {c} ({d}%)'
+      },
+      legend: {
+        // yzz
+        type: 'scroll',   //实现滚动条
+        left: 'center',
+        top: 'bottom',
+        data: [
+          '1次',
+          '2次',
+          '3次',
+          '4次',
+          '5次',
+          '6次',
+          '7次',
+          '8次',
+        ],
+        textStyle: {
+          color: "white",
+        },
+      },
+      series: [
+        {
+          name: '测试次数统计',
+          type: 'pie',
+          radius: [30, 60],
+          center: ['50%', '40%'],
+          roseType: 'area',
+          labelLine: {
+            normal: {
+              length: 15,   	// 指示线长度
+              lineStyle: {
+                color: "white"  // 指示线颜色
+              }
+            },
+          },
+          itemStyle: {
+            borderRadius: 5
+          },
+          data: [
+            { value: 30, name: '1次' },
+            { value: 28, name: '2次' },
+            { value: 26, name: '3次' },
+            { value: 24, name: '4次' },
+            { value: 22, name: '5次' },
+            { value: 20, name: '6次' },
+            { value: 18, name: '7次' },
+            { value: 16, name: '8次' }
+          ]
+        }
+      ]
+    };
+    // 3.把配置项给实例对象
+    myChart1.setOption(option);
+    changeImage1(timeFilter);
+
+    // 4.让图表随屏幕自适应
+    window.addEventListener('resize', function () {
+      myChart1.resize();
+    })
+
+
+    // 1.实例化对象 近12月测试统计
+    var myChart2 = echarts.init(document.getElementById("main2"));
+    // 2.指定配置项和数据
+    var option2 = {
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+          type: 'shadow'
+        }
+      },
+      legend: {
+        textStyle: {
+          color: "white",
+        },
+        x: "right",
+        // y: "top",
+        padding: [25, 0, 0, 0],//可设定图例[距上方距离，距右方距离，距下方距离，距左方距离]
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        containLabel: true
+      },
+      xAxis: [
+        {
+          type: 'category',
+          data: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+          axisLine: {
+            //轴线的颜色以及宽度
+            show: true,
+            lineStyle: {
+              color: "white",
+            },
+          },
+          axisLabel: {
+            //轴文字的配置
+            show: true,
+            textStyle: {
+              color: "white",
+            },
+          },
+        }
+      ],
+      yAxis: [
+        {
+          type: 'value',
+          axisLine: {
+            //轴线的颜色以及宽度
+            show: true,
+            lineStyle: {
+              color: "white",
+            },
+          },
+          axisLabel: {
+            //轴文字的配置
+            show: true,
+            textStyle: {
+              color: "white",
+            },
+          },
+        }
+      ],
+      series: [
+        // {
+        //     name: '测试人数',
+        //     type: 'bar',
+        //     // label:{
+        //     //     show: true,
+        //     //     position: "top",
+        //     //     textStyle: {
+        //     //         color: "white"
+        //     //     }
+        //     // },
+        //     emphasis: {
+        //         focus: 'series'
+        //     },
+        //     data: [0, 332, 301, 334, 390, 330, 320,320, 332, 301, 334, 390]
+        // },
+        {
+          name: '正常',
+          type: 'bar',
+          itemStyle: {
+            color: '#4CAF50',
+          },
+          stack: 'Ad',
+          // label:{
+          //     show: true,
+          //     position: "top",
+          //     textStyle: {
+          //         color: "white"
+          //     }
+          // },
+          emphasis: {
+            focus: 'series'
+          },
+          data: [120, 132, 101, 134, 90, 230, 210, 132, 101, 134, 90, 230],
+          barMaxWidth: 50
+        },
+        {
+          name: '一般',
+          type: 'bar',
+          stack: 'Ad',
+          itemStyle: {
+            color: '#c8c533',
+
+          },
+          emphasis: {
+            focus: 'series'
+          },
+          data: [220, 182, 191, 234, 290, 330, 310, 182, 191, 234, 290, 330]
+        },
+        {
+          name: '关注',
+          type: 'bar',
+          stack: 'Ad',
+          itemStyle: {
+            color: '#f44336',
+          },
+          emphasis: {
+            focus: 'series'
+          },
+          data: [150, 182, 191, 234, 290, 330, 410, 182, 191, 234, 290, 330]
+        },
+      ]
+    };
+    // 3.把配置项给实例对象
+    myChart2.setOption(option2);
+    // yzz
+    changeImage2(timeFilter);
+    // 4.让图表随屏幕自适应
+    window.addEventListener('resize', function () {
+      myChart2.resize();
+    })
+
+    //大屏图表 --部门统计
+    // 1.实例化对象
+    var myChart3 = echarts.init(document.getElementById("main3"));
+    // 2.指定配置项和数据
+    var option3 = {
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+          type: 'shadow'
+        }
+      },
+      legend: {
+        textStyle: {
+          color: "white",
+        },
+        x: "right",
+        // y: "top",
+        padding: [25, 0, 0, 0],//可设定图例[距上方距离，距右方距离，距下方距离，距左方距离]
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        containLabel: true
+      },
+      xAxis: [
+        {
+          type: 'category',
+          data: ['B部门', 'C部门', 'D部门', 'E部门', 'F部门', 'G部门', 'H部门', 'I部门', 'J部门', 'K部门', 'L部门'],
+          axisLine: {
+            //轴线的颜色以及宽度
+            show: true,
+            lineStyle: {
+              color: "white",
+            },
+          },
+          axisLabel: {
+            //轴文字的配置
+            interval: 0,
+            show: true,
+            textStyle: {
+              color: "white",
+            },
+          },
+        }
+      ],
+      yAxis: [
+        {
+          type: 'value',
+          axisLine: {
+            //轴线的颜色以及宽度
+            show: true,
+            lineStyle: {
+              color: "white",
+            },
+          },
+          axisLabel: {
+            //轴文字的配置
+            show: true,
+            textStyle: {
+              color: "white",
+            },
+          },
+        }
+      ],
+      series: [
+        // {
+        //     name: '测试人数',
+        //     type: 'bar',
+        //     emphasis: {
+        //         focus: 'series'
+        //     },
+        //     data: [320, 332, 301, 334, 390, 330, 320,320, 332, 301, 334]
+        // },
+        {
+          name: '正常',
+          type: 'bar',
+          stack: 'Ad',
+          itemStyle: {
+            color: '#4CAF50',
+          },
+          emphasis: {
+            focus: 'series'
+          },
+          data: [120, 132, 101, 134, 90, 230, 210, 132, 101, 134, 90],
+          barMaxWidth: 50
+        },
+        {
+          name: '一般',
+          type: 'bar',
+          stack: 'Ad',
+          itemStyle: {
+            color: '#c8c533',
+
+          },
+          emphasis: {
+            focus: 'series'
+          },
+          data: [220, 182, 191, 234, 290, 330, 310, 182, 191, 234, 290]
+        },
+        {
+          name: '关注',
+          type: 'bar',
+          stack: 'Ad',
+          itemStyle: {
+            color: '#f44336',
+          },
+          emphasis: {
+            focus: 'series'
+          },
+          data: [150, 182, 191, 234, 290, 330, 410, 182, 191, 234, 290]
+        },
+      ]
+    };
+    // 3.把配置项给实例对象
+    myChart3.setOption(option3);
+    // yzz
+    changeImage3(timeFilter);
+
+    // 4.让图表随屏幕自适应
+    window.addEventListener('resize', function () {
+      myChart3.resize();
+    })
+    //大屏图表 --各类状态分布比例
+    // 1.实例化对象
+    var myChart4 = echarts.init(document.getElementById("main4"));
+    // 2.指定配置项和数据
+    var option4 = {
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+          type: 'shadow'
+        }
+      },
+      legend: {
+        textStyle: {
+          color: "white",
+        },
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        containLabel: true
+      },
+      xAxis: [
+        {
+          type: 'category',
+          data: ['疲劳', '激动', '压力', '焦虑', '平衡', '能量', '稳定', '压抑'],
+          axisLine: {
+            //轴线的颜色以及宽度
+            show: true,
+            lineStyle: {
+              color: "white",
+            },
+          },
+          axisLabel: {
+            //轴文字的配置
+            show: true,
+            textStyle: {
+              color: "white",
+            },
+          },
+        }
+      ],
+      yAxis: [
+        {
+          type: 'value',
+          axisLine: {
+            //轴线的颜色以及宽度
+            show: true,
+            lineStyle: {
+              color: "white",
+            },
+          },
+          axisLabel: {
+            //轴文字的配置
+            show: true,
+            textStyle: {
+              color: "white",
+            },
+          },
+        }
+      ],
+      series: [
+
+        // {
+        //     name: '正常',
+        //     type: 'bar',
+        //     stack: 'Ad',
+        //     emphasis: {
+        //         focus: 'series'
+        //     },
+        //     data: [120, 132, 101, 134, 90, 132, 101, 134]
+        // },
+        {
+          // name: '关注',
+          name: '高',
+          type: 'bar',
+          stack: 'Ad',
+          itemStyle: {
+            color: '#f44336',
+          },
+          emphasis: {
+            focus: 'series'
+          },
+          data: [220, 182, 191, 330, 310, 182, 191, 330],
+          barMaxWidth: 50
+        },
+        {
+          // name: '一般',
+          name: '低',
+          type: 'bar',
+          stack: 'Ad',
+          itemStyle: {
+            color: '#c8c533',
+
+          },
+          emphasis: {
+            focus: 'series'
+          },
+          data: [150, 232, 201, 154, 410, 182, 191, 330]
+        },
+
+      ]
+    };
+    // 3.把配置项给实例对象
+    myChart4.setOption(option4);
+    changeImage4(timeFilter);
+    // 4.让图表随屏幕自适应
+    window.addEventListener('resize', function () {
+      myChart4.resize();
+    })
+    //大屏图表--年龄比例
+    // 1.实例化对象
+    var myChart8 = echarts.init(document.getElementById("main8"));
+    // 2.指定配置项和数据
+    var option8 = {
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+          type: 'shadow'
+        }
+      },
+      legend: {
+        textStyle: {
+          color: "white"
+        },
+        x: "right",
+        // y: "top",
+        padding: [25, 28, 0, 0],//可设定图例[距上方距离，距右方距离，距下方距离，距左方距离]
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        containLabel: true
+      },
+      xAxis: [
+        {
+          type: 'category',
+          data: ['20以下', '20-25', '25-30', '30-40', '40以上'],
+          axisLine: {
+            //轴线的颜色以及宽度
+            show: true,
+            lineStyle: {
+              color: "white",
+            },
+          },
+          axisLabel: {
+            interval: 0,
+            //轴文字的配置
+            show: true,
+            textStyle: {
+              color: "white",
+            },
+          },
+        }
+      ],
+      yAxis: [
+        {
+          type: 'value',
+          axisLine: {
+            //轴线的颜色以及宽度
+            show: true,
+            lineStyle: {
+              color: "white",
+            },
+          },
+          axisLabel: {
+            //轴文字的配置
+            show: true,
+            textStyle: {
+              color: "white",
+            },
+          },
+        }
+      ],
+      series: [
+
+        {
+          name: '正常',
+          type: 'bar',
+          stack: 'Ad',
+          itemStyle: {
+            color: '#4CAF50',
+          },
+          emphasis: {
+            focus: 'series'
+          },
+          data: [120, 132, 101, 134, 90],
+          barMaxWidth: 50
+        },
+        {
+          name: '关注',
+          type: 'bar',
+          stack: 'Ad',
+          itemStyle: {
+            color: '#f44336',
+          },
+          emphasis: {
+            focus: 'series'
+          },
+          data: [220, 182, 191, 330, 310]
+        },
+        {
+          name: '一般',
+          type: 'bar',
+          stack: 'Ad',
+          itemStyle: {
+            color: '#c8c533',
+
+          },
+          emphasis: {
+            focus: 'series'
+          },
+          data: [150, 232, 201, 154, 410]
+        },
+
+      ]
+    };
+    // 3.把配置项给实例对象
+    myChart8.setOption(option8);
+    changeImage8(timeFilter);
+    // 4.让图表随屏幕自适应
+    window.addEventListener('resize', function () {
+      myChart8.resize();
+    })
+    //大屏图表 --任务完成情况统计
+    // 1.实例化对象
+    var myChart9 = echarts.init(document.getElementById("main9"));
+    // 2.指定配置项和数据
+    var option9 = {
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+          type: 'shadow'
+        }
+      },
+      legend: {
+        textStyle: {
+          color: "white",
+        },
+        x: "right",
+        // y: "top",
+        padding: [10, 0, 0, 0],//可设定图例[距上方距离，距右方距离，距下方距离，距左方距离]
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        containLabel: true
+      },
+      xAxis: [
+        {
+          type: 'category',
+          data: ['B部门', 'C部门', 'D部门', 'E部门', 'F部门', 'G部门', 'H部门', 'I部门', 'J部门', 'K部门', 'L部门'],
+          axisLine: {
+            //轴线的颜色以及宽度
+            show: true,
+            lineStyle: {
+              color: "white",
+            },
+          },
+          axisLabel: {
+            //轴文字的配置
+            interval: 0,
+            show: true,
+            textStyle: {
+              color: "white",
+            },
+          },
+        }
+      ],
+      yAxis: [
+        {
+          type: 'value',
+          axisLine: {
+            //轴线的颜色以及宽度
+            show: true,
+            lineStyle: {
+              color: "white",
+            },
+          },
+          axisLabel: {
+            //轴文字的配置
+            show: true,
+            textStyle: {
+              color: "white",
+            },
+          },
+        }
+      ],
+      series: [
+        // {
+        //     name: '测试人数',
+        //     type: 'bar',
+        //     itemStyle: {
+        //         color: '#e0efef',
+        //
+        //     },
+        //     emphasis: {
+        //         focus: 'series'
+        //     },
+        //     data: [320, 332, 301, 334, 390, 330, 320,320, 332, 301, 334]
+        // },
+        {
+          name: '正常',
+          type: 'bar',
+          stack: 'Ad',
+          itemStyle: {
+            color: '#4CAF50',
+          },
+          barMaxWidth: 50,
+          emphasis: {
+            focus: 'series'
+          },
+          data: [120, 132, 101, 134, 90, 230, 210, 132, 101, 134, 90]
+        },
+        {
+          name: '一般',
+          type: 'bar',
+          stack: 'Ad',
+          itemStyle: {
+            color: '#c8c533',
+
+          },
+          emphasis: {
+            focus: 'series'
+          },
+          data: [220, 182, 191, 234, 290, 330, 310, 182, 191, 234, 290]
+        },
+        {
+          name: '关注',
+          type: 'bar',
+          stack: 'Ad',
+          itemStyle: {
+            color: '#f44336',
+          },
+          emphasis: {
+            focus: 'series'
+          },
+          data: [150, 182, 191, 234, 290, 330, 410, 182, 191, 234, 290]
+        },
+      ]
+    };
+    // 3.把配置项给实例对象
+    myChart9.setOption(option9);
+    // yzz
+    changeImage9(timeFilter);
+    // 4.让图表随屏幕自适应
+    window.addEventListener('resize', function () {
+      myChart9.resize();
+    })
+    // 1.实例化对象 近15天心理状态统计
+    var myChart5 = echarts.init(document.getElementById("main5"));
+    // 2.指定配置项和数据
+    var option5 = {
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+          type: 'cross',
+          label: {
+            backgroundColor: '#6a7985'
+          }
+        }
+      },
+      legend: {
+        // data: ['低', '中', '高', '未跟踪'],
+        data: ['一般', '关注'],
+        textStyle: {
+          color: "white"
+        },
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        containLabel: true
+      },
+      xAxis: [
+        {
+          type: 'category',
+          boundaryGap: false,
+          data: ['05-01', '05-02', '05-03', '05-04', '05-05', '05-06', '05-07', '05-08', '05-09', '05-10', '05-11', '05-12', '05-13', '05-14', '05-15'],
+          // data:[],
+          axisLine: {
+            //轴线的颜色以及宽度
+            show: true,
+            lineStyle: {
+              color: "white",
+            },
+          },
+          axisLabel: {
+            //轴文字的配置
+            show: true,
+            textStyle: {
+              color: "white",
+            },
+          },
+        }
+      ],
+      yAxis: [
+        {
+          type: 'value',
+          axisLine: {
+            //轴线的颜色以及宽度
+            show: true,
+            lineStyle: {
+              color: "white",
+            },
+          },
+          axisLabel: {
+            //轴文字的配置
+            show: true,
+            textStyle: {
+              color: "white",
+            },
+          },
+
+        }
+      ],
+      series: [
+        {
+          // name: '低',
+          name: '一般',
+          type: 'line',
+          stack: 'Total',
+          itemStyle: {
+            color: '#c8c533',
+
+          },
+          areaStyle: {},
+          emphasis: {
+            focus: 'series'
+          },
+          data: [120, 132, 101, 134, 90, 230, 210, 120, 132, 101, 134, 90, 230, 210, 222]
+        },
+        {
+          // name: '中',
+          name: '关注',
+          type: 'line',
+          stack: 'Total',
+          itemStyle: {
+            color: '#f44336',
+          },
+          areaStyle: {},
+          emphasis: {
+            focus: 'series'
+          },
+          data: [220, 182, 191, 234, 290, 330, 310, 220, 182, 191, 234, 290, 330, 310, 333]
+        },
+        // {
+        //     name: '高',
+        //     type: 'line',
+        //     stack: 'Total',
+        //     areaStyle: {},
+        //     emphasis: {
+        //         focus: 'series'
+        //     },
+        //     data: [150, 232, 201, 154, 190, 330, 410,365,150, 232, 201, 154, 190, 330, 410]
+        // },
+        // {
+        //     name: '未跟踪',
+        //     type: 'line',
+        //     stack: 'Total',
+        //     areaStyle: {},
+        //     emphasis: {
+        //         focus: 'series'
+        //     },
+        //     data: [320, 332, 301, 334, 390, 330, 320,320, 332, 301, 334, 390, 330, 320,289]
+        // },
+
+      ]
+    };
+    // 3.把配置项给实例对象
+    myChart5.setOption(option5);
+    // yzz
+    // 定义要传递的type参数值
+    $.ajax({
+      url: '${ctx}/emotion/emotionResult/countNumberByPsychology',
+      type: 'GET',
+      dataType: 'json',
+      success: function (response) {
+        var currentTime = [];
+        var j = 14;
+        // var highCount = [];
+        var concernCount = [];
+        var commonlyCount = [];
+        // var unTrackingCount = [];
+        for (var i = 0; i < response.length; i++) {
+          // highCount[j] = response[i].highCount;
+          // 使用split方法按照"-"来分割字符串
+          var time = response[i].createdAt.split("-");
+          // 提取月和日部分，并拼接成你想要的格式
+          currentTime[j] = time[1] + "-" + time[2];
+          // highCount[j] = response[i].highCount;
+          concernCount[j] = response[i].concernCount;
+          commonlyCount[j] = response[i].commonlyCount;
+          // unTrackingCount[j] = response[i].unTrackingCount ;
+          j--;
+        };
+        option5.xAxis[0].data = currentTime;
+        // option5.series[2].data = highCount;
+        option5.series[1].data = concernCount;
+        option5.series[0].data = commonlyCount;
+        // option5.series[3].data = unTrackingCount;
+        // 使用新的数据更新图表
+        myChart5.setOption(option5);
+      },
+      error: function (xhr, status, error) {
+        console.log("请求失败: " + error);
+      }
+    });
+    // 4.让图表随屏幕自适应
+    window.addEventListener('resize', function () {
+      myChart5.resize();
+    })
+
+
+    changePeople(timeFilter);
+
+    changeCount(timeFilter);
+    returnVisitors(timeFilter);
+    modelersCount(timeFilter);
+    document.getElementById('button1').addEventListener('click', function () {
+      timeFilter = 1;
+      change(timeFilter);
+      document.getElementById('testStatistics').textContent = '近1月测试统计';
+
+    })
+    document.getElementById('button2').addEventListener('click', function () {
+      timeFilter = 3;
+      change(timeFilter);
+      document.getElementById('testStatistics').textContent = '近3月测试统计';
+
+    })
+    document.getElementById('button3').addEventListener('click', function () {
+      timeFilter = 6;
+      change(timeFilter);
+      document.getElementById('testStatistics').textContent = '近6月测试统计';
+
+    })
+    document.getElementById('button4').addEventListener('click', function () {
+      timeFilter = 12;
+      change(timeFilter);
+      document.getElementById('testStatistics').textContent = '近12月测试统计';
+
+    })
+    function change(timeFilter) {
+      changeImage1(timeFilter);
+      changeImage2(timeFilter);
+      changeImage3(timeFilter);
+      changeImage4(timeFilter);
+      changeImage8(timeFilter);
+      changeImage9(timeFilter);
+      changePeople(timeFilter);
+      changeCount(timeFilter);
+      returnVisitors(timeFilter);
+      modelersCount(timeFilter);
+    }
+    function changePeople(timeFilter) {
+      // 总人数
+      $.ajax({
+        type: "GET",
+        url: "${ctx}/emotion/emotionResult/findAllPeopleCount",
+        data: { time: timeFilter },
+        dataType: "json",
+        success: function (response) {
+          var allPeopleCount = response;
+          $(".headcount").text(allPeopleCount);
+        },
+        error: function (xhr, status, error) {
+          console.log("请求失败: " + error);
+        }
+      });
+    }
+    function changeCount(timeFilter) {
+      // 总次数
+      $.ajax({
+        type: "GET",
+        url: "${ctx}/emotion/emotionResult/findAllMidCount",
+        data: { time: timeFilter },
+        dataType: "json",
+        success: function (response) {
+          var allMidCount = response;
+          $(".totalTimes").text(allMidCount);
+        },
+        error: function (xhr, status, error) {
+          console.log("请求失败: " + error);
+        }
+      });
+    }
+    //回访人数
+    function returnVisitors(timeFilter) {
+
+      var type = 2;
+      $.ajax({
+        type: "GET",
+        url: "subject/subjectInformation/findAnnotationByType",
+        dataType: "json",
+        data: {
+          type: type,
+          time: timeFilter
+        }, // 传递type参数
+        success: function (response) {
+          var AnnotationByType = response;
+          $(".returnVisitors").text(AnnotationByType);
+        },
+        error: function (xhr, status, error) {
+          console.log("请求失败: " + error);
+        }
+      });
+      var type = 0;
+      $.ajax({
+        type: "GET",
+        url: "${ctx}/subject/subjectInformation/findAnnotationByType",
+        dataType: "json",
+        data: {
+          type: type,
+          time: timeFilter
+
+        }, // 传递type参数
+        success: function (response) {
+          var dayAnnotationByType = response;
+          $(".returnVisitors_today").text(dayAnnotationByType);
+        },
+        error: function (xhr, status, error) {
+          console.log("请求失败: " + error);
+        }
+      });
+      var type = 1;
+      $.ajax({
+        type: "GET",
+        url: "${ctx}/subject/subjectInformation/findAnnotationByType",
+        dataType: "json",
+        data: {
+          type: type,
+          time: timeFilter
+
+        }, // 传递type参数
+        success: function (response) {
+          var WeekAnnotationByType = response;
+          $(".returnVisitors_week").text(WeekAnnotationByType);
+        },
+        error: function (xhr, status, error) {
+          console.log("请求失败: " + error);
+        }
+      });
+    }
+    function modelersCount(timeFilter) {
+      var type = 2;
+      $.ajax({
+        type: "GET",
+        url: "${ctx}/subject/subjectInformation/findModelingByType",
+        dataType: "json",
+        data: {
+          type: type,
+          time: timeFilter
+        }, // 传递type参数
+        success: function (response) {
+          var ModelingByType = response;
+          $(".modelers").text(ModelingByType);
+        },
+        error: function (xhr, status, error) {
+          console.log("请求失败: " + error);
+        }
+      });
+      //返回一天
+      var type = 0;
+      $.ajax({
+        type: "GET",
+        url: "${ctx}/subject/subjectInformation/findModelingByType",
+        dataType: "json",
+        data: {
+          type: type,
+          time: timeFilter
+        }, // 传递type参数
+        success: function (response) {
+          var DayModelingByType = response;
+          $(".modelers_today").text(DayModelingByType);
+        },
+        error: function (xhr, status, error) {
+          console.log("请求失败: " + error);
+        }
+      });
+      //返回一周
+      var type = 1;
+      $.ajax({
+        type: "GET",
+        url: "${ctx}/subject/subjectInformation/findModelingByType",
+        dataType: "json",
+        data: {
+          type: type,
+          time: timeFilter
+        }, // 传递type参数
+        success: function (response) {
+          var WeekModelingByType = response;
+          $(".modelers_week").text(WeekModelingByType);
+        },
+        error: function (xhr, status, error) {
+          console.log("请求失败: " + error);
+        }
+      });
+    }
+    function changeImage1(timeFilter) {
+
+      $.ajax({
+        url: '${ctx}/emotion/emotionResult/countTestNumber',
+        type: 'GET',
+        data: { time: timeFilter },
+        //  dataType: 'json',  因为获取的是map数据
+        success: function (response) {
+          // 获取所有的键作为legend数据
+          var legendData = Object.keys(response).map(name => name + "次");
+
+          // 转换数据为ECharts所需格式，并添加颜色
+          var seriesData = Object.entries(response).map(([name, value], index) => {
+            // 假设您有一个颜色数组，用于循环分配颜色
+            var colors = [
+              '#4CAF50',
+              '#c8c533',
+              '#f44336',
+            ];
+            return {
+              name: name + "次",
+              value: value,
+              itemStyle: {
+                color: colors[index % colors.length] // 使用颜色数组中的颜色
+              }
+            };
+          });
+          // 更新option对象
+          option.series[0].data = seriesData;
+          option.legend.data = legendData;
+
+          // 设置ECharts实例的选项
+          myChart1.setOption(option);
+        },
+        error: function (xhr, status, error) {
+          console.log("请求失败: " + error);
+        }
+      });
+    }
+
+    function changeImage2(timeFilter) {
+      $.ajax({
+        url: '${ctx}/emotion/emotionResult/findTwelveTestingInformation',
+        type: 'GET',
+        data: { time: timeFilter },
+        dataType: 'json',
+        success: function (response) {
+          var j = response.length - 1;
+          var month = [];
+          var commonlyCount = [];// 一般
+          var concernCount = [];// 关注
+          var normalCount = [];// 正常
+          // var monthCount = [];// 测试人数
+          for (var i = 0; i < response.length; i++) {
+            console.log(response, '12');
+            commonlyCount[j] = response[i].commonlyCount;
+            concernCount[j] = response[i].concernCount;
+            normalCount[j] = response[i].normalCount;
+            // monthCount[j] = response[i].monthCount;
+            month[j] = response[i].month;
+            j--;
+          };
+          option2.xAxis[0].data = month;
+          // option2.series[0].data = monthCount;
+          option2.series[0].data = normalCount;
+          option2.series[1].data = commonlyCount;
+          option2.series[2].data = concernCount;
+          // 使用新的数据更新图表
+          myChart2.setOption(option2);
+        },
+        error: function (xhr, status, error) {
+          console.log("请求失败: " + error);
+        }
+      });
+    }
+    function changeImage3(timeFilter) {
+      // 定义要传递的type参数值
+      $.ajax({
+        url: '${ctx}/emotion/emotionResult/countPosition',
+        type: 'GET',
+        data: { time: timeFilter },
+        dataType: 'json',
+        success: function (response) {
+          // optiontt.xAxis.data =  ['1月', '2月', '3月', '4月', '5月', '6月', '7月','8月','1月','1月','1月','1月'];
+          var position = []; //部门
+          var mediumCount = [];// 一般
+          var followCount = [];// 关注
+          var normalCount = [];// 正常
+          // var testNumber = [];// 测试人数
+          for (var i = 0; i < response.length; i++) {
+            mediumCount[i] = response[i].mediumCount;
+            followCount[i] = response[i].followCount;
+            normalCount[i] = response[i].normalCount;
+            // testNumber[i] = response[i].testNumber;
+            position[i] = response[i].position;
+          };
+          option3.xAxis[0].data = position;
+          // option3.series[0].data = testNumber;
+          option3.series[0].data = normalCount;
+          option3.series[1].data = mediumCount;
+          option3.series[2].data = followCount;
+          // 使用新的数据更新图表
+          myChart3.setOption(option3);
+        },
+        error: function (xhr, status, error) {
+          console.log("part请求失败: " + error);
+        }
+      });
+    }
+    function changeImage4(timeFilter) {
+      // mxy
+      $.ajax({
+        url: '${ctx}/emotion/emotionResult/findEmotionResultByEightIndicators',
+        type: 'GET',
+        dataType: 'json',
+        data: { time: timeFilter },
+        success: function (response) {
+          var High = [response.fatigueHighCount,
+          response.aggressionHighCount,
+          response.stressHighCount,
+          response.tensionHighCount,
+          response.charmHighCount,
+          response.energyHighCount,
+          response.regulationHighCount,
+          response.depressionHighCount,
+          ];
+          var Mid = [response.fatigueMediumCount,
+          response.aggressionMediumCount,
+          response.stressMediumCount,
+          response.tensionMediumCount,
+          response.charmMediumCount,
+          response.energyMediumCount,
+          response.regulationMediumCount,
+          response.depressionMediumCount,
+          ];
+          // var Low=[response.fatigueLowCount ,
+          //     response.aggressionLowCount,
+          //     response.stressLowCount,
+          //     response.tensionLowCount,
+          //     response.charmLowCount,
+          //     response.energyLowCount,
+          //     response.regulationLowCount,
+          //     response.depressionLowCount,
+          // ];
+
+          // option4.series[0].data = Low;
+          option4.series[0].data = Mid;
+          option4.series[1].data = High;
+          // 使用新的数据更新图表
+          myChart4.setOption(option4);
+        },
+        error: function (xhr, status, error) {
+          console.log("请求失败: " + error);
+        }
+      });
+    }
+    function changeImage8(timeFilter) {
+      /*
+   * @Description: 年龄预警
+   * @return:
+   * @Author: mxy
+   * @Date: 2024/4/13 17:44
+   */
+      $.ajax({
+        url: '${ctx}/emotion/emotionResult/getPsychologyGroupByAge',
+        type: 'GET',
+        data: { time: timeFilter },
+        dataType: 'json',
+        success: function (response) {
+          var commonlyCount = [];//一般
+          var concernCount = [];//关注
+          var normalCount = [];//正常
+          for (var i = 0; i < response.length; i++) {
+            commonlyCount[i] = response[i].commonlyCount;
+            concernCount[i] = response[i].concernCount;
+            normalCount[i] = response[i].normalCount;
+          };
+          option8.series[2].data = commonlyCount;
+          option8.series[1].data = concernCount;
+          option8.series[0].data = normalCount;
+
+          // 使用新的数据更新图表  
+          myChart8.setOption(option8);
+        },
+        error: function (xhr, status, error) {
+          console.log("请求失败: " + error);
+        }
+      });
+    }
+    function changeImage9(timeFilter) {
+      // 定义要传递的type参数值
+      $.ajax({
+        url: '${ctx}/emotion/emotionResult/countTest',
+        type: 'GET',
+        data: { time: timeFilter },
+        dataType: 'json',
+        success: function (response) {
+          // optiontt.xAxis.data =  ['1月', '2月', '3月', '4月', '5月', '6月', '7月','8月','1月','1月','1月','1月'];
+          var testName = []; //任务名称
+          var mediumCount = [];// 一般
+          var followCount = [];// 关注
+          var normalCount = [];// 正常
+          // var allCount = [];// 测试人数
+          for (var i = 0; i < response.length; i++) {
+            mediumCount[i] = response[i].mediumCount;
+            followCount[i] = response[i].followCount;
+            normalCount[i] = response[i].normalCount;
+            // allCount[i] = response[i].allCount;
+            testName[i] = response[i].testName;
+          };
+          option9.xAxis[0].data = testName;
+          // option9.series[0].data = allCount;
+          option9.series[0].data = normalCount;
+          option9.series[1].data = mediumCount;
+          option9.series[2].data = followCount;
+          // 使用新的数据更新图表
+          myChart9.setOption(option9);
+        },
+        error: function (xhr, status, error) {
+          console.log("part请求失败: " + error);
+        }
+      });
+    }
+  </script>
+  <!--时间处理-->
+  <script type="text/javascript">
+    $(function () {
+      $('.visual_conBot').width($(document).width() * 0.5)
+      var a = $('.visualSssf_left a')
+      for (var i = 0; i < a.length; i++) {
+        a[i].index = i;
+        a[i].onclick = function () {
+          for (var i = 0; i < a.length; i++) {
+            a[i].className = ''
+          }
+          this.className = 'active'
+        }
+      }
+      var sfzcllH = $('.sfzcll_box').height()
+      var sfzcllHtwo = sfzcllH - 2
+      $('.sfzcll_box').css('line-height', sfzcllH + 'px')
+      $('.sfzcll_smallBk>div').css('line-height', sfzcllHtwo + 'px')
+
+      //删除加载动画
+      $('#load').fadeOut(1000)
+      setTimeout(function () {
+        $('#load').remove()
+      }, 1100);
+
+      // initDay()
+      let timer = setInterval(() => {
+        initDay();
+      }, 1000);
+      // 数组过渡动画
+
+    })
+    // 时间处理
+    function initDay() {
+      let now = new Date();
+      let week = Time.getWeek(now);
+      let day = Time.format('yyyy/MM/dd', now);
+      let time = Time.format('HH:mm:ss', now);
+      $('.day').text(day)
+      $('.time').text(time)
+      $('.wek').text(week)
+    }
+
+    window.addEventListener('resize', function () {
+      // myChart1.resize()
+      // myChart2.resize()
+      // myChart3.resize()
+      // myChart4.resize()
+      // myChart5.resize()
+
+      // myChart7.resize()
+      // myChart71.resize()
+      // myChart8.resize()
+      // myChart9.resize()
+      // myChart91.resize()
+      window.location = '?';
+    })
+  </script>
+
+</body>
+
+</html>

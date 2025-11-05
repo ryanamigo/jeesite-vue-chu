@@ -1,5 +1,9 @@
 <template>
-  <div class="data_box item" :style="{ backgroundImage: `url(${titBg})` }" @click="handleClick">
+  <div 
+    class="data_box item" 
+    :style="backgroundStyle" 
+    @click="handleClick"
+  >
     <div class="textInfo">
       <p>{{ title }}</p>
       <span :class="valueClass">{{ value }}</span>
@@ -11,7 +15,8 @@
 </template>
 
 <script setup>
-import titBg from '@jeesite/assets/images/tit-01.png';
+import { computed } from 'vue';
+import titBg from '@jeesite/assets/images/img-北京/tit-01.png';
 
 // 定义接收的属性
 const props = defineProps({
@@ -44,7 +49,20 @@ const props = defineProps({
   jumpTitle: {
     type: String,
     required: true
+  },
+  // 自定义背景图片（可选）
+  backgroundImage: {
+    type: String,
+    default: ''
   }
+});
+
+// 计算背景样式，如果传入了自定义背景图片则使用，否则使用默认
+const backgroundStyle = computed(() => {
+  const bgImg = props.backgroundImage || titBg;
+  return {
+    backgroundImage: `url(${bgImg})`
+  };
 });
 
 // 定义自定义事件（仅声明一次，解决重复声明问题）

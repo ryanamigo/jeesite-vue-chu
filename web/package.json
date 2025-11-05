@@ -29,12 +29,5 @@
     "name": "ThinkGem",
     "email": "thinkgem@163.com",
     "url": "https://gitee.com/thinkgem"
-  },
-  "dependencies": {
-    "layui": "^2.12.1",
-    "xm-select": "^0.0.3"
-  },
-  "devDependencies": {
-    "cross-env": "10.0.0"
   }
 }

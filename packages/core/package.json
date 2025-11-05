@@ -18,8 +18,6 @@
     "cropperjs": "1.6.2",
     "crypto-js": "4.2.0",
     "echarts": "6.0.0",
-    "layui": "^2.12.1",
-    "layui-src": "^2.6.8",
     "path-to-regexp": "8.2.0",
     "pinia": "2.3.1",
     "print-js": "1.6.0",
@@ -32,8 +30,7 @@
     "vue-i18n": "11.1.11",
     "vue-json-pretty": "2.5.0",
     "vue-types": "6.0.0",
-    "xlsx": "0.18.5",
-    "xm-select": "^0.0.3"
+    "xlsx": "0.18.5"
   },
   "devDependencies": {
     "@types/codemirror": "5.60.16",
@@ -45,8 +42,8 @@
     "@types/sortablejs": "1.15.8",
     "@vitejs/plugin-vue": "6.0.1",
     "rollup-plugin-visualizer": "6.0.3",
-    "vite-plugin-dts": "4.5.4",
-    "vite-plugin-theme-vite3": "2.0.1"
+    "vite-plugin-theme-vite3": "2.0.1",
+    "vite-plugin-dts": "4.5.4"
   },
   "homepage": "https://jeesite.com",
   "repository": {

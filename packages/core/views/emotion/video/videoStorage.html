@@ -1,0 +1,2232 @@
+<!DOCTYPE html>
+<% layout('/layouts/default.html', {title: '视频管理' , libs: ['dataGrid']}){ %>
+    <html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <title>Video Recorder</title>
+        <style>
+            .video {
+                border: 2px solid #49A3F525;
+                width: calc(100% - 5px);
+                /* 调整窗口大小距离边缘5px */
+                height: calc(100% - 120px);
+                /* 调整窗口大小距离边缘5px */
+                position: absolute;
+                /*margin-left: 3px;*/
+                transform: scaleX(-1);
+                /* 水平镜像 */
+
+            }
+
+            #testInfoButton,
+            .startButton,
+            .playButton,
+            .exportButton {
+                width: 150px;
+                border: 0;
+                border-radius: 22px;
+                background-color: rgb(5, 148, 183);
+                box-shadow: 0 0 15px #97bdd4;
+                color: #FFFFFF;
+                font-size: 15px;
+                margin-bottom: 4px;
+            }
+
+            /* 开始录制按钮样式设置 */
+            .startButton {
+                bottom: 13px;
+                position: fixed;
+                left: 40%;
+                height: 25px;
+            }
+
+            .exportButton {
+                bottom: 13px;
+                position: fixed;
+                left: 28%;
+                height: 25px;
+                width: 100px;
+            }
+
+            #testInfoButton {
+                bottom: 13px;
+                position: fixed;
+                left: 55%;
+                height: 25px;
+                width: 150px;
+            }
+
+            /* 修改倒计时框为进度条样式 */
+            #progressBar {
+                border: 2px solid #49A3F525;
+                /* 黑色边框 */
+                width: 99%;
+                /* 进度条长度调整为与视频窗口相同 */
+                height: 20px;
+                /* 进度条高度 */
+                background-color: #102155;
+                /* 进度条背景色 */
+                text-align: center;
+                line-height: 20px;
+                /* 使文本垂直居中 */
+                color: white;
+                /* 文本颜色 */
+                font-size: 15px;
+                /* 文本大小 */
+                position: relative;
+                /* 为进度条内部的填充设置定位基点 */
+                margin: 2px 5px 1px 3px;
+            }
+
+            #progressFill {
+                height: 100%;
+                /* 填充整个高度 */
+                background-color: rgb(5, 148, 183);
+                /* 填充颜色 */
+                text-align: center;
+                line-height: 30px;
+                /* 使文本垂直居中 */
+                color: white;
+                /* 文本颜色 */
+                position: absolute;
+                /* 相对于父元素定位 */
+                left: 0;
+                top: 0;
+            }
+
+            .info-inputs select {
+                display: block;
+                /* 使每个输入框独占一行 */
+                margin-bottom: 10px;
+                /* 输入框间距 */
+            }
+
+            .info-inputs label {
+                margin-bottom: 5px;
+                /* 标签与输入框的间距 */
+            }
+
+            * {
+                margin: 0;
+            }
+
+            html,
+            body {
+                height: 100%;
+            }
+
+            #parent {
+                background-color: #FFFFFF;
+                height: 100%;
+                display: flex;
+                box-shadow: 5px 1px 5px 1px #999;
+            }
+
+            .child {
+                height: 99%;
+                flex: 1 1 auto;
+                border: 5px #49A3F5B2;
+                background-color: #091F4300;
+            }
+
+            .child:nth-child(1) {
+                width: 15%;
+                border: 2px solid #49A3F525;
+                margin-right: 5px;
+            }
+
+            .child:nth-child(2) {
+                width: 60%;
+                border: 2px solid #49A3F525;
+                position: relative;
+                /* 添加相对定位以适应视频窗口的绝对定位 */
+            }
+
+            .child:nth-child(3) {
+                width: 25%;
+                margin-left: 5px;
+                border: 2px solid #49A3F525;
+            }
+
+            .videoOverlay {
+                position: absolute;
+                top: 55%;
+                /* 垂直居中 */
+                left: 50%;
+                /* 水平居中 */
+                transform: translate(-45%, -50%);
+                /* 精确居中 */
+                width: 27%;
+                /* 方框宽度 */
+                height: 45%;
+                /* 方框高度 */
+                border: 4px solid red;
+                /* 红色边框 */
+                background-color: #FFFFFF00;
+                /* 设置透明背景色 */
+                z-index: 1;
+                /* 确保方框位于视频上层 */
+            }
+
+            input[type="text"] {
+                border: 0;
+                outline: 0;
+                border: solid 1px #494640;
+                box-shadow: 0 0 10px #3c8dbc;
+                border-radius: 4px;
+                background-color: transparent;
+                caret-color: #ffffff;
+                /* 光标颜色 */
+                width: 140px;
+                height: 40px;
+                color: #d7e4ed;
+                text-align: left;
+            }
+
+            input[type="text"]:focus {
+                outline: 1px solid #39949b;
+            }
+
+            #saveInfoButton,
+            #snapshotButton,
+            #clearInfoButton {
+                width: 100%;
+                height: 100%;
+                border: 0;
+                border-radius: 22px;
+                background-color: #494640;
+                box-shadow: 0 0 15px #97bdd4;
+                color: #FFFFFF;
+                font-size: 20px;
+                margin-bottom: 10px;
+                background-color: rgb(5 148 183);
+            }
+
+            button {
+                cursor: pointer;
+                /* 显示鼠标指针为手型 */
+            }
+
+            button:active {
+                transform: translateY(2px);
+                /* 按下时按钮向下移动2px */
+            }
+
+            button:disabled {
+                opacity: 0.5;
+                /* 降低按钮透明度表示禁用状态 */
+                cursor: not-allowed;
+                /* 鼠标指针显示为禁止符号 */
+            }
+
+            #brightnessSlider {
+                -webkit-appearance: none;
+                /* 覆盖默认外观 */
+                width: 100%;
+                /* 滑块宽度 */
+                height: 10px;
+                /* 滑块高度 */
+                background: #ddd;
+                /* 滑块背景色 */
+                outline: none;
+                /* 去除轮廓 */
+                opacity: 0.7;
+                /* 透明度设置 */
+                border-radius: 10%;
+                /* 圆形 */
+                transition: opacity .2s;
+                /* 过渡效果 */
+            }
+
+            #brightnessSlider:hover {
+                opacity: 1;
+                /* 鼠标悬停时不透明 */
+            }
+
+            #brightnessSlider::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                /* 覆盖默认外观 */
+                appearance: none;
+                width: 25px;
+                /* 滑块手柄的宽度 */
+                height: 25px;
+                /* 滑块手柄的高度 */
+                background: #4e7bcc;
+                /* 滑块手柄的背景色 */
+                border-radius: 50%;
+                /* 圆形 */
+                cursor: pointer;
+                /* 光标形状 */
+            }
+
+            #brightnessSlider::-moz-range-thumb {
+                width: 25px;
+                /* 滑块手柄的宽度 */
+                height: 25px;
+                /* 滑块手柄的高度 */
+                background: #4e7bcc;
+                /* 滑块手柄的背景色 */
+                border-radius: 50%;
+                /* 圆形 */
+                cursor: pointer;
+                /* 光标形状 */
+            }
+
+            #sliderTicks {
+                display: flex;
+                justify-content: space-between;
+                padding: 0 10px;
+            }
+
+            #sliderTicks span {
+                position: relative;
+                display: block;
+                text-align: center;
+                width: 1px;
+                background: #39b1e8;
+                height: 10px;
+                color: rgba(255, 255, 255, 0.1);
+                font-size: 0px;
+            }
+
+            #snapshot,
+            #idcanvas {
+                border: 2px solid #91F4E500;
+                /* 设置边框为红色，宽度为2px */
+                background-color: #1c477e;
+            }
+
+            #snapshot {
+                margin-left: 5px;
+                width: 175px;
+                /* 视频截图宽度调整为容器的宽度 */
+                height: 230px;
+                /* 高度自适应 */
+            }
+
+            #idcanvas {
+                width: 190px;
+                /* 视频截图宽度调整为容器的宽度 */
+                height: 230px;
+                /* 高度自适应 */
+            }
+
+            #snapshotButton {
+                text-align: center;
+                align-items: center;
+                margin-left: 110px;
+                margin-top: 5px;
+                margin-bottom: 20px;
+                height: 30px;
+                width: 150px;
+
+            }
+
+            #parent {
+                background-image: url('/js/static/image/win2.jpg');
+                height: 100%;
+                width: 100%;
+                background-size: cover;
+                /* 可选：设置背景图大小 */
+                background-position: center;
+                /* 可选：设置背景图位置 */
+            }
+
+            .configuration {
+                background-size: contain;
+                /* 设置背景图大小为包含在div中 */
+                width: 100%;
+                background-position: center;
+                /* 可选：设置背景图位置 */
+                max-width: 100%
+            }
+
+            .videoImg {
+                background-size: cover;
+                /* 设置背景图大小为覆盖整个元素 */
+                width: 100%;
+                height: 100%;
+                background-position: center;
+                /* 设置背景图位置为中心 */
+                background-repeat: no-repeat;
+                /* 禁止背景图重复 */
+            }
+
+            img {
+                height: 50px;
+            }
+
+            img:nth-child(1) {
+                height: 50px;
+            }
+
+            .img-container::after {
+                content: "";
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                color: white;
+                font-size: 20px;
+            }
+
+            .img-container {
+                position: relative;
+            }
+
+            .text-overlay {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                color: white;
+                font-size: 20px;
+            }
+
+            .treeselect .form-control,
+            .form-control.laydate {
+                background-color: transparent !important;
+                color: #d7e4ed;
+                width: 100px;
+                height: 30px;
+            }
+
+            .input-group-btn .btn,
+            .treeSearchInput button,
+            .treeSearchInput button:hover,
+            .treeSearchInput button:focus {
+                border: solid 1px #494640;
+                box-shadow: 0 0 10px #3c8dbc;
+                border-radius: 4px;
+                background-color: transparent !important;
+                color: #d7e4ed;
+                height: 30px;
+            }
+
+            #addElement #addElementConfirm #addElementClear:focus {
+                outline: 1px solid #39949b;
+            }
+
+            #addElement,
+            #addElementConfirm,
+            #addElementClear,
+            #addElementCancel {
+                border: 0;
+                outline: 0;
+                border: solid 1px #494640;
+                box-shadow: 0 0 10px #3c8dbc;
+                border-radius: 4px;
+                background-color: transparent;
+                width: 60px;
+                height: 30px;
+                color: #d7e4ed;
+                font-size: 15px;
+            }
+
+            #findVideoStatusByDate {
+                width: 80%;
+                height: 43%;
+                border: solid 2px #3c8dbc;
+                box-shadow: 0 0 10px #3c8dbc;
+                border-radius: 4px;
+                margin: 10% 0 0 10%;
+                background-color: #0b61a78f;
+                justify-content: center;
+                /* 水平居中 */
+                align-items: center;
+                /* 垂直居中 */
+            }
+
+            #videoStatusTree {
+                color: #ffffff;
+                border-collapse: separate;
+                /* 使用独立的边框模型 */
+                border-spacing: 10px;
+                /* 设置表格单元格之间的间距为10px */
+                justify-content: center;
+                /* 水平居中 */
+                align-items: center;
+                /* 垂直居中 */
+                max-height: 88%;
+                /* 设置最大高度，超出部分将显示滚动条 */
+                overflow: auto;
+                /* 显示滚动条 */
+            }
+
+            #videoStatusTree th {
+                padding: 5px;
+                /* 设置表格单元格的内边距为5px */
+
+            }
+
+            #videoStatusTree td {
+                padding: 5px;
+                /* 设置表格单元格的内边距为5px */
+            }
+
+            table {
+                border-collapse: separate;
+                /* 使用独立的边框模型 */
+                border-spacing: 10px;
+                /* 设置表格单元格之间的间距为10px */
+                margin: 0 auto;
+                /* 水平居中 */
+            }
+
+            th,
+            td {
+                padding: 5px;
+                /* 设置表格单元格的内边距为5px */
+                text-align: center;
+                /* 内容居中对齐 */
+            }
+
+            #parent {
+                position: relative;
+                /* 父级容器设置为相对定位 */
+            }
+
+            #findVideoStatusByDate {
+                position: relative;
+                /* 设置为相对定位 */
+            }
+
+            #refreshStatus {
+                position: absolute;
+                bottom: 0;
+                /* 放置在底部 */
+                left: 50%;
+                /* 水平居中 */
+                transform: translateX(-50%);
+                /* 水平居中对齐 */
+            }
+
+            /* 鼠标移上去后修改下拉菜单链接颜色 */
+            #recordingMode option:hover {
+                background-color: rgb(5, 148, 183);
+            }
+
+            .fa-search {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 28px;
+
+            }
+
+            .btn-success {
+                background-color: #0594B7;
+                border-color: #0594B7;
+            }
+        </style>
+        <!-- Import style -->
+        <link rel="stylesheet" href="//unpkg.com/element-plus/dist/index.css" />
+        <!-- Import Vue 3 -->
+        <script src="//unpkg.com/vue@3"></script>
+        <!-- Import component library -->
+        <script src="//unpkg.com/element-plus"></script>
+    </head>
+
+    <body>
+        <div id="parent">
+<!--            左-->
+            <div class="child">
+<!--                顶部标题-->
+                <div style="position: relative; display: inline-block;">
+                    <img id="configuration" class="infoImg" src="/js/static/image/边框1.png"
+                        style="display: block; max-width: 100%">
+                    <div
+                        style="position: absolute;
+                        top: 50%; left:22%;
+                        transform: translate(-50%, -50%);
+                        color: white;
+                         font-size: 20px;">
+                        选项配置
+                    </div>
+                </div>
+<!--                录制类型-->
+                <h4 style=" margin:20px 0 20px 0;color: #91f2f4">录制类型</h4>
+                <div
+                    style="display: flex;align-items: center;text-align-last: center;text-align: center; margin:0 10px 20px 5px">
+                    <select style="height: 40px; font-size: 20px ; width: 80%;text-align: center;margin-left: 20px;
+            background-color: #092046;border: solid 1px #494640;box-shadow: 0 0 10px #3c8dbc;color: #91f2f4"
+                        id="recordingMode" onchange="toggleInfoInputs()">
+                        <option style="text-align: center;" value="automaticRecording">自动录制</option>
+                        <option style="text-align: center;" value="manualRecording">手动录制</option>
+                    </select>
+                </div>
+<!--                任务选择-->
+                <h4 style=" margin:20px 0 20px 0;color: #91f2f4">任务选择</h4>
+                <select id="taskSelection" style="height: 40px; font-size: 20px ; width: 80%;text-align: center;margin-left: 20px;
+            background-color: #092046;border: solid 1px #494640;box-shadow: 0 0 10px #3c8dbc;color: #91f2f4"></select>
+<!--                更新数据-->
+                <div id="findVideoStatusByDate">
+                    <div id="videoStatusTree"></div>
+                    <div id="refreshStatus">
+                        <button id="refreshStausBtn" class="btn btn-success btn-sm">更新数据</button>
+                    </div>
+                </div>
+            </div>
+<!--            中-->
+            <div class="child" style="color: #91f2f4">
+<!--                顶部标题-->
+                <div class="img-container" style="display: flex;">
+                    <img id="videoImg" class="infoImg" src="/js/static/image/综合数据.png"
+                        style="display: block; max-width: 100%">
+                    <div id="selfName"
+                        style="position: absolute; top: 50%;left: 5%; transform: translate(-50%, -50%); color: white; font-size: 20px;cursor: pointer;">
+                        视频录制
+                    </div>
+                    <div id="statusInfo" class="text-overlay"></div>
+                </div>
+<!--                -->
+                <div id="progressBar"></div>
+                <video class="video" autoPlay id="video"></video>
+                <video class="  video video2" autoPlay id="video2" style="display: none"></video>
+                <button @click="startRecording" :disabled="startBtnDisabled" class="startButton" id="start-btn" style="display: none;">开始录制</button>
+                <button id="testInfoButton" style="display: none;"> 测试账号登录 </button>
+            </div>
+<!--            右-->
+            <div class="child">
+<!--                信息采集-->
+                <div style="position: relative; display: inline-block;">
+                    <img id="infoImg" class="infoImg" src="/js/static/image/边框1.png"
+                        style="display: block; max-width: 104%;width: 114%;">
+                    <div id="infoCollection"
+                        style="position: absolute; top: 50%;left: 13%; transform: translate(-50%, -50%); color: white; font-size: 20px;cursor: pointer;">
+                        信息采集</div>
+                </div>
+<!--                照片-->
+                <div className="snapshot-container">
+                    <canvas id="idcanvas" width="160" height="150" style="margin-left: 1%">证件照</canvas>
+                    <!-- 添加用于显示视频截图的画布 -->
+                    <canvas id="snapshot" width="160" height="150">近期照</canvas> <!-- 添加用于显示视频截图的画布 -->
+                </div>
+                <button id="snapshotButton" style="width: 55%;margin-left: 26%;">拍照</button>
+<!--                个人信息-->
+                <div className="info-inputs"
+                    style="display: flex; flex-direction: column;color: #91f2f4;margin-left: 3%;">
+                    <div style="display: flex; align-items: center; text-align: justify; margin:0 10% 4% 8% ">
+                        <label htmlFor="name" style="width: 20%;margin-right: 5%;font-size: 120%"> 姓名 </label>
+                        <input style="width: 80%;" type="text" id="name" name="name">
+                    </div>
+                    <div style="display: flex; align-items: center;text-align: justify;margin:0 10% 4% 8% ">
+                        <label htmlFor="idNumber" style="width: 20%;margin-right: 5%;font-size: 120%"> 编号 </label>
+                        <input style="width: 80%;" type="text" id="idNumber" name="idNumber">
+                    </div>
+                    <div style="display: flex; align-items: center;text-align: justify; margin:0 10% 4% 8% ">
+                        <label htmlFor="age" style="width: 20%;margin-right: 5%;font-size: 120%"> 年龄 </label>
+                        <input style="width: 80%;" type="text" id="age" name="age">
+                    </div>
+                    <div style="display: flex; align-items: center;text-align: justify;margin:0 10% 4% 8% ">
+                        <label htmlFor="gender" style="width: 20%;margin-right: 5%;font-size: 120%"> 性别 </label>
+                        <input class="gender" id="male" type="radio" checked="checked" name="gender" value="男"
+                            style="margin-right: 5px"><span
+                            style="font-size: 15px;color: #d7e4ed;margin-right: 20px">男</span>
+                        <input class="gender" id="female" type="radio" name="gender" value="女"
+                            style="margin-right: 5px"><span style="font-size: 15px;color: #d7e4ed">女</span>
+                    </div>
+                    <div style="display: flex; align-items: center;text-align: justify;margin:0 10% 4% 8% ">
+                        <label htmlFor="jobTitle" style="width: 20%;margin-right: 5%;font-size: 120%"> 部别 </label>
+                        <#form:treeselect id="company" title="${text('部职别选择')}" style="height:40px;width:200px;"
+                            path="employee.company.companyCode" labelPath="employee.company.companyName"
+                            url="${ctx}/sys/company/treeData?ctrlPermi=2" callbackFuncName="treeselectCallback"
+                            btnClass="" allowClear="true" canSelectRoot="true" canSelectParent="true" />
+                    </div>
+                    <div class="info-actions">
+                        <div>
+                            <button id="saveInfoButton"
+                                style="width: 75%;height: 40px;margin-left: 13%;margin-bottom: 8%;margin-top: 4%;"> 保存信息
+                            </button>
+                            <div id="virtualBox1"></div>
+                        </div>
+                        <div>
+                            <button id="clearInfoButton" style="width: 75%;height: 40px;margin-left: 13%;"> 清空信息
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+
+    </html>
+    <% } %>
+        <script src="/js/static/jquery/jquery-3.7.0.min.js"></script>
+        <script src="${ctxStatic}/js/toastr.min.js"></script>
+        <link href="${ctxStatic}/css/toastr.min.css" rel="stylesheet">
+        <script src="${ctxStatic}/js/sweetalert2.js"></script>
+        <script src="${ctxStatic}/js/cardReader-1.0.js"></script>
+        <script>
+            const { createApp, ref, onMounted } = Vue
+            const startBtnDisabled = ref(false);
+            createApp({
+                setup() {
+                    // 手动录制模式下的开始录制按钮
+                    const startRecording = () => {
+                        if (document.getElementById('selfName').style.backgroundColor === "rgb(5, 148, 183)") {
+                            startBtnDisabled.value = true;
+                            document.getElementById('statusInfo').innerHTML = '';
+                            var selectedTaski = document.getElementById("taskSelection").value;
+                            if (companyName !== null && document.getElementById('name').value && document.getElementById('idNumber').value && document.getElementById('age').value) {
+                                if (selectedTaski === "") { toastr.warning('请选择任务批次'); }
+                            } else {
+                                if (selectedTaski === "") { toastr.warning('请选择任务批次和填写个人信息'); }
+                                else { toastr.warning('请填写个人信息'); }
+                            }
+                            let Matching5 = setInterval(function () {
+                                var selectedTask = document.getElementById("taskSelection").value;
+                                if (selectedTask === "") { }
+                                else if (companyName !== null && document.getElementById('name').value && document.getElementById('idNumber').value && document.getElementById('age').value) {
+                                    clearInterval(Matching5)
+                                    itExists(document.getElementById('idNumber').value);//判断此人在数据库中是否存在
+                                }
+                            }, 5000)
+                        }
+                    }
+                    onMounted(() => {
+                        document.getElementById('companyName').style.width = '211px';
+                        document.getElementById('companyName').style.height = '40px';
+                        document.getElementById('companyButton').style.height = '40px';
+                    })
+                    return {
+                        startBtnDisabled,
+                        startRecording
+                    }
+                },
+
+            }).mount('#parent')
+
+            //设置部别的宽度
+            
+            const startBtn = document.querySelector('#start-btn');  // 开始录像按钮
+            const videoEl = document.querySelector('video');  // 视频播放元素
+            const videoEl2 = document.querySelector('#video2');  // 视频播放元素
+
+            const playBtn = document.querySelector('#play-btn');  // 播放视频按钮
+            const cleanBtn = document.querySelector('#clearInfoButton') //清除信息按钮
+            const saveBtn = document.querySelector('#saveInfoButton')  //保存信息按钮
+            const updateBtn = document.querySelector('#update-btn')  //上传视频按钮
+            // const addElement = document.querySelector('#addElement')  //新增部职别按钮
+            let shotFile;
+            let videoData = [];  // 存放视频数据
+            let cameraStream = null;  // 存放媒体流
+            let mediaRecorder = null;  // 存放媒体录制对象
+            let videoData2 = [];  // 存放红外视频数据
+            let cameraStream2 = null;  // 存放红外媒体流
+            let mediaRecorder2 = null;  // 存放红外媒体录制对象
+
+            toastr.options = {
+                positionClass: 'toast-bottom-right'
+            };
+            //
+            // const image = document.getElementById('infoImg');
+            // const textOverlay = document.getElementById('textInfo');
+            // textOverlay.textContent = newText;
+            let companyName = null
+            let companyCode = null
+
+            /**
+             * @Description: 部职别选择回调函数
+             **/
+            function treeselectCallback(id, act, index, layero, nodes) {
+                if (id == 'company' && (act == 'ok')) {
+                    var win = layero.iframeWindow();
+                    log(nodes);  // 选择的节点数据
+                    companyName = nodes[0].name
+                    companyCode = nodes[0].code
+                }
+                if (act === 'clear') {//清空
+                    companyName = null;
+                }
+            }
+            /**
+             * @Description: 两个画布上绘制文字（"证件照"和"近期照"）
+             *
+             * @Author: ljh
+             **/
+            // 获取idcanvas和snapshot画布元素
+            const idCanvas = document.getElementById('idcanvas'); // 证件照
+            const snapshotCanvas = document.getElementById('snapshot'); // 近期照
+            // 获取idcanvas和snapshot画布的上下文
+            const idContext = idCanvas.getContext('2d');
+            const snapshotContext = snapshotCanvas.getContext('2d');
+
+            // 在idcanvas上绘制文字（竖排）
+            idContext.font = '19px 宋体';
+            idContext.fillStyle = 'white';
+            idContext.textAlign = 'center'; // 水平居中
+            // var lineHeight = 25; // 每行文本的高度（包括行间距，这里假设为20px）
+            idContext.fillText('证', idCanvas.width / 2, idCanvas.height / 2 - 25); // 垂直居中
+            idContext.fillText('件', idCanvas.width / 2, idCanvas.height / 2);
+            idContext.fillText('照', idCanvas.width / 2, idCanvas.height / 2 + 25);
+
+            // 在snapshot画布上绘制文字（竖排）
+            snapshotContext.font = '19px  宋体';
+            snapshotContext.fillStyle = 'white';
+            snapshotContext.textAlign = 'center'; // 水平居中
+            var lineHeight = 25; // 每行文本的高度（包括行间距，这里假设为20px）
+            snapshotContext.fillText('近', snapshotCanvas.width / 2, snapshotCanvas.height / 2 - 25); // 垂直居中
+            snapshotContext.fillText('期', snapshotCanvas.width / 2, snapshotCanvas.height / 2);
+            snapshotContext.fillText('照', snapshotCanvas.width / 2, snapshotCanvas.height / 2 + 25);
+
+            //清空部别树形选择
+            function clearTreeSelect() {
+                $("#companyCode").val('').change();  // 清空 companyCode 的值
+                $("#companyName").val('').change();  // 清空 companyName 的值
+                try {
+                    $("#companyCode,#companyName").resetValid();  // 尝试重置校验状态
+                } catch (e) {
+                    // 处理 resetValid 方法不存在或出错的情况
+                }
+                treeselectCallback('company', 'clear');
+            }
+
+
+            /**
+             * @Description: 拍照功能，将视频当前帧截取到画布上
+             *
+             * @Author: ljh
+             **/
+            // 创建一个FormData对象
+            let formData = new FormData();
+            document.getElementById('snapshotButton').addEventListener('click', () => {
+                const Canvas = document.getElementById('snapshot');
+                const context = Canvas.getContext('2d'); // 获取2D绘图上下文，用于在画布上绘制/清空/写字等操作
+                Canvas.width = video.videoWidth;
+                Canvas.height = video.videoHeight;
+                context.clearRect(0, 0, Canvas.width, Canvas.height);
+                // 创建离屏 Canvas(后台画布)
+                const offscreenCanvas = document.createElement('canvas');
+                const offscreenContext = offscreenCanvas.getContext('2d');
+                // 设置离屏 Canvas 的尺寸
+                offscreenCanvas.width = video.videoWidth;
+                offscreenCanvas.height = video.videoHeight;
+                offscreenContext.save();
+                offscreenContext.scale(-1, 1);//镜像
+                // 在离屏 Canvas 上绘制视频画面
+                offscreenContext.drawImage(video, -Canvas.width, 0, Canvas.width, Canvas.height);
+                offscreenContext.restore();
+                // 清空画布
+                context.clearRect(0, 0, Canvas.width, Canvas.height);
+                // blob就是 binary large object 二进制大对象
+                //toBlob()方法用于将Canvas内容转换为Blob对象
+                //toBlob()方法执行后，会调用回调函数，将blob对象作为参数传入
+                offscreenCanvas.toBlob(function (blob) {
+                    // 创建FormData对象
+                    const formData1 = new FormData();
+                    formData1.append('multipartFile', blob, 'snapshot.png'); // 将Blob对象添加到FormData中
+                    // 使用AJAX将FormData发送到后台
+                    $.ajax({
+                        url: '${ctx}/face/faceWeb/faceRecognitionTest',
+                        type: 'POST',
+                        data: formData1,
+                        processData: false,
+                        contentType: false,
+                        success: function (response) {
+                            // 510start-------------------------------------------------------------------------------------
+                            if (response.length !== 0) {
+                                // 获取坐标信息
+                                const rect = response[0].rect;
+                                // 原始矩阵宽度和高度
+                                const width = rect.right - rect.left;
+                                const height = rect.bottom - rect.top;
+                                // 判断照片中人像位置是否居中
+                                if (rect.bottom > 718) {
+                                    context.clearRect(0, 0, Canvas.width, Canvas.height); toastr.warning('照片不合格，人员过于靠下，请靠上拍照');
+                                    return
+                                }
+                                if (rect.left < -5) {
+                                    context.clearRect(0, 0, Canvas.width, Canvas.height); toastr.warning('照片不合格，人员过于靠左，请靠右拍照');
+                                    return
+                                }
+                                if (rect.top < 8) {
+                                    context.clearRect(0, 0, Canvas.width, Canvas.height); toastr.warning('照片不合格，人员过于靠上，请靠下拍照');
+                                    return
+                                }
+                                if (rect.right > 1285) {
+                                    context.clearRect(0, 0, Canvas.width, Canvas.height); toastr.warning('照片不合格，人员过于靠右，请靠左拍照');
+                                    return
+                                }
+                                const image = new Image();
+                                image.onload = function () {
+                                    // 计算需要扩大的比例
+                                    const scaleRatio = 1.2; // 假设扩大比例为1.2
+
+                                    // 计算扩大后的宽高度
+                                    const expandedWidth = width * scaleRatio;
+                                    const expandedHeight = height * scaleRatio;
+
+                                    // 计算扩大后的起始点
+                                    const expandedLeft = rect.left - (expandedWidth - width) / 2;
+                                    const expandedTop = rect.top - (expandedHeight - height) / 2;
+
+                                    // 清空画布
+                                    context.clearRect(0, 0, Canvas.width, Canvas.height);
+
+                                    // 绘制扩大后的画面到 Canvas 上
+                                    context.drawImage(image, expandedLeft, expandedTop, expandedWidth, expandedHeight, 0, 0, Canvas.width, Canvas.height);
+
+                                    // 将画布内容转换为 Blob 对象
+                                    Canvas.toBlob(function (blob) {
+                                        shotFile = new File([blob], 'snapshot.png', { type: 'image/png' });
+                                    }, 'image/png');
+                                };
+                                image.src = URL.createObjectURL(blob); // 将Blob对象转换为URL
+                            } else {
+                                context.clearRect(0, 0, Canvas.width, Canvas.height); toastr.warning('照片不合格，请重新拍照');
+                            }
+                        },
+                        error: function () {
+                            console.error('Error saving image snapshot');
+                        }
+                    });
+                }, 'image/png'); // 指定转换为PNG格式
+
+            });
+
+            document.getElementById('taskSelection').addEventListener('change', function () {
+                getVideoStatus()
+            })
+
+            document.getElementById('refreshStausBtn').addEventListener('click', function () {
+                getVideoStatus()
+            })
+
+            function getVideoStatus(params) {
+                $.ajax({
+                    url: '${ctx}/emotion/emotionVideo/findVideoStatusByDate?testNumber=' + document.getElementById('taskSelection').value,
+                    type: 'POST',
+                    success: function (response) {
+                        if (response && response.length > 0) {
+                            // 构建表格的 HTML 结构
+                            var tableHtml = '<table>';
+                            // 添加表头信息
+                            tableHtml += '<thead>';
+                            tableHtml += '<tr>';
+                            tableHtml += '<th>姓名</th>';
+                            tableHtml += '<th>视频状态</th>';
+                            // 添加更多表头列...
+                            tableHtml += '</tr>';
+                            tableHtml += '</thead>';
+
+                            // 添加表格内容
+                            tableHtml += '<tbody>';
+                            response.forEach(function (row) {
+                                tableHtml += '<tr>';
+                                tableHtml += '<td>' + row.pname + '</td>';
+                                var statusText = '';
+                                switch (row.status) {
+                                    case 0:
+                                        statusText = '未解析';
+                                        break;
+                                    case 1:
+                                        statusText = '解析成功';
+                                        break;
+                                    case 2:
+                                        statusText = '解析中';
+                                        break;
+                                    case 3:
+                                        statusText = '无效视频';
+                                        break;
+                                    // default:
+                                    //     statusText = '未知状态';
+                                }
+                                tableHtml += '<td>' + statusText + '</td>';
+                                // 添加更多列...
+                                tableHtml += '</tr>';
+                            });
+                            tableHtml += '</tbody>';
+
+                            tableHtml += '</table>';
+
+                            // 将表格插入到指定的 div 中
+                            $('#videoStatusTree').html(tableHtml);
+                        } else {
+                            // 显示空白或其他提示信息
+                            $('#videoStatusTree').html('暂无数据');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('任务添加失败:', error);
+                    }
+                });
+            }
+
+            /**
+             * @Description: 设置摄像头参数
+             * @Author: lpf
+             * @Date: 2024/5/7 21:37
+             **/
+
+            /**
+             * @Description: 获取所有任务批次填入选项
+             * @Author: lpf
+             * @Date: 2024/5/7 21:37
+             **/
+            // 发送 AJAX 请求获取任务编号
+            $.ajax({
+                url: '${ctx}/test/testNumber/findTestNumberByLimit',
+                type: 'GET',  // 根据实际情况可能需要调整请求类型
+                dataType: 'json',
+                success: function (data) {
+                    var select = $('#taskSelection');
+                    // 清空现有的选项
+                    select.empty();
+                    // 添加新的选项
+                    select.append($('<option></option>').attr('value', '').text(''));
+                    data.forEach(function (item) {
+                        select.append($('<option></option>').attr('value', item.testNumber).text(item.testNumberName));
+                    });
+                },
+                error: function () {
+                    console.error('无法加载任务编号');
+                }
+            })
+
+            /**
+             * @Description: 手动自动模式切换，显示信息输入框
+             * @Author: lpf
+             * @Date: 2024/5/7 21:36
+             **/
+            var recordingMode = document.getElementById('recordingMode').value;
+            function toggleInfoInputs() {
+                document.getElementById('selfName').innerHTML = '视频录制';
+                document.getElementById('selfName').style.left = '5%';
+                document.getElementById('statusInfo').innerHTML = '';
+                document.getElementById('name').value = '';
+                document.getElementById('idNumber').value = '';
+                clearTreeSelect();
+                document.getElementById('age').value = '';
+                progressBar = document.getElementById('progressBar');
+                progressBar.innerHTML = '<div id="progressFill"></div>'; // 初始化进度条内部填充和文本
+
+                var startBtn = document.getElementById('start-btn')
+                document.getElementById('start-btn').style.display = 'block'//可见
+                var testInfoButton = document.getElementById('testInfoButton')
+                recordingMode = document.getElementById('recordingMode').value
+                if (recordingMode === 'manualRecording') {
+                    document.getElementById('start-btn').style.display = 'block'
+                    document.getElementById('start-btn').disabled = true;
+                    // startBtn.style.display = 'block'
+                    testInfoButton.style.display = 'block'
+                    // stopSnapshotInterval();
+                    var selectedTaski = document.getElementById("taskSelection").value;
+                    if (companyName !== null && document.getElementById('name').value && document.getElementById('idNumber').value && document.getElementById('age').value) {
+                        if (selectedTaski === "") { toastr.warning('请选择任务批次'); }
+                    } else {
+                        if (selectedTaski === "") { toastr.warning('请选择任务批次和填写个人信息'); }
+                        else { toastr.warning('请填写个人信息'); }
+                    }
+                    //每1000毫秒判断一次信息是否填写完整
+                    let Matching1 = setInterval(function () {
+                        var selectedTask = document.getElementById("taskSelection").value;
+                        if (selectedTask === "") {
+                        }
+                        else if (companyName !== null && document.getElementById('name').value && document.getElementById('idNumber').value && document.getElementById('age').value) {
+                            clearInterval(Matching1)//关掉定时器
+                            document.getElementById('start-btn').disabled = false;
+                        }
+                    }, 1000)
+                    // document.getElementById('start-btn').disabled = true;
+                } else {
+                    if (isclearInfo) {
+                        informationMatching();//是否清空信息
+                    }
+                    document.getElementById('start-btn').disabled = true;
+                    document.getElementById('name').value = '';
+                    document.getElementById('idNumber').value = '';
+                    document.getElementById('age').value = '';
+                    clearTreeSelect();
+                    var selectedTaski = document.getElementById("taskSelection").value;
+                    if (selectedTaski === "") { // 检查是否选择了空的选项
+                        toastr.warning('请选择任务批次');
+                    }
+                    // startBtn.style.display = 'none'
+                    document.getElementById('start-btn').style.display = 'none'
+                    testInfoButton.style.display = 'none'
+                    let Matching2 = setInterval(function () {
+                        var selectedTask = document.getElementById("taskSelection").value;
+                        if (selectedTask === "") {
+                        }
+                        else {
+                            clearInterval(Matching2)
+                            document.getElementById('start-btn').disabled = true;
+                        }
+                    }, 1000)
+                }
+            }
+            /**
+             * @Description: 切换视频录制和信息录入的样式
+             * @Author: yzz
+             * @Date: 2024/7/9 16:40
+             **/
+            function setStyles(elementId, backgroundColor, borderRadius) {
+                document.getElementById(elementId).style.backgroundColor = backgroundColor;
+                document.getElementById(elementId).style.borderRadius = borderRadius;
+            }
+
+            //检测是否切换到视频录制模块
+            let intervalIds; // 用于存储定时器ID
+            document.getElementById('selfName').addEventListener('click', function () {
+                setStyles("infoCollection", "", "");
+                setStyles("selfName", "rgb(5, 148, 183)", "5px");
+                document.getElementById('saveInfoButton').disabled = true;
+                // document.getElementById('start-btn').disabled = true;
+                recordingMode = document.getElementById('recordingMode').value
+                if (recordingMode === "automaticRecording") {
+                    // document.getElementById('start-btn').style.display='none'
+                    // setTimeout(informationMatching, 1000);
+                    var selectedTaski = document.getElementById("taskSelection").value;
+                    if (selectedTaski === "") { // 检查是否选择了空的选项
+                        toastr.warning('请选择任务批次');
+                    }
+                    let Matching3 = setInterval(function () {
+                        var selectedTask = document.getElementById("taskSelection").value;
+                        if (selectedTask === "") {
+                        }
+                        else {
+                            clearInterval(Matching3)
+                            // document.getElementById('start-btn').disabled = false;
+                            setTimeout(informationMatching, 1000);
+                        }
+                    }, 1000)
+                } else {
+                    // document.getElementById('start-btn').style.display='block';
+                    var selectedTaski = document.getElementById("taskSelection").value;
+                    if (selectedTaski === "") { // 检查是否选择了空的选项
+                        toastr.warning('请选择任务批次和填写个人信息');
+                    }
+                    var selectedTaski = document.getElementById("taskSelection").value;
+                    if (companyName !== null && document.getElementById('name').value && document.getElementById('idNumber').value && document.getElementById('age').value) {
+                        if (selectedTaski === "") { toastr.warning('请选择任务批次'); }
+                    } else {
+                        if (selectedTaski === "") { toastr.warning('请选择任务批次和填写个人信息'); }
+                        else { toastr.warning('请填写个人信息'); }
+                    }
+                    let Matching8 = setInterval(function () {
+                        var selectedTask = document.getElementById("taskSelection").value;
+                        if (selectedTask === "") { }
+                        else if (companyName !== null && document.getElementById('name').value && document.getElementById('idNumber').value && document.getElementById('age').value) {
+                            clearInterval(Matching8)
+                            // document.getElementById('start-btn').disabled = false;
+                            // document.getElementById('start-btn').disabled = false;
+                            // document.getElementById('selfName').innerHTML =  document.getElementById('name').value+ '  '+'  '+'视频录制'
+                            // document.getElementById('selfName').style.left = '10%';
+                            document.getElementById('start-btn').disabled = false;
+                        }
+                    }, 5000)
+                }
+            })
+
+            
+           
+            //判断此人在数据库中是否存在
+            function itExists(pidcard) {
+                $.ajax({
+                    url: '${ctx}/subject/subjectInformation/judgePerson?pidCard=' + pidcard,
+                    type: 'POST',
+                    success: function (data) {
+                        if (data === "true") {
+                            document.getElementById('statusInfo').innerHTML = document.getElementById('name').value
+                            setTimeout(adjustingTheAngle, 500);//人进行一次人脸姿态调整
+                        } else {
+                            // clearInterval(Matching5);
+                            Swal.fire({
+                                title: '提示',
+                                text: '无此人信息，请先进行信息采集',
+                                icon: 'warning',
+                                showCancelButton: false, // 可选
+                                confirmButtonText: '确定'
+                                // 没有.then()调用，因为不需要处理确认后的结果
+                            });
+                            document.getElementById('start-btn').disabled = false;
+                        }
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        console.error('There was a problem with the AJAX operation:', textStatus, errorThrown);
+                    }
+                });
+            }
+
+            document.getElementById('infoCollection').addEventListener('click', function () {
+                // document.getElementById('start-btn').style.display = 'none';
+                stopSnapshotInterval() //停止信息匹配
+                // document.getElementById('statusInfo').innerHTML = ''
+                setStyles("selfName", "", "");
+                setStyles("infoCollection", "rgb(5, 148, 183)", "5px");
+
+                document.getElementById('saveInfoButton').disabled = false;
+                // var select = document.getElementById('taskSelection');
+                // select.value = '';
+                document.getElementById('start-btn').disabled = true;
+            });
+            /**
+             * @Description: 进入页面调用摄像头设备，开启信息匹配功能
+             * @Author: lpf
+             * @Date: 2024/4/15 20:40
+             **/
+            let isInfoMatch;//信息是否已匹配完成”的状态标志位
+            let Matching;
+            //页面加载完成后首先执行onload
+            window.onload = function () {
+                /**
+                 * @Description: 新增部职别按钮
+                 *
+                 * @Author: ljh
+                 **/
+                isInfoMatch = false;
+                document.getElementById('saveInfoButton').disabled = false;
+                setStyles("selfName", "", "");
+                setStyles("infoCollection", "rgb(5 148 183)", "10px");
+                document.getElementById('start-btn').disabled = true;
+                informationMatching();
+                // manualRecordingf();
+                openReader1()
+                startMediaDevices();
+            }
+            //开启读卡
+            var readIDIntervalId;
+            // function openReader1() {
+            //     readIDIntervalId = setInterval(function () {
+            //         $.ajax({
+            //             url: '${ctx}/face/faceInformation/duka',
+            //             type: 'POST',
+            //             // data: snapshots,
+            //             // processData: false,
+            //             // contentType: false,
+            //             success: function (response) {
+            //                 if (response && response.length && response[0] !== '空') {
+            //                     clearInterval(readIDIntervalId);
+            //                     document.getElementById('name').value = response[0];
+            //                     document.getElementById('idNumber').value = response[2];
+            //                     const Canvas = document.getElementById('idcanvas');
+            //                     const ctx = Canvas.getContext('2d');
+            //                     const img = new Image();
+            //                     img.src = "data:image/jpeg;base64," + response[4];//图片的base64编码，只有加上data:image/jpeg;base64,才会被识别为图片
+            //                     img.onload = function () {//图片加载完成之后
+            //                         ctx.clearRect(0, 0, Canvas.width, Canvas.height);
+            //                         // 绘制图片，使其铺满整个 Canvas
+            //                         ctx.drawImage(img, 0, 0, Canvas.width, Canvas.height);
+            //                         Canvas.toBlob(function (blob) {//把图片变成二进制
+            //                             const idFile = new File([blob], 'idFile.png', { type: 'image/png' });
+            //                             formData2.append('idFile', idFile);
+            //                         }, 'image/png');
+            //                     }
+            //                     document.getElementById('age').value = response[3]
+            //                     if (response[1] === '男') {
+            //                         document.getElementById('male').checked = true; // 选中男性选项
+            //                         document.getElementById('female').checked = false; // 取消女性选项的选择
+            //                     } else if (response[1] === '女') {
+            //                         document.getElementById('male').checked = false; // 取消男性选项的选择
+            //                         document.getElementById('female').checked = true; // 选中女性选项
+            //                     }
+            //                 }
+            //             },
+            //             error: function () {
+            //                 console.error('Error saving image snapshot');
+            //             }
+            //         })
+            //     }, 1000 )
+            // }
+            let socket = null
+            function openReader1() {
+                console.log('读卡')
+                var host = "ws://127.0.0.1:33666";
+                if(socket === null){
+                    socket = new WebSocket(host);
+                }else {
+                    console.log('1227/*已经初始化')
+                }
+                try{
+                    socket.onopen = function () {
+                        autoReadIDCard();
+                    }
+                    socket.onclose = function () {
+                    };
+                    socket.onerror = function(){
+
+                    };
+                    socket.onmessage = function (msg) {
+                        if (typeof msg.data == "string") {
+                            var msgM=msg.data+"";
+                            var msgJson = JSON.parse(msgM);
+                            switch(msgJson.fun) {
+                                case "EST_Reader_ReadIDCard#":
+                                    if (msgJson.rCode == "0") {
+                                        document.getElementById('name').value = msgJson.name;
+                                        // document.getElementById('selfName').innerHTML = msgJson.name + '  '+'  '+'视频录制'
+                                        // document.getElementById('selfName').style.left = '10%';
+                                        document.getElementById('idNumber').value =msgJson.certNo
+                                        const Canvas = document.getElementById('idcanvas');
+                                        const ctx = Canvas.getContext('2d');
+                                        const img = new Image();
+                                        img.src = "data:image/jpeg;base64," + msgJson.base64Data;
+                                        img.onload = function() {
+                                            // 清空 Canvas
+                                            ctx.clearRect(0, 0, Canvas.width, Canvas.height);
+                                            // 绘制图片，使其铺满整个 Canvas
+                                            ctx.drawImage(img, 0, 0, Canvas.width, Canvas.height);
+                                            Canvas.toBlob(function(blob) {
+                                                const idFile = new File([blob], 'idFile.png', { type: 'image/png' });
+                                                formData2.append('idFile', idFile);
+                                            }, 'image/png');
+                                        }
+
+                                        const Canvas2 = document.getElementById('snapshot');
+                                        const ctx2 = Canvas2.getContext('2d');
+                                        const img2 = new Image();
+                                        img2.src = "data:image/jpeg;base64," + msgJson.base64Data;
+                                        img2.onload = function() {
+                                            // 清空 Canvas2
+                                            ctx2.clearRect(0, 0, Canvas2.width, Canvas2.height);
+                                            // 绘制图片，使其铺满整个 Canvas2
+                                            ctx2.drawImage(img2, 0, 0, Canvas2.width, Canvas2.height);
+                                            Canvas2.toBlob(function(blob) {
+                                                shotFile = new File([blob], 'snapshot.png', { type: 'image/png' });
+                                            }, 'image/png');
+                                        }
+                                        // 获取当前日期
+                                        const currentDate = new Date();
+                                        // 提取生日年月日
+                                        const birthYear = parseInt(msgJson.birth.substring(0, 4));
+                                        const birthMonth = parseInt(msgJson.birth.substring(4, 6)) - 1; // 月份从0开始，需要减1
+                                        const birthDay = parseInt(msgJson.birth.substring(6, 8));
+                                        // 创建生日日期对象
+                                        const birthDate = new Date(birthYear, birthMonth, birthDay);
+                                        // 计算年龄
+                                        let age = currentDate.getFullYear() - birthDate.getFullYear();
+                                        if (currentDate.getMonth() < birthDate.getMonth() ||
+                                            (currentDate.getMonth() === birthDate.getMonth() && currentDate.getDate() < birthDate.getDate())) {
+                                            age--; // 如果当前月份小于生日月份，或者当前月份等于生日月份但当前日期小于生日日期，则年龄减一
+                                        }
+                                        document.getElementById('age').value = age
+                                        if (msgJson.sex === '男') {
+                                            document.getElementById('male').checked = true; // 选中男性选项
+                                            document.getElementById('female').checked = false; // 取消女性选项的选择
+                                        } else if (msgJson.sex === '女') {
+                                            document.getElementById('male').checked = false; // 取消男性选项的选择
+                                            document.getElementById('female').checked = true; // 选中女性选项
+                                        }
+                                        stopAutoReadIDCard()
+                                    }
+                                    else if(msgJson.rCode == "1"){
+                                        console.log('已停止自动读卡')
+                                    }
+                                    else if(msgJson.rCode == "-2"){
+                                        console.log('请放身份证')
+                                    }
+                                    else {
+                                        console.log('错误')
+                                    }
+                                    break;
+                            }
+                        }
+                    }
+                }
+                catch (ex) {
+                    toastr.warning("连接异常,请检查是否成功安装控件.");
+                }
+            }
+
+            //自动读取身份证信息
+            function autoReadIDCard() {
+                try {
+                    if (socket.readyState == 1) {
+                        socket.send("EST_Reader_ReadIDCard#|1");
+                        //resultMsg("自动读卡，请放身份证...");
+                    }
+                    else {
+                        toastr.warning("未找到控件，请检查控件是否安装.");
+                    }
+                }
+                catch (ex) {
+                    toastr.warning("连接异常,请检查是否成功安装控件.");
+                }
+            }
+            //停止连续读取身份证信息
+            function stopAutoReadIDCard() {
+                try {
+                    if (socket.readyState == 1) {
+                        socket.send("EST_StopReadIDCard#");
+                    }
+                    else {
+                        toastr.warning("未找到控件，请检查控件是否安装.");
+                    }
+                }
+                catch (ex) {
+                    toastr.warning("连接异常,请检查是否成功安装控件.");
+                }
+            }
+
+            function startMediaDevices() {
+                var targetDeviceName = 'AXZW6C (0c40:0c80)';
+                navigator.mediaDevices.enumerateDevices()
+                    .then(function (devices) {
+                        devices.forEach(function (device) {
+                            if (device.kind === 'videoinput' && device.label === targetDeviceName) {
+                                // 申请视频和音频的参数
+                                const constraints = {
+                                    video: {
+                                        height: 720,
+                                        width: 1280,
+                                        //  c8bcb81fd2c7b5fc27bda57125b689053d03ac2836a9d64fa18dde01837618e8
+                                    },
+                                };
+                                navigator.mediaDevices.getUserMedia(constraints).then(stream => {
+                                    cameraStream = stream;
+                                    // 禁用 video 的控制组件
+                                    videoEl.controls = false;
+                                    // 把媒体流传给 video 的 srcObject
+                                    videoEl.srcObject = cameraStream;
+                                    // 播放画面和声音
+                                    videoEl.play();
+                                }).catch(info => {
+                                    toastr.error('错误' + info);
+                                })
+                            }
+                        });
+                    })
+                    .catch(function (err) {
+                        console.error('获取设备信息时出错:', err);
+                    });
+                var targetDeviceName2 = 'AXZW6W (0c40:0c81)';
+                navigator.mediaDevices.enumerateDevices()
+                    .then(function (devices) {
+                        devices.forEach(function (device) {
+                            if (device.kind === 'videoinput' && device.label === targetDeviceName2) {
+                                const constraints2 = {
+                                    video: {
+                                        height: 720,
+                                        width: 1280,
+                                        deviceId: device.deviceId,
+                                    },
+                                };
+                                // 申请摄像头和麦克风权限
+                                navigator.mediaDevices.getUserMedia(constraints2).then(stream => {
+                                    cameraStream2 = stream;
+                                    videoEl2.controls = false;
+                                    // 把媒体流传给 video 的 srcObject
+                                    videoEl2.srcObject = cameraStream2;
+                                    // 检查视频轨道是否存在且激活
+                                    const videoTracks = stream.getVideoTracks();
+                                    if (videoTracks.length === 0 || !videoTracks[0].enabled) {
+                                        throw new Error('No video track available');
+                                    }
+                                    videoEl2.play();
+                                }).catch(info => {
+                                    toastr.error('错误' + info);
+                                })
+                            }
+                        });
+                    })
+                    .catch(function (err) {
+                        console.error('获取设备信息时出错:', err);
+                    });
+                setTimeout(() => {
+                    document.getElementById('statusInfo').innerHTML = ''
+                }, 500)
+            }
+
+            /**
+             * @Description: 上传图片进行信息匹配
+             * @Author: lpf
+             * @Date: 2024/4/15 10:37
+             **/
+            //开始信息匹配的定时器
+            let startinformationMatching;
+            let intervalId; // 用于存储定时器ID
+            //判断是否清除了startinformationMatching
+            let isclearInfo; // 是否可以开始视频录制标志位
+            function informationMatching() {
+                isclearInfo = false;
+                // document.getElementById('start-btn').style.display = 'none';
+                startinformationMatching = setInterval(function () {
+                    console.log('diyige')
+                    if (document.getElementById('selfName').style.backgroundColor === "rgb(5, 148, 183)") {
+                        if (recordingMode === "automaticRecording") {
+                            var selectedTask = document.getElementById("taskSelection").value;
+                            if (selectedTask === "") {
+                            }
+                            else {
+                                isclearInfo = true;
+                                clearInterval(startinformationMatching);
+                                var recordingModeb = document.getElementById('recordingMode').value;
+                                var isstart = true;//是否开始视频录制标志位
+                                // 开始定时器，每隔1秒截取视频当前帧
+                                // var selectedTask = document.getElementById("taskSelection").value;
+                                // if (selectedTask === "") { // 检查是否选择了空的选项
+                                //     return;
+                                // }
+                                // document.getElementById('start-btn').disabled = true;
+
+                                intervalId = setInterval(function () {
+                                    // if(intervalId === null){
+                                    //     stopSnapshotInterval();
+                                    // }
+
+                                    var recordingModea = document.getElementById('recordingMode').value;
+                                    if (recordingModeb !== recordingModea) {
+                                        informationMatching();
+                                        document.getElementById('start-btn').disabled = false;
+                                        // manualRecordingf();
+                                        stopSnapshotInterval()
+                                        isstart = false;
+                                        document.getElementById('statusInfo').innerHTML = '';
+                                    }
+                                    // 创建Canvas元素用于绘制视频截图
+                                    const canvas = document.createElement('canvas');
+                                    const context = canvas.getContext('2d');
+                                    canvas.width = videoEl.videoWidth;
+                                    canvas.height = videoEl.videoHeight;
+                                    context.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+                                    // 将Canvas上的内容转换为Blob对象
+                                    canvas.toBlob(function (blob) {
+                                        // 创建FormData对象
+                                        const formData = new FormData();
+                                        formData.append('multipartFile', blob, 'snapshot.png'); // 将Blob对象添加到FormData中
+                                        // 使用AJAX将FormData发送到后台
+                                        $.ajax({
+                                            url: '${ctx}/face/faceWeb/faceRecognitionTest',
+                                            type: 'POST',
+                                            data: formData,
+                                            processData: false,
+                                            contentType: false,
+                                            success: function (response) {
+                                                console.log(response[0].name)
+                                                if (response[0].name) {
+                                                    // clearInterval(startinformationMatching);
+                                                    stopSnapshotInterval() //停止信息匹配
+                                                    //开始进行姿态调整
+                                                    // document.getElementById('selfName').innerHTML = response[0].name + '  '+'  '+'视频录制'
+                                                    // document.getElementById('selfName').style.left = '10%';
+                                                    document.getElementById('statusInfo').innerHTML = response[0].name;
+                                                    document.getElementById('start-btn').disabled = true
+                                                    $("#name").val(response[0].name)
+                                                    $("#idNumber").val(response[0].pidcard)
+                                                    $("#age").val(response[0].age)
+                                                    $("#gender").val(response[0].gender)
+                                                    $("#companyName").val(response[0].position)
+                                                    if (response[0].gender === '男') {
+                                                        document.getElementById('male').checked = true; // 选中男性选项
+                                                        document.getElementById('female').checked = false; // 取消女性选项的选择
+                                                    } else if (response[0].gender === '女') {
+                                                        document.getElementById('male').checked = false; // 取消男性选项的选择
+                                                        document.getElementById('female').checked = true; // 选中女性选项
+                                                    }
+                                                    setTimeout(adjustingTheAngle, 500);
+                                                } else {
+                                                    if (isstart === true) {
+                                                        stopSnapshotInterval() //停止信息匹配
+                                                        document.getElementById('statusInfo').innerHTML = '未检测到人脸信息'
+                                                        // 获取元素
+                                                        // 模拟点击
+                                                        document.getElementById('infoCollection').click();
+                                                        clearInterval(startinformationMatching);
+                                                    }
+                                                }
+                                            },
+                                            error: function () {
+                                                console.error('Error saving image snapshot');
+                                            }
+                                        });
+                                    }, 'image/png'); // 指定转换为PNG格式
+                                }, 1500); // 每隔1秒执行一次截图操作
+                            }
+                        }
+                    }
+                }, 2000)
+            }
+            let adjustingTheAngleId
+            //开始手动录制定时器
+            /**
+             * @Description: 人脸姿态调整
+             * @Author: lpf
+             * @Date: 2024/4/30 16:01
+             **/
+            let flagAdjustingTheAngle = 0;//姿态调整标志（0：未开始，1：开始）
+            let recordingModeb;
+            let isstart;
+            function adjustingTheAngle() {
+                //之前
+                recordingModeb = document.getElementById('recordingMode').value;
+                isstart = true;//录制开始
+                //开始位姿的时候禁止使用开始录制按钮
+                document.getElementById('start-btn').disabled = true;
+                if (flagAdjustingTheAngle == 0) {
+                    flagAdjustingTheAngle = 1;//开始姿态调整
+                    // 开始定时器，每隔1秒截取视频当前帧
+                    videoAnalytics();
+                    adjustingTheAngleId = setInterval(function () {
+                        videoAnalytics();
+                    }, 1000); // 每隔1秒执行一次截图操作
+                }
+            }
+            /**
+             * @Description: 对视频帧进行处理
+             * @Author: yzz
+             * @Date: 2024/11/13 10:38
+             **/
+            function videoAnalytics() {
+                var recordingModea = document.getElementById('recordingMode').value;
+                if (recordingModeb !== recordingModea) {
+                    isstart = false;
+                    stopAdjustingTheAngle()//停止姿势调整
+                    if (isclearInfo) {
+                        informationMatching();
+                    } 
+                    else {
+                        // manualRecordingf();
+                        document.getElementById('start-btn').disabled = true;
+                    }
+                    document.getElementById('statusInfo').innerHTML = '';
+                }
+                let snapshots = new FormData();
+
+                // 创建并处理第一个Canvas
+                const canvas2 = document.createElement('canvas');
+                const context2 = canvas2.getContext('2d');
+                canvas2.width = videoEl.videoWidth;
+                canvas2.height = videoEl.videoHeight;
+                context2.drawImage(videoEl, 0, 0, canvas2.width, canvas2.height);
+
+                // 使用Promise包装toBlob
+                const canvas2Blob = new Promise((resolve) => {
+                    canvas2.toBlob(resolve, 'image/png');
+                });
+
+                // 创建并处理第二个Canvas
+                const canvas3 = document.createElement('canvas');
+                const context3 = canvas3.getContext('2d');
+                canvas3.width = videoEl2.videoWidth;
+                canvas3.height = videoEl2.videoHeight;
+                context3.drawImage(videoEl2, 0, 0, canvas3.width, canvas3.height);
+
+                // 使用Promise包装toBlob
+                const canvas3Blob = new Promise((resolve) => {
+                    canvas3.toBlob(resolve, 'image/png');
+                });
+
+                // 确保所有Canvas的Blob都完成后再执行AJAX请求
+                Promise.all([canvas2Blob, canvas3Blob]).then(([blob1, blob2]) => {
+                    snapshots.append('nirFile', blob1, 'snapshot1.jpg');
+                    snapshots.append('rbgFile', blob2, 'snapshot2.jpg');
+                    // snapshots.append('name',document.getElementById('name').value);
+                    // snapshots.append('pidCard',document.getElementById('idNumber').value);
+                    // 使用AJAX将FormData发送到后台
+                    $.ajax({
+                        url: '${ctx}/face/faceWeb/adjustingTheAngle1',
+                        type: 'POST',
+                        data: snapshots,
+                        processData: false,
+                        contentType: false,
+                        success: function (response) {
+                            flagAdjustingTheAngle = 0;//可以进行姿态调整
+                            stopSnapshotInterval(); // 停止信息匹配
+                            if (isstart === true) {//已录制
+                                if (response === 0) {
+                                    document.getElementById('statusInfo').innerHTML = '没有人脸或多个人脸';
+                                } else if (response === 1) {
+                                    document.getElementById('statusInfo').innerHTML = '亮度过高请远离';
+                                } else if (response === 2) {
+                                    document.getElementById('statusInfo').innerHTML = '亮度过低请靠近';
+                                } else if (response === 3) {
+                                    stopAdjustingTheAngle();
+                                    document.getElementById('statusInfo').innerHTML = document.getElementById('name').value + '录制中,请保持位置20秒';
+                                    startVideo();//检验通过开始录制
+                                }
+                            }
+                        },
+                        error: function () {
+                            console.error('Error saving image snapshot');
+                            flagAdjustingTheAngle = 0;
+                        }
+                    });
+                });
+
+            }
+            /**
+             * @Description: 停止信息匹配
+             * @Author: lpf
+             * @Date: 2024/4/15 10:38
+             **/
+            function stopSnapshotInterval() {
+                clearInterval(intervalId);
+            }
+
+            /**
+             * @Description: 停止姿势调整
+             * @Author: lpf
+             * @Date: 2024/4/30 16:11
+             **/
+            function stopAdjustingTheAngle() {
+                clearInterval(adjustingTheAngleId);
+            }
+            //停止调用信息匹配
+            function stopMatching() {
+                clearInterval(Matching);
+            }
+            /**
+             * @Description: 录制开始，启动倒计时，计时结束同时视频结束录制
+             * @Author: lpf
+             * @Date: 2024/4/15 15:28
+             **/
+            //被迫中断标志位
+            let recordingInterrupted = 0;
+            let videoScreen;
+
+            function startCountdown(duration) {
+                var i = 0;
+                let progressBar = document.getElementById('progressBar');
+                progressBar.innerHTML = '<div id="progressFill"></div>'; // 初始化进度条内部填充和文本
+                let progressFill = document.getElementById('progressFill');
+                let timer = duration, minutes, seconds;
+                let step = progressBar.offsetWidth / duration; // 每秒钟进度条填充的长度
+                const countdownTimer = setInterval(function () {
+                    minutes = parseInt(timer / 60, 10);//转成10进制整数
+                    seconds = parseInt(timer % 60, 10);
+                    minutes = minutes < 10 ? "0" + minutes : minutes;
+                    seconds = seconds < 10 ? "0" + seconds : seconds;
+                    progressFill.style.width = step * (duration - timer) + 'px'; // 更新进度条填充宽度
+                    // progressFill.textContent = minutes + ":" + seconds; // 更新进度条内的文本 
+                    document.getElementById('statusInfo').innerHTML = minutes + ":" + seconds;
+                    if (--timer < 0) {
+                        timer = duration;
+                        clearInterval(countdownTimer);
+                        clearInterval(intervalId); // 当cameraStream为null时停止调用
+                        clearInterval(videoScreen);
+                        progressBar.style.color = '#91f2f4'
+                        progressBar.style.fontWeight = 'bold'
+                        progressBar.innerHTML = '录制结束'; // 倒计时结束时显示的文本
+                        if (mediaRecorder && mediaRecorder.state === "recording") {
+                            // 停止录像
+                            mediaRecorder2.stop();
+                            mediaRecorder.stop();
+                            // setTimeout(function() { alert('录制结束'); }, 300);
+                            console.log('MediaRecorder stopped due to countdown end');
+                        }
+                    }
+                }, 1000);
+                // 视频截图
+                videoScreen = setInterval(function () {
+                    // 实现截取四张图
+
+                    // 创建FormData对象
+                    const formData = new FormData();
+                    const formData2 = new FormData();
+                    const canvas2 = document.createElement('canvas');
+                    const context2 = canvas2.getContext('2d');
+                    canvas2.width = videoEl.videoWidth;
+                    canvas2.height = videoEl.videoHeight;
+                    context2.drawImage(videoEl, 0, 0, canvas2.width, canvas2.height);
+
+                    // 使用Promise包装toBlob
+                    const canvas2Blob = new Promise((resolve) => {
+                        canvas2.toBlob(resolve, 'image/png');
+                    });
+                    // 创建并处理第二个Canvas
+                    const canvas3 = document.createElement('canvas');
+                    const context3 = canvas3.getContext('2d');
+                    canvas3.width = videoEl2.videoWidth;
+                    canvas3.height = videoEl2.videoHeight;
+                    context3.drawImage(videoEl2, 0, 0, canvas3.width, canvas3.height);
+
+                    // 使用Promise包装toBlob
+                    const canvas3Blob = new Promise((resolve) => {
+                        canvas3.toBlob(resolve, 'image/png');
+                    });
+
+                    // 确保所有Canvas的Blob都完成后再执行AJAX请求
+                    Promise.all([canvas2Blob, canvas3Blob]).then(([blob1, blob2]) => {
+                        // formData.append('multipartFile', blob1, 'snapshot.jpg'); // 将Blob对象添加到FormData中
+
+                        // 使用AJAX将FormData发送到后台
+                        formData.append('name', document.getElementById('name').value);
+                        formData.append('pidCard', document.getElementById('idNumber').value);
+                        console.log(document.getElementById('name').value)
+                        formData.append('nirFile', blob1, 'snapshot1.jpg');
+                        formData.append('rbgFile', blob2, 'snapshot2.jpg');
+                        formData2.append('multipartFile', blob1, 'snapshot1.jpg');
+                        formData2.append('name', document.getElementById('name').value);
+                        formData2.append('pidcard', document.getElementById('idNumber').value)
+                        formData2.append('taskSelection', document.getElementById("taskSelection").value)
+                        formData2.append('flag', i)
+                        if (i < 4) {
+                            screenCart(formData2);
+                            console.log('截取图' + i)
+                            i = i + 1;
+                        }
+                        // 使用AJAX将FormData发送到后台
+                        $.ajax({
+                            url: '${ctx}/face/faceWeb/adjustingTheAngle',
+                            type: 'POST',
+                            data: formData,
+                            processData: false,
+                            contentType: false,
+                            success: function (response) {
+                                flagAdjustingTheAngle = 0;
+                                stopSnapshotInterval(); // 停止信息匹配
+                                if (isstart === true) {
+                                    if (response === 1) {
+                                        document.getElementById('statusInfo').innerHTML = '亮度过高请远离';
+                                        recordingInterrupted = 1;
+                                        timer = duration;
+                                        clearInterval(countdownTimer);
+                                        clearInterval(intervalId); // 当cameraStream为null时停止调用
+                                        progressBar.style.color = '#91f2f4'
+                                        progressBar.style.fontWeight = 'bold'
+                                        progressBar.innerHTML = '不合格，录制结束'; // 倒计时结束时显示的文本
+                                        setTimeout(function () {
+                                            progressBar.innerHTML = '';
+                                        }, 3000)
+                                        clearInterval(videoScreen);
+                                        if (mediaRecorder && mediaRecorder.state === "recording") {
+                                            // 停止录像
+                                            mediaRecorder2.stop();
+                                            mediaRecorder.stop();
+                                            // setTimeout(function() { alert('录制结束'); }, 300);
+                                            console.log('MediaRecorder stopped due to countdown end');
+                                        }
+                                    }
+                                    if (response === 2) {
+                                        document.getElementById('statusInfo').innerHTML = '亮度过低请靠近';
+                                        recordingInterrupted = 1;
+                                        timer = duration;
+                                        clearInterval(countdownTimer);
+                                        clearInterval(intervalId); // 当cameraStream为null时停止调用
+                                        progressBar.style.color = '#91f2f4'
+                                        progressBar.style.fontWeight = 'bold'
+                                        progressBar.innerHTML = '不合格，录制结束'; // 倒计时结束时显示的文本
+                                        setTimeout(function () {
+                                            progressBar.innerHTML = '';
+                                        }, 3000)
+                                        clearInterval(videoScreen);
+                                        if (mediaRecorder && mediaRecorder.state === "recording") {
+                                            // 停止录像
+                                            mediaRecorder2.stop();
+                                            mediaRecorder.stop();
+                                            // setTimeout(function() { alert('录制结束'); }, 300);
+                                            console.log('MediaRecorder stopped due to countdown end');
+                                        }
+                                    }
+                                    if (response === 0) {
+                                        recordingInterrupted = 1;
+                                        document.getElementById('statusInfo').innerHTML = '画面出现多个或无人脸'
+                                        timer = duration;
+                                        clearInterval(countdownTimer);
+                                        clearInterval(intervalId); // 当cameraStream为null时停止调用
+                                        progressBar.style.color = '#91f2f4'
+                                        progressBar.style.fontWeight = 'bold'
+                                        progressBar.innerHTML = '不合格，录制结束'; // 倒计时结束时显示的文本
+                                        setTimeout(function () {
+                                            progressBar.innerHTML = '';
+                                        }, 3000)
+                                        clearInterval(videoScreen);
+                                        if (mediaRecorder && mediaRecorder.state === "recording") {
+                                            // 停止录像
+                                            mediaRecorder2.stop();
+                                            mediaRecorder.stop();
+                                            // setTimeout(function() { alert('录制结束'); }, 300);
+                                            console.log('MediaRecorder stopped due to countdown end');
+                                        }
+                                    }
+                                    if (response === 3) {
+                                        recordingInterrupted = 1;
+                                        document.getElementById('statusInfo').innerHTML = '人脸晃动'
+                                        timer = duration;
+                                        clearInterval(countdownTimer);
+                                        clearInterval(intervalId); // 当cameraStream为null时停止调用
+                                        progressBar.style.color = '#91f2f4'
+                                        progressBar.style.fontWeight = 'bold'
+                                        progressBar.innerHTML = '不合格，录制结束'; // 倒计时结束时显示的文本
+                                        setTimeout(function () {
+                                            progressBar.innerHTML = '';
+                                        }, 3000)
+                                        clearInterval(videoScreen);
+                                        if (mediaRecorder && mediaRecorder.state === "recording") {
+                                            // 停止录像
+                                            mediaRecorder2.stop();
+                                            mediaRecorder.stop();
+                                            // setTimeout(function() { alert('录制结束'); }, 300);
+                                            console.log('MediaRecorder stopped due to countdown end');
+                                        }
+                                    }
+                                    if (response === 4) {
+                                        recordingInterrupted = 1;
+                                        document.getElementById('statusInfo').innerHTML = '请摆正人脸'
+
+                                        timer = duration;
+                                        clearInterval(countdownTimer);
+                                        clearInterval(intervalId); // 当cameraStream为null时停止调用
+                                        progressBar.style.color = '#91f2f4'
+                                        progressBar.style.fontWeight = 'bold'
+                                        progressBar.innerHTML = '不合格，录制结束'; // 倒计时结束时显示的文本
+                                        setTimeout(function () {
+                                            progressBar.innerHTML = '';
+                                        }, 3000)
+                                        clearInterval(videoScreen);
+                                        if (mediaRecorder && mediaRecorder.state === "recording") {
+                                            // 停止录像
+                                            mediaRecorder2.stop();
+                                            mediaRecorder.stop();
+                                            // setTimeout(function() { alert('录制结束'); }, 300);
+                                            console.log('MediaRecorder stopped due to countdown end');
+                                        }
+                                    }
+                                }
+                            },
+                            error: function () {
+                                console.error('Error saving image snapshot');
+                                flagAdjustingTheAngle = 0;
+                            }
+                        });
+                    })
+                }, 500)
+            }
+
+            function screenCart(formData) {
+                $.ajax({
+                    url: '${ctx}/face/faceWeb/savePictrue',
+                    type: 'POST',
+                    processData: false,
+                    contentType: false,
+                    data: formData,
+                    success: function (response) {
+
+                    },
+                    error: function (xhr, status, error) {
+                        console.log("请求失败: " + error);
+                    }
+                });
+            }
+            /**
+             * @Description:  开启倒计时 开启录制
+             * @Author: lpf
+             * @Date: 2024/4/15 15:28
+             **/
+            function startVideo() {
+                stopAdjustingTheAngle()
+                // 停止任何当前正在运行的录制，开始当前的录制
+                if (mediaRecorder && mediaRecorder.state === 'recording') {
+                    mediaRecorder.stop();
+                }
+                if (mediaRecorder2 && mediaRecorder2.state === 'recording') {
+                    mediaRecorder2.stop();
+                }
+                // 清空视频数据数组
+                videoData = [];
+                videoData2 = [];
+
+                // 创建媒体录制
+                mediaRecorder = new MediaRecorder(cameraStream, { mimeType: 'video/webm' });
+                mediaRecorder2 = new MediaRecorder(cameraStream2, { mimeType: 'video/webm' });
+                // 开始录制
+                mediaRecorder.start();
+                mediaRecorder2.start();
+                // mediaRecorder2.addEventListener('start', () => {
+                //     console.log('红外视频录制开始');
+                // });
+                // 处理视频数据
+                mediaRecorder.addEventListener('dataavailable', ev => {
+                    videoData.push(ev.data);
+                });
+                mediaRecorder2.addEventListener('dataavailable', ev => {
+                    // videoData2.push(ev.data);
+                    if (ev.data && ev.data.size > 0) {
+                        videoData2.push(ev.data);
+                    }
+                });
+                // 录制停止事件
+                mediaRecorder.addEventListener('stop', () => {
+                    videoData = new Blob(videoData);
+                    if (recordingInterrupted === 1) {//录制异常中断
+                        setTimeout(function () {
+                            document.getElementById('statusInfo').innerHTML = '';
+                        }, 3000);
+                        recordingInterrupted = 0;
+                        toastr.error('请重新录制！');
+                        document.getElementById('name').value = '';
+                        document.getElementById('idNumber').value = '';
+                        document.getElementById('age').value = '';
+                        document.querySelector('.gender:checked').value = '';
+                        clearTreeSelect();
+                        // 清除canvas内容
+                        var canvas1 = document.getElementById('idcanvas');
+                        var ctx1 = canvas1.getContext('2d');
+                        ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
+                        var canvas2 = document.getElementById('snapshot');
+                        var ctx2 = canvas2.getContext('2d');
+                        ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+                        formData2 = new FormData();
+                        progressBar = document.getElementById('progressBar');
+                        progressBar.innerHTML = '<div id="progressFill"></div>'; // 初始化进度条内部填充和文本
+                        document.getElementById('selfName').innerHTML = '视频录制';
+                        document.getElementById('selfName').style.left = '5%';
+                        recordingMode = document.getElementById('recordingMode').value
+                        document.getElementById('start-btn').disabled = false;
+                        document.getElementById('recordingMode').disabled = false;
+                        // if(recordingMode === 'automaticRecording'){
+                        //     setTimeout(informationMatching(),6000)
+                        // }
+                        if (isclearInfo) {
+                            informationMatching();
+                        } else {
+                            // manualRecordingf();
+                            document.getElementById('start-btn').disabled = false;
+                        }
+                        // autoReadIDCard()
+                    } else {//录制成功
+                        document.getElementById('statusInfo').innerHTML = '';
+                        download();//下载视频
+                    }
+
+                });
+                mediaRecorder2.addEventListener('stop', () => {
+                    videoData2 = new Blob(videoData2);//把红外视频转成二进制
+                    // updateBtn.click()
+                });
+                startCountdown(20); // 开始20秒倒计时
+            }
+
+            /**
+             * @Description: 开始按钮点击事件
+             * @Author: lpf
+             * @Date: 2024/5/17 10:28
+             **/
+            // startBtn.addEventListener('click', () => {
+            //     var selectedTask = document.getElementById("taskSelection").value;
+            //     if(selectedTask === ""){
+            //         toastr.warning('请选择任务批次');
+            //     }else{startVideo()}
+            //
+            // });
+
+            /**
+             * @Description: 时间获取功能
+             * @Author: lpf
+             * @Date: 2024/5/17 10:19
+             **/
+            function format(dataString) {
+                //dataString是整数，否则要parseInt转换
+                var time = new Date(dataString);
+                var year = time.getFullYear();
+                var month = time.getMonth() + 1;
+                var day = time.getDate();
+                var hour = time.getHours();
+                var minute = time.getMinutes();
+                var second = time.getSeconds();
+                return year + '-' + (month < 10 ? '0' + month : month) + '-' + (day < 10 ? '0' + day : day) + ' ' + (hour < 10 ? '0' + hour : hour) + ':' + (minute < 10 ? '0' + minute : minute) + ':' + (second < 10 ? '0' + second : second)
+            }
+
+            /**
+             * @Description: 导出视频按钮点击事件
+             * @Author: lpf
+             * @Date: 2024/4/15 15:56
+             **/
+            async function download(selector) {
+                if (videoData.length === 0) {
+                    toastr.warning('请先录制视频')
+                } else {
+                    // 假设videoBlob是录制的视频数据，可以通过MediaRecorder API获取
+                    var videoBlob = videoData; // 获取录制的视频数据
+                    var videoBlob2 = videoData2; // 获取录制的视频数据
+                    // 创建一个 FormData 对象
+                    toastr.info('正在保存，请稍候...');
+                    const formData = new FormData();
+                    // 任务批次编号
+                    var testNumber = document.getElementById('taskSelection').value;
+                    var testNumberName = document.getElementById("taskSelection").options[document.getElementById("taskSelection").selectedIndex].text;
+                    formData.append('nirVideoFile', videoBlob2); // 添加第一个视频数据
+                    formData.append('videoFile', videoBlob); // 添加第二个视频数据
+                    formData.append('pname', document.getElementById('name').value); // 添加身份证号
+                    formData.append('pidCard', document.getElementById('idNumber').value); // 添加姓名
+                    // 发送 AJAX 请求
+                    $.ajax({
+                        url: '${ctx}/emotion/emotionVideo/insertVideoInformation?testNumber=' + testNumber + '&testNumberName=' + testNumberName + '',
+                        type: 'POST',
+                        data: formData,
+                        processData: false, // 不对数据进行序列化处理
+                        contentType: false, // 不设置内容类型
+                        success: function (response) {
+                            toastr.success('视频保存成功！');
+                            recordingEnds();
+                        },
+                        error: function (xhr, status, error) {
+                            toastr.error('视频保存失败！');
+                            recordingEnds();
+                        }
+                    });
+                }
+            }
+            /**
+             * @Description: 录制结束
+             *
+             * @Author: yzz
+             **/
+            function recordingEnds() {
+                document.getElementById('name').value = '';
+                document.getElementById('idNumber').value = '';
+                document.getElementById('age').value = '';
+                document.querySelector('.gender:checked').value = '';
+                clearTreeSelect();
+                // 清除canvas内容
+                var canvas1 = document.getElementById('idcanvas');
+                var ctx1 = canvas1.getContext('2d');
+                ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
+                var canvas2 = document.getElementById('snapshot');
+                var ctx2 = canvas2.getContext('2d');
+                ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+                formData2 = new FormData();
+                progressBar = document.getElementById('progressBar');
+                progressBar.innerHTML = '<div id="progressFill"></div>'; // 初始化进度条内部填充和文本
+                document.getElementById('selfName').innerHTML = '视频录制';
+                document.getElementById('selfName').style.left = '5%';
+                recordingMode = document.getElementById('recordingMode').value
+                document.getElementById('start-btn').disabled = false;
+                document.getElementById('recordingMode').disabled = false;
+                // if(recordingMode === 'automaticRecording'){
+                //     setTimeout(informationMatching(),6000)
+                // }
+                // autoReadIDCard()
+
+                if (isclearInfo) {
+                    informationMatching();
+                } else {
+                    // manualRecordingf();
+                    document.getElementById('start-btn').disabled = false;
+                }
+                // informationMatching();
+                // manualRecordingf();
+            }
+
+
+            /**
+             * @Description: 清除输入框中的用户信息
+             *
+             * @Author: mxy510
+             **/
+            // 将清除功能封装
+            function clearForm() {
+                document.getElementById('name').value = '';
+                document.getElementById('idNumber').value = '';
+                document.getElementById('age').value = '';
+                document.querySelector('.gender:checked').value = '';
+                var canvas1 = document.getElementById('idcanvas');
+                var ctx1 = canvas1.getContext('2d');
+                ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
+                var canvas2 = document.getElementById('snapshot');
+                var ctx2 = canvas2.getContext('2d');
+                ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+                var img = new Image();
+            }
+
+            /**
+             * @Description: 确认信息按钮事件监听
+             * @Author: lpf
+             * @Date: 2024/4/15 15:57
+             **/
+            let formData2 = new FormData();
+            saveBtn.addEventListener('click', () => {
+                const selectElement = document.getElementById('taskSelection');
+                const selectedOption = selectElement.options[selectElement.selectedIndex].text;
+                // 输出选中的性别
+                if (companyName !== null && document.getElementById('name').value && document.getElementById('idNumber').value && document.getElementById('age').value) {
+                    var name = document.getElementById('name').value;
+                    var idNumber = document.getElementById('idNumber').value;
+                    var age = parseInt(document.getElementById('age').value);
+                    var gender = document.querySelector('.gender:checked').value;
+                    formData2.append('pname', name);//
+                    formData2.append('pidcard', idNumber);
+                    formData2.append('age', age);
+                    formData2.append('pgender', gender);
+                    formData2.append('companyName', companyName);
+                    formData2.append('companyCode', companyCode);
+                    formData2.append('shotFile', shotFile);
+                    // 创建 FormData 对象
+                    $.ajax({
+                        url: '${ctx}/face/faceInformation/insertOrModifyInformation',
+                        type: 'POST',
+                        processData: false, //不写这行 进不去后端
+                        contentType: false,
+                        data: formData2,
+                        success: function (data) {
+                            toastr.success('全部信息保存成功！');
+                            document.getElementById('name').value = '';
+                            document.getElementById('idNumber').value = '';
+                            document.getElementById('age').value = '';
+
+                            clearTreeSelect();//清空树形选择
+                            //清空画布
+                            const Canvas = document.getElementById('idcanvas');
+                            const ctx = Canvas.getContext('2d');
+                            ctx.clearRect(0, 0, Canvas.width, Canvas.height);
+                            const Canvas2 = document.getElementById('snapshot');
+                            const ctx2 = Canvas2.getContext('2d');
+                            ctx2.clearRect(0, 0, Canvas2.width, Canvas2.height);
+                            //重置formdata2
+                            formData2 = new FormData();
+                            // informationMatching()
+                            // autoReadIDCard()
+                            openReader1()
+                        },
+                        error: function (error) {
+                            toastr.error('信息保存失败！');
+                            formData2 = new FormData();
+                        }
+                    });
+                } else {
+                    toastr.warning('请保证信息完整')
+                    formData2 = new FormData();
+                }
+            });
+
+            /**
+             * @Description: 清除信息按钮事件
+             * @Author: lpf
+             * @Date: 2024/4/15 15:59
+             **/
+            cleanBtn.addEventListener('click', () => {
+                // informationMatching()
+                formData2 = new FormData();
+                document.getElementById('start-btn').disabled = true
+                document.getElementById('name').value = '';
+                document.getElementById('idNumber').value = '';
+                document.getElementById('age').value = '';
+                clearTreeSelect();
+                const Canvas = document.getElementById('idcanvas');
+                const ctx = Canvas.getContext('2d');
+                ctx.clearRect(0, 0, Canvas.width, Canvas.height);
+                const Canvas2 = document.getElementById('snapshot');
+                const ctx2 = Canvas2.getContext('2d');
+                ctx2.clearRect(0, 0, Canvas2.width, Canvas2.height);
+                // autoReadIDCard();
+                openReader1()
+            });
+            /**
+             * @Description: 测试人员登录按钮
+             * @Author: lpf
+             * @Date: 2024/5/10 10:09
+             **/
+            document.getElementById('testInfoButton').addEventListener('click', () => {
+                stopSnapshotInterval()
+                document.getElementById('start-btn').disabled = false
+                document.getElementById('name').value = '测试账号'
+                document.getElementById('idNumber').value = '测试身份证号'
+                document.getElementById('statusInfo').innerHTML = '现在进行姿势调整,调整完毕后自动开始录制视频'
+                // document.getElementById('selfName').innerHTML = document.getElementById('name').value + '  '+'  '+'视频录制'
+                // document.getElementById('selfName').style.left = '10%';
+                var selectedTaski = document.getElementById("taskSelection").value;
+                if (selectedTaski === "") { // 检查是否选择了空的选项
+                    toastr.warning('请选择任务批次');
+                } else {
+                    setTimeout(adjustingTheAngle(), 1000);
+                }
+            })
+            function callback(rjson) {
+            }
+            function showMsg(msg) {
+                $("#msg").append(msg).append("<br>");
+                $("#msg").scrollTop($("#msg").height() + 300);
+            }
+        </script>

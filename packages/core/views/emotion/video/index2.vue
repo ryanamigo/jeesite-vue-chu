@@ -415,32 +415,83 @@ const stopSnapshotInterval = () => {
   }
 };
 
-const startMediaDevices = async () => {
-  try {
-    const constraints: MediaStreamConstraints = { video: { width: 1280, height: 720 } };
-    const stream = await navigator.mediaDevices.getUserMedia(constraints);
-    cameraStream = stream;
-    const videoEl = document.getElementById('video') as HTMLVideoElement;
-    if (videoEl) {
-      videoEl.controls = false;
-      videoEl.srcObject = stream;
-      await videoEl.play().catch(() => {});
+const startMediaDevices = () => {
+  const targetDeviceName = 'AXZW6C (0c40:0c80)';
+  navigator.mediaDevices.enumerateDevices()
+    .then(function (devices) {
+      devices.forEach(function (device) {
+        if (device.kind === 'videoinput' && device.label === targetDeviceName) {
+          // 申请视频和音频的参数
+          const constraints = {
+            video: {
+              height: 720,
+              width: 1280,
+            },
+          };
+          navigator.mediaDevices.getUserMedia(constraints).then(stream => {
+            cameraStream = stream;
+            const videoEl = document.getElementById('video') as HTMLVideoElement;
+            if (videoEl) {
+              // 禁用 video 的控制组件
+              videoEl.controls = false;
+              // 把媒体流传给 video 的 srcObject
+              videoEl.srcObject = cameraStream;
+              // 播放画面和声音
+              videoEl.play();
+            }
+          }).catch(info => {
+            notifyError('错误' + info);
+          })
+        }
+      });
+    })
+    .catch(function (err) {
+      console.error('获取设备信息时出错:', err);
+    });
+
+  const targetDeviceName2 = 'AXZW6W (0c40:0c81)';
+  navigator.mediaDevices.enumerateDevices()
+    .then(function (devices) {
+      devices.forEach(function (device) {
+        if (device.kind === 'videoinput' && device.label === targetDeviceName2) {
+          const constraints2 = {
+            video: {
+              height: 720,
+              width: 1280,
+              deviceId: device.deviceId,
+            },
+          };
+          // 申请摄像头和麦克风权限
+          navigator.mediaDevices.getUserMedia(constraints2).then(stream => {
+            cameraStream2 = stream;
+            const videoEl2 = document.getElementById('video2') as HTMLVideoElement;
+            if (videoEl2) {
+              videoEl2.controls = false;
+              // 把媒体流传给 video 的 srcObject
+              videoEl2.srcObject = cameraStream2;
+              // 检查视频轨道是否存在且激活
+              const videoTracks = stream.getVideoTracks();
+              if (videoTracks.length === 0 || !videoTracks[0].enabled) {
+                throw new Error('No video track available');
+              }
+              videoEl2.play();
+            }
+          }).catch(info => {
+            notifyError('错误' + info);
+          })
+        }
+      });
+    })
+    .catch(function (err) {
+      console.error('获取设备信息时出错:', err);
+    });
+
+  setTimeout(() => {
+    const statusInfo = document.getElementById('statusInfo');
+    if (statusInfo) {
+      statusInfo.innerHTML = '';
     }
-  } catch (e) {
-    notifyError('摄像头开启失败');
-  }
-  try {
-    const constraints2: MediaStreamConstraints = { video: { width: 1280, height: 720 } };
-    const stream2 = await navigator.mediaDevices.getUserMedia(constraints2);
-    cameraStream2 = stream2;
-    const videoEl2 = document.getElementById('video2') as HTMLVideoElement;
-    if (videoEl2) {
-      videoEl2.controls = false;
-      videoEl2.srcObject = stream2;
-      await videoEl2.play().catch(() => {});
-    }
-  } catch {}
-  window.setTimeout(() => { const s = getEl('statusInfo'); if (s) s.innerHTML = ''; }, 500);
+  }, 500)
 };
 
 const informationMatching = () => {
@@ -456,7 +507,13 @@ const informationMatching = () => {
         isclearInfo = true;
         if (startinformationMatching) { window.clearInterval(startinformationMatching); startinformationMatching = null; }
         const videoEl = document.getElementById('video') as HTMLVideoElement;
-        if (!videoEl || !videoEl.videoWidth) return;
+        console.log('Video element:', videoEl);
+        console.log('Video width:', videoEl?.videoWidth, 'height:', videoEl?.videoHeight);
+        console.log('Video readyState:', videoEl?.readyState);
+        if (!videoEl || !videoEl.videoWidth) {
+          console.error('Video element not ready or no dimensions');
+          return;
+        }
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
@@ -464,7 +521,11 @@ const informationMatching = () => {
         canvas.height = videoEl.videoHeight;
         ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
         canvas.toBlob(async (blob) => {
-          if (!blob) return;
+          if (!blob) {
+            console.error('Canvas toBlob failed - no blob generated');
+            return;
+          }
+          console.log('Blob generated:', blob.size, 'bytes, type:', blob.type);
           try {
             const resp = await faceRecognitionBySnapshot(blob);
             if (resp && resp[0] && resp[0].name) {

@@ -8,7 +8,7 @@ export const faceRecognitionBySnapshot = (blob: Blob) => {
   formData.append('multipartFile', blob, 'snapshot.png');
   return defHttp.post({
     url: adminPath + '/face/faceWeb/faceRecognitionTest',
-    data: formData,
+    params: formData,
     headers: {
       'Content-Type': 'multipart/form-data',
     },

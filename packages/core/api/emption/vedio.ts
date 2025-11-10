@@ -14,3 +14,10 @@ export const faceRecognitionBySnapshot = (blob: Blob) => {
     },
   });
 };
+
+export const getTasksData = () => {
+  return defHttp.post({
+    url:adminPath+"/test/testNumber/findTestNumberByLimit",
+  })
+}
+  

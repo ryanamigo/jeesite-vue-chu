@@ -54,7 +54,7 @@
       <video class="video" autoplay id="video" ref="videoRef"></video>
       <video class="video video2" autoplay id="video2" style="display: none"></video>
       <button @click="startRecording" :disabled="startBtnDisabled" class="startButton" id="start-btn" style="display: none;">开始录制</button>
-      <button id="testInfoButton" style="display: none;">测试账号登录</button>
+      <button id="testInfoButton" style="display: none;" @click="handleTestInfoLogin">测试账号登录</button>
     </div>
 
     <!-- 右 -->
@@ -116,7 +116,7 @@
 </template>
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
-import { faceRecognitionBySnapshot } from '../../../api/emption/vedio';
+import { faceRecognitionBySnapshot, getTasksData } from '../../../api/emption/vedio';
 
 const startBtnDisabled = ref(true);
 
@@ -650,6 +650,32 @@ const onClickInfoCollection = () => {
   openReader1();
 };
 
+const handleTestInfoLogin = () => {
+  stopSnapshotInterval();
+  // 启用开始按钮（手动录制）
+  startBtnDisabled.value = false;
+  const startBtn = getEl('start-btn') as HTMLButtonElement;
+  if (startBtn) startBtn.disabled = false;
+  // 填充测试账号信息
+  const name = getInput('name');
+  const idNumber = getInput('idNumber');
+  if (name) name.value = '测试账号';
+  if (idNumber) idNumber.value = '测试身份证号';
+  // 提示姿态调整
+  const statusInfo = getEl('statusInfo');
+  if (statusInfo) statusInfo.innerHTML = '现在进行姿势调整,调整完毕后自动开始录制视频';
+  // 任务校验
+  const selectedTask = (document.getElementById('taskSelection') as HTMLSelectElement)?.value || '';
+  if (!selectedTask) {
+    notifyWarn('请选择任务批次');
+    return;
+  }
+  // 预留姿态调整/自动开始逻辑（与原 HTML 中 adjustingTheAngle 行为对齐）
+  window.setTimeout(() => {
+    // 此处可接入姿态调整或直接触发后续流程
+  }, 1000);
+};
+
 const saveInfo = async () => {
   try {
     
@@ -657,6 +683,7 @@ const saveInfo = async () => {
     try { autoReadIDCard(); } catch {}
   }
 };
+
 
 onMounted(async () => {
   try {
@@ -671,6 +698,7 @@ onMounted(async () => {
   await fillTasks();
   await startMediaDevices();
   informationMatching();
+  await getTasksData();
 
   const progressBar = getEl('progressBar');
   if (progressBar) progressBar.innerHTML = '<div id="progressFill"></div>';
@@ -690,6 +718,8 @@ onBeforeUnmount(() => {
   cameraStream?.getTracks().forEach(t => t.stop());
   cameraStream2?.getTracks().forEach(t => t.stop());
 });
+
+const tasks = ref();
 </script>
 <style scoped>
 .video {

@@ -21,3 +21,9 @@ export const getTasksData = () => {
   })
 }
   
+export const getVideoStatus = (testNumber: string) =>{
+  return defHttp.post({
+    url:adminPath + "/emotion/emotionVideo/findVideoStatusByDate",
+    params:{testNumber}
+  })
+}

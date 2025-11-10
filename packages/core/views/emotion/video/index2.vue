@@ -29,7 +29,7 @@
         style="height: 40px; font-size: 20px ; width: 80%;text-align: center;margin-left: 20px; background-color: #092046;border: solid 1px #494640;box-shadow: 0 0 10px #3c8dbc;color: #91f2f4"
         @change="renderVideoStatus"
       >
-        <option value="">请选择任务</option>
+        <option v-for="item in taskList" :key="item.id" :value="item.testNumber">{{item.testNumberName}}</option>
       </select>
       <!-- 更新数据 -->
       <div id="findVideoStatusByDate">
@@ -116,7 +116,7 @@
 </template>
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
-import { faceRecognitionBySnapshot, getTasksData } from '../../../api/emption/vedio';
+import { faceRecognitionBySnapshot, getTasksData, getVideoStatus } from '../../../api/emption/vedio';
 
 const startBtnDisabled = ref(true);
 
@@ -194,7 +194,7 @@ const renderVideoStatus = async () => {
   const select = document.getElementById('taskSelection') as HTMLSelectElement;
   const v = select?.value || '';
   try {
-    const resp = await fetchJSON(`${(window as any).ctx || ''}/emotion/emotionVideo/findVideoStatusByDate?testNumber=${encodeURIComponent(v)}`, { method: 'POST' });
+    const resp = await getVideoStatus(v)
     const container = getEl('videoStatusTree');
     if (!container) return;
     if (resp && resp.length > 0) {
@@ -685,6 +685,7 @@ const saveInfo = async () => {
 };
 
 
+const taskList = ref([])
 onMounted(async () => {
   try {
     const companyNameEl = getEl('companyName');
@@ -698,7 +699,8 @@ onMounted(async () => {
   await fillTasks();
   await startMediaDevices();
   informationMatching();
-  await getTasksData();
+  // await getTasksData();
+  taskList.value  = await getTasksData()
 
   const progressBar = getEl('progressBar');
   if (progressBar) progressBar.innerHTML = '<div id="progressFill"></div>';

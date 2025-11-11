@@ -77,15 +77,15 @@
       <div class="info-inputs" style="display: flex; flex-direction: column;color: #91f2f4;margin-left: 3%;">
         <div style="display: flex; align-items: center; text-align: justify; margin:0 10% 4% 8% ">
           <label for="name" style="width: 20%;margin-right: 5%;font-size: 120%"> 姓名 </label>
-          <input style="width: 80%;" type="text" id="name" name="name" />
+          <input style="width: 80%;" type="text" id="name" name="name" v-model="pername"/>
         </div>
         <div style="display: flex; align-items: center;text-align: justify;margin:0 10% 4% 8% ">
           <label for="idNumber" style="width: 20%;margin-right: 5%;font-size: 120%"> 编号 </label>
-          <input style="width: 80%;" type="text" id="idNumber" name="idNumber" />
+          <input style="width: 80%;" type="text" id="idNumber" name="idNumber" v-model="peridNumber"  />
         </div>
         <div style="display: flex; align-items: center;text-align: justify; margin:0 10% 4% 8% ">
           <label for="age" style="width: 20%;margin-right: 5%;font-size: 120%"> 年龄 </label>
-          <input style="width: 80%;" type="text" id="age" name="age" />
+          <input style="width: 80%;" type="text" id="age" name="age" v-model="perage"/>
         </div>
         <div style="display: flex; align-items: center;text-align: justify;margin:0 10% 4% 8% ">
           <label for="gender" style="width: 20%;margin-right: 5%;font-size: 120%"> 性别 </label>
@@ -116,7 +116,8 @@
 </template>
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
-import { faceRecognitionBySnapshot, getTasksData, getVideoStatus } from '../../../api/emption/vedio';
+import { faceRecognitionBySnapshot, getTasksData, getVideoStatus,insertOrModifyInformation } from '../../../api/emption/vedio';
+import { log } from 'console';
 
 const startBtnDisabled = ref(true);
 
@@ -167,27 +168,6 @@ const fetchJSON = async (url: string, init?: RequestInit) => {
   const res = await fetch(url, init);
   if (!res.ok) throw new Error(`${res.status}`);
   try { return await res.json(); } catch { return null as any; }
-};
-
-const fillTasks = async () => {
-  try {
-    const data = await fetchJSON(`${(window as any).ctx || ''}/test/testNumber/findTestNumberByLimit`);
-    const select = document.getElementById('taskSelection') as HTMLSelectElement;
-    if (!select) return;
-    select.innerHTML = '';
-    const empty = document.createElement('option');
-    empty.value = '';
-    empty.text = '';
-    select.appendChild(empty);
-    (data || []).forEach((item: any) => {
-      const op = document.createElement('option');
-      op.value = item.testNumber;
-      op.text = item.testNumberName;
-      select.appendChild(op);
-    });
-  } catch (e) {
-    notifyError('无法加载任务编号');
-  }
 };
 
 const renderVideoStatus = async () => {
@@ -305,6 +285,8 @@ const stopAutoReadIDCard = () => {
   }
 };
 
+let idFile: File | null = null;
+
 const openReader1 = () => {
   try {
     const host = 'ws://127.0.0.1:33666';
@@ -338,7 +320,7 @@ const openReader1 = () => {
                   idCanvas.toBlob((blob) => {
                     if (!blob) return;
                     try {
-                      const idFile = new File([blob], 'idFile.png', { type: 'image/png' });
+                      idFile = new File([blob], 'idFile.png', { type: 'image/png' });
                       if (!formData2) formData2 = new FormData();
                       formData2.append('idFile', idFile);
                     } catch {}
@@ -632,29 +614,58 @@ const handleSnapshot = () => {
   offscreenContext.restore();
 
   offscreenCanvas.toBlob(async (blob) => {
-    if (!blob) return;
+    // debugger
+    // if (!blob) return;
     try {
-      const resp = await faceRecognitionBySnapshot(blob);
-      if (resp && resp.length) {
-        // 根据返回的人脸框，重绘更合适的预览
+      const rectData = await faceRecognitionBySnapshot(blob);
+      const rect = rectData[0].rect;
+      
+      if (rect && rectData.length) {
+        const width = rect.right - rect.left;
+        const height = rect.bottom - rect.top;
+        
+        // 判断照片中人像位置是否居中
+        if (rect.bottom > 718) {
+          context.clearRect(0, 0, Canvas.width, Canvas.height); notifyWarn('照片不合格，人员过于靠下，请靠上拍照');
+          return
+        }
+        if (rect.left < -5) {
+          context.clearRect(0, 0, Canvas.width, Canvas.height); notifyWarn('照片不合格，人员过于靠左，请靠右拍照');
+          return
+        }
+        if (rect.top < 8) {
+          context.clearRect(0, 0, Canvas.width, Canvas.height); notifyWarn('照片不合格，人员过于靠上，请靠下拍照');
+          return
+        }
+        if (rect.right > 1285) {
+          context.clearRect(0, 0, Canvas.width, Canvas.height); notifyWarn('照片不合格，人员过于靠右，请靠左拍照');
+          return
+        }
         const image = new Image();
-        image.onload = () => {
-          const rect = resp[0]?.rect || null;
+        image.onload = function () {
+          // 计算需要扩大的比例
+          const scaleRatio = 1.2; // 假设扩大比例为1.2
+
+          // 计算扩大后的宽高度
+          const expandedWidth = width * scaleRatio;
+          const expandedHeight = height * scaleRatio;
+
+          // 计算扩大后的起始点
+          const expandedLeft = rect.left - (expandedWidth - width) / 2;
+          const expandedTop = rect.top - (expandedHeight - height) / 2;
+
+          // 清空画布
           context.clearRect(0, 0, Canvas.width, Canvas.height);
-          if (rect) {
-            const width = rect.right - rect.left;
-            const height = rect.bottom - rect.top;
-            const scaleRatio = 1.2;
-            const expandedWidth = width * scaleRatio;
-            const expandedHeight = height * scaleRatio;
-            const expandedLeft = rect.left - (expandedWidth - width) / 2;
-            const expandedTop = rect.top - (expandedHeight - height) / 2;
-            context.drawImage(image, expandedLeft, expandedTop, expandedWidth, expandedHeight, 0, 0, Canvas.width, Canvas.height);
-          } else {
-            context.drawImage(image, 0, 0, Canvas.width, Canvas.height);
-          }
+
+          // 绘制扩大后的画面到 Canvas 上
+          context.drawImage(image, expandedLeft, expandedTop, expandedWidth, expandedHeight, 0, 0, Canvas.width, Canvas.height);
+
+          // 将画布内容转换为 Blob 对象
+          Canvas.toBlob(function (blob) {
+            shotFile = new File([blob], 'snapshot.png', { type: 'image/png' });
+          }, 'image/png');
         };
-        image.src = URL.createObjectURL(blob);
+        image.src = URL.createObjectURL(blob); // 将Blob对象转换为URL        
       } else {
         // 接口未返回有效结果，保留本地预览
         notifyWarn('照片不合格，请调整姿态后重试');
@@ -737,9 +748,23 @@ const handleTestInfoLogin = () => {
   }, 1000);
 };
 
+let pername = ref('');
+let peridNumber = ref('');
+let perage = ref('');
+
+let formData3 = new FormData();
+
+
 const saveInfo = async () => {
   try {
-    
+    formData3.append('name', perage.value);
+    formData3.append('idNumber', peridNumber.value);
+    formData3.append('age', perage.value);
+    formData3.append('shotFile', shotFile);
+    formData3.append('idFile', shotFile);
+    formData3.append('gender',"女");
+    formData3.append('company',null);
+    insertOrModifyInformation(formData3)
   } finally {
     try { autoReadIDCard(); } catch {}
   }
@@ -757,11 +782,11 @@ onMounted(async () => {
 
   await nextTick();
   formData2 = new FormData();
-  await fillTasks();
   await startMediaDevices();
   informationMatching();
   // await getTasksData();
-  taskList.value  = await getTasksData()
+  const taskDataList = await getTasksData()
+  taskList.value = taskDataList
 
   const progressBar = getEl('progressBar');
   if (progressBar) progressBar.innerHTML = '<div id="progressFill"></div>';

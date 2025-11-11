@@ -27,3 +27,12 @@ export const getVideoStatus = (testNumber: string) =>{
     params:{testNumber}
   })
 }
+
+export const insertOrModifyInformation = (formData: FormData) =>{
+  return defHttp.post({
+    url:adminPath + "/face/faceInformation/insertOrModifyInformation",
+    params:{
+      formData
+    }
+  })
+}

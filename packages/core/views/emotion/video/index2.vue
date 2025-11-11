@@ -97,8 +97,8 @@
         <div style="display: flex; align-items: center;text-align: justify;margin:0 10% 4% 8% ">
           <label for="jobTitle" style="width: 20%;margin-right: 5%;font-size: 120%"> 部别 </label>
           <!-- Treeselect 服务端标签占位，前端先用占位下拉替代 -->
-          <select style="height:40px;width:200px; background-color: #092046;border: solid 1px #494640;box-shadow: 0 0 10px #3c8dbc;color: #91f2f4">
-            <option value="">请选择</option>
+          <select style="height:40px;width:200px; background-color: #092046;border: solid 1px #494640;box-shadow: 0 0 10px #3c8dbc;color: #91f2f4" v-model="currentCompanyId">
+            <option v-for="item in companyTreeData" :key="item.id" :value="item.id">{{item.name}}</option>
           </select>
         </div>
         <div class="info-actions">
@@ -116,10 +116,12 @@
 </template>
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
-import { faceRecognitionBySnapshot, getTasksData, getVideoStatus,insertOrModifyInformation } from '../../../api/emption/vedio';
+import { faceRecognitionBySnapshot, getCompanyTreeData, getTasksData, getVideoStatus,insertOrModifyInformation } from '../../../api/emption/vedio';
 import { log } from 'console';
 
 const startBtnDisabled = ref(true);
+const companyTreeData = ref()
+const currentCompanyId = ref()
 
 let cameraStream: MediaStream | null = null;
 let cameraStream2: MediaStream | null = null;
@@ -489,9 +491,9 @@ const informationMatching = () => {
         isclearInfo = true;
         if (startinformationMatching) { window.clearInterval(startinformationMatching); startinformationMatching = null; }
         const videoEl = document.getElementById('video') as HTMLVideoElement;
-        console.log('Video element:', videoEl);
-        console.log('Video width:', videoEl?.videoWidth, 'height:', videoEl?.videoHeight);
-        console.log('Video readyState:', videoEl?.readyState);
+        // console.log('Video element:', videoEl);
+        // console.log('Video width:', videoEl?.videoWidth, 'height:', videoEl?.videoHeight);
+        // console.log('Video readyState:', videoEl?.readyState);
         if (!videoEl || !videoEl.videoWidth) {
           console.error('Video element not ready or no dimensions');
           return;
@@ -507,7 +509,7 @@ const informationMatching = () => {
             console.error('Canvas toBlob failed - no blob generated');
             return;
           }
-          console.log('Blob generated:', blob.size, 'bytes, type:', blob.type);
+          // console.log('Blob generated:', blob.size, 'bytes, type:', blob.type);
           try {
             const resp = await faceRecognitionBySnapshot(blob);
             if (resp && resp[0] && resp[0].name) {
@@ -752,19 +754,23 @@ let pername = ref('');
 let peridNumber = ref('');
 let perage = ref('');
 
-let formData3 = new FormData();
 
 
 const saveInfo = async () => {
   try {
-    formData3.append('name', perage.value);
+    let formData3 = new FormData();
+
+    formData3.append('name', pername.value);
     formData3.append('idNumber', peridNumber.value);
     formData3.append('age', perage.value);
     formData3.append('shotFile', shotFile);
     formData3.append('idFile', shotFile);
     formData3.append('gender',"女");
-    formData3.append('company',null);
-    insertOrModifyInformation(formData3)
+    const targetCompany = companyTreeData.value.find(item => item.id === currentCompanyId.value)
+    formData3.append('company.companyName',targetCompany.name);
+    formData3.append('company.companyCode', targetCompany.code)
+    // console.log()
+    await insertOrModifyInformation(formData3)
   } finally {
     try { autoReadIDCard(); } catch {}
   }
@@ -787,6 +793,7 @@ onMounted(async () => {
   // await getTasksData();
   const taskDataList = await getTasksData()
   taskList.value = taskDataList
+  companyTreeData.value = await getCompanyTreeData();
 
   const progressBar = getEl('progressBar');
   if (progressBar) progressBar.innerHTML = '<div id="progressFill"></div>';

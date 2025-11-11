@@ -31,8 +31,17 @@ export const getVideoStatus = (testNumber: string) =>{
 export const insertOrModifyInformation = (formData: FormData) =>{
   return defHttp.post({
     url:adminPath + "/face/faceInformation/insertOrModifyInformation",
-    params:{
-      formData
+    params: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  })
+}
+export const getCompanyTreeData = () =>{
+  return defHttp.get({
+    url:adminPath + "/sys/company/treeData",
+    params: {
+      ctrlPermi:2
     }
   })
 }

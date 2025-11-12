@@ -98,7 +98,6 @@
             :background-image="titBgImg"
             @card-click="() => {}"
           />
-          <div class="clear"></div>
         </div>
 
         <!-- 底部区域 -->
@@ -366,7 +365,7 @@ const initChart1 = async () => {
         textStyle: {
           color: 'white',
         },
-        padding: [10, 0, 0, 0],
+        padding: [30, 0, 0, 0],
       },
       series: [
         {
@@ -426,12 +425,13 @@ const initChart2 = async () => {
         },
         left: 'right',
         top: 'top',
-        padding: [10, 0, 0, 0],
+        padding: [30, 0, 0, 0],
       },
       grid: {
         left: '3%',
         right: '4%',
-        bottom: '3%',
+        top: '10%',
+        bottom: '10%',
         containLabel: true,
       },
       xAxis: [
@@ -477,7 +477,7 @@ const initChart2 = async () => {
             focus: 'series',
           },
           data: normalCount,
-          barMaxWidth: 50,
+          barMaxWidth: 80,
         },
         {
           name: '一般',
@@ -541,12 +541,13 @@ const initChart3 = async () => {
         },
         left: 'right',
         top: 'top',
-        padding: [10, 0, 0, 0],
+        padding: [30, 0, 0, 0],
       },
       grid: {
         left: '3%',
         right: '4%',
-        bottom: '3%',
+        top: '10%',
+        bottom: '10%',
         containLabel: true,
       },
       xAxis: [
@@ -593,7 +594,7 @@ const initChart3 = async () => {
             focus: 'series',
           },
           data: normalCount,
-          barMaxWidth: 50,
+          barMaxWidth: 80,
         },
         {
           name: '一般',
@@ -666,12 +667,13 @@ const initChart4 = async () => {
         },
         left: 'right',
         top: 'top',
-        padding: [10, 0, 0, 0],
+        padding: [30, 0, 0, 0],
       },
       grid: {
         left: '3%',
         right: '4%',
-        bottom: '3%',
+        top: '10%',
+        bottom: '10%',
         containLabel: true,
       },
       xAxis: [
@@ -717,7 +719,7 @@ const initChart4 = async () => {
             focus: 'series',
           },
           data: High,
-          barMaxWidth: 50,
+          barMaxWidth: 80,
         },
         {
           name: '低',
@@ -774,12 +776,13 @@ const initChart5 = async () => {
         },
         left: 'right',
         top: 'top',
-        padding: [10, 0, 0, 0],
+        padding: [30, 0, 0, 0],
       },
       grid: {
         left: '3%',
         right: '4%',
-        bottom: '3%',
+        top: '10%',
+        bottom: '10%',
         containLabel: true,
       },
       xAxis: [
@@ -877,12 +880,13 @@ const initChart8 = async () => {
         },
         left: 'right',
         top: 'top',
-        padding: [10, 0, 0, 0],
+        padding: [30, 0, 0, 0],
       },
       grid: {
         left: '3%',
         right: '4%',
-        bottom: '3%',
+        top: '10%',
+        bottom: '10%',
         containLabel: true,
       },
       xAxis: [
@@ -929,7 +933,7 @@ const initChart8 = async () => {
             focus: 'series',
           },
           data: normalCount,
-          barMaxWidth: 50,
+          barMaxWidth: 80,
         },
         {
           name: '关注',
@@ -993,12 +997,13 @@ const initChart9 = async () => {
         },
         left: 'right',
         top: 'top',
-        padding: [10, 0, 0, 0],
+        padding: [30, 0, 0, 0],
       },
       grid: {
         left: '3%',
         right: '4%',
-        bottom: '3%',
+        top: '10%',
+        bottom: '10%',
         containLabel: true,
       },
       xAxis: [
@@ -1041,7 +1046,7 @@ const initChart9 = async () => {
           itemStyle: {
             color: '#4CAF50',
           },
-          barMaxWidth: 50,
+          barMaxWidth: 80,
           emphasis: {
             focus: 'series',
           },
@@ -1483,6 +1488,9 @@ onUnmounted(() => {
     :deep(.data_box) {
       cursor: default;
       pointer-events: none;
+      flex: 1;
+      min-width: 0;
+      max-width: none;
     }
   }
 

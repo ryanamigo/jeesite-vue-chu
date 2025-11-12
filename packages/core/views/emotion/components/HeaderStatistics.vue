@@ -1,15 +1,25 @@
 <template>
   <div 
-    class="data_box item" 
+    class="visual_conTop_box" 
+    :class="boxClass"
     :style="backgroundStyle" 
     @click="handleClick"
   >
-    <div class="textInfo">
-      <p>{{ title }}</p>
-      <span :class="valueClass">{{ value }}</span>
-    </div>
-    <div class="img">
-      <img :src="icon" style="width: 80%" />
+    <div>
+      <h3>{{ title }}</h3>
+      <p class="stat-value">{{ value }}</p>
+      <div class="conTop_smil" v-if="showTodayWeek">
+        <a>
+          <span v-if="todayLabel">{{ todayLabel }}:</span>
+          <span class="today-value">{{ todayValue || 0 }}</span>
+          <span class="arrow-icon">↑</span>
+        </a>
+        <a>
+          <span v-if="weekLabel">{{ weekLabel }}:</span>
+          <span class="week-value">{{ weekValue || 0 }}</span>
+          <span class="arrow-icon">↓</span>
+        </a>
+      </div>
     </div>
   </div>
 </template>
@@ -30,6 +40,36 @@ const props = defineProps({
     type: [Number, String],
     default: 0
   },
+  // 今日数值
+  todayValue: {
+    type: [Number, String],
+    default: 0
+  },
+  // 本周数值
+  weekValue: {
+    type: [Number, String],
+    default: 0
+  },
+  // 今日标签（如：今日人数、今日次数）
+  todayLabel: {
+    type: String,
+    default: ''
+  },
+  // 本周标签（如：本周人数、本周次数）
+  weekLabel: {
+    type: String,
+    default: ''
+  },
+  // 是否显示今日和本周数据
+  showTodayWeek: {
+    type: Boolean,
+    default: true
+  },
+  // 卡片样式类（visual_conTop1 或 visual_conTop2）
+  boxClass: {
+    type: String,
+    default: 'visual_conTop1'
+  },
   // 数值的类名（用于样式区分）
   valueClass: {
     type: String,
@@ -38,7 +78,7 @@ const props = defineProps({
   // 图标路径
   icon: {
     type: String,
-    required: true
+    required: false
   },
   // 卡片唯一标识（用于跳转参数）
   cardId: {
@@ -61,7 +101,10 @@ const props = defineProps({
 const backgroundStyle = computed(() => {
   const bgImg = props.backgroundImage || titBg;
   return {
-    backgroundImage: `url(${bgImg})`
+    backgroundImage: `url(${bgImg})`,
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'center center',
+    backgroundSize: '90% 85%'
   };
 });
 
@@ -75,11 +118,9 @@ const handleClick = () => {
 </script>
 
 <style scoped>
-.data_box {
-  position: relative;
+.visual_conTop_box {
   flex: 1;
-  max-width: 20%;
-  height: 90%;
+  height: 100%;
   cursor: pointer;
   display: flex;
   justify-content: center;
@@ -87,27 +128,57 @@ const handleClick = () => {
   background-repeat: no-repeat;
   background-position: center center;
   background-size: 90% 85%;
+  padding: 10px;
+  box-sizing: border-box;
 }
-.data_box .textInfo {
-  float: left;
+
+.visual_conTop_box > div {
+  width: 100%;
   text-align: center;
-  width: 50%;
 }
-.data_box .textInfo p {
+
+.visual_conTop_box h3 {
   color: #9afefe;
   font-size: 20px;
-  margin-bottom: 8px;
+  margin: 0 0 10px 0;
+  font-weight: normal;
 }
-.data_box .textInfo span {
+
+.visual_conTop_box .stat-value {
   color: #e2dd0a;
   font-size: 32px;
   font-weight: bold;
+  margin: 0 0 10px 0;
+  display: block;
 }
-.data_box .img {
+
+.visual_conTop_box .conTop_smil {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.visual_conTop_box .conTop_smil a {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  text-decoration: none;
+  display: flex;
   align-items: center;
-  width: 50%;
-  float: right;
+  justify-content: center;
+  gap: 5px;
+}
+
+.visual_conTop_box .conTop_smil a .today-value,
+.visual_conTop_box .conTop_smil a .week-value {
+  color: #e2dd0a;
+  font-weight: bold;
+  margin: 0 3px;
+}
+
+.visual_conTop_box .conTop_smil a .arrow-icon {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+  margin-left: 3px;
 }
 </style>

@@ -45,3 +45,9 @@ export const getCompanyTreeData = () =>{
     }
   })
 }
+export const judgePerson = (pidCard: string) =>{
+  return defHttp.post({
+    url:adminPath + "/subject/subjectInformation/judgePerson",
+    params: {pidCard}
+  })
+}

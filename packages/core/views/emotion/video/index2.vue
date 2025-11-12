@@ -116,7 +116,7 @@
 </template>
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
-import { faceRecognitionBySnapshot, getCompanyTreeData, getTasksData, getVideoStatus,insertOrModifyInformation } from '../../../api/emption/vedio';
+import { faceRecognitionBySnapshot, getCompanyTreeData, getTasksData, getVideoStatus,insertOrModifyInformation, judgePerson } from '../../../api/emption/vedio';
 import { log } from 'console';
 
 const startBtnDisabled = ref(true);
@@ -256,7 +256,7 @@ const toggleInfoInputs = () => {
     const checker = window.setInterval(() => {
       const selectedTask = (document.getElementById('taskSelection') as HTMLSelectElement)?.value || '';
       if (!selectedTask) return;
-      if (companyName !== null && name?.value && idNumber?.value && age?.value) {
+      if (currentCompanyId.value && name?.value && idNumber?.value && age?.value) {
         window.clearInterval(checker);
         if (startBtn) startBtn.disabled = false;
       }
@@ -556,7 +556,7 @@ const informationMatching = () => {
 
 const itExists = async (pidcard: string) => {
   try {
-    const data = await fetchJSON(`${(window as any).ctx || ''}/subject/subjectInformation/judgePerson?pidCard=${encodeURIComponent(pidcard)}`, { method: 'POST' });
+    const data = await judgePerson(pidcard);
     if (data === 'true' || data === true) {
       const statusInfo = getEl('statusInfo');
       const name = getInput('name');
@@ -564,7 +564,7 @@ const itExists = async (pidcard: string) => {
       window.setTimeout(() => { /* 姿态调整入口占位 */ }, 500);
     } else {
       try {
-        (window as any).Swal?.fire({ title: '提示', text: '无此人信息，请先进行信息采集', icon: 'warning', showCancelButton: false, confirmButtonText: '确定' });
+        notifyError('无此人信息，请先进行信息采集');
       } catch {}
       const startBtn = getEl('start-btn') as HTMLButtonElement;
       if (startBtn) startBtn.disabled = false;
@@ -576,6 +576,7 @@ const itExists = async (pidcard: string) => {
 
 const startRecording = () => {
   const selfName = getEl('selfName');
+  // debugger
   if (selfName && (selfName as HTMLElement).style.backgroundColor === 'rgb(5, 148, 183)') {
     startBtnDisabled.value = true;
     const statusInfo = getEl('statusInfo');
@@ -584,7 +585,7 @@ const startRecording = () => {
     const name = getInput('name');
     const idNumber = getInput('idNumber');
     const age = getInput('age');
-    if (companyName !== null && name?.value && idNumber?.value && age?.value) {
+    if (currentCompanyId.value&& name?.value && idNumber?.value && age?.value) {
       if (!selectedTaski) notifyWarn('请选择任务批次');
     } else {
       if (!selectedTaski) notifyWarn('请选择任务批次和填写个人信息'); else notifyWarn('请填写个人信息');
@@ -592,8 +593,9 @@ const startRecording = () => {
     const checker = window.setInterval(() => {
       const selectedTask = (document.getElementById('taskSelection') as HTMLSelectElement)?.value || '';
       if (!selectedTask) return;
-      if (companyName !== null && name?.value && idNumber?.value && age?.value) {
+      if (currentCompanyId.value&& name?.value && idNumber?.value && age?.value) {
         window.clearInterval(checker);
+        // debugger
         itExists(idNumber.value);
       }
     }, 5000);

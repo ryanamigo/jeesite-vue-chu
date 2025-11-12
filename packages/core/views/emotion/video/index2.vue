@@ -116,7 +116,7 @@
 </template>
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
-import { faceRecognitionBySnapshot, getCompanyTreeData, getTasksData, getVideoStatus,insertOrModifyInformation, judgePerson } from '../../../api/emption/vedio';
+import { faceRecognitionBySnapshot, getCompanyTreeData, getTasksData, getVideoStatus,insertOrModifyInformation, judgePerson, adjustingTheAngle } from '../../../api/emption/vedio';
 import { log } from 'console';
 
 const startBtnDisabled = ref(true);
@@ -134,6 +134,10 @@ let companyCode: string | null = null;
 let formData2: FormData | null = null;
 let socket: WebSocket | null = null;
 let shotFile: File | null = null;
+let adjustingTheAngleId: number | null = null;
+let flagAdjustingTheAngle = 0; // 姿态调整标志（0：未开始，1：开始）
+let recordingModeb: string | undefined;
+let isstart: boolean; // 录制开始状态
 
 const getEl = (id: string) => document.getElementById(id) as HTMLElement;
 const getInput = (id: string) => document.getElementById(id) as HTMLInputElement;
@@ -546,6 +550,8 @@ const informationMatching = () => {
                 (document.getElementById('male') as HTMLInputElement).checked = false;
                 (document.getElementById('female') as HTMLInputElement).checked = true;
               }
+              // 开始姿态调整
+              window.setTimeout(() => { startAdjustingTheAngle(); }, 500);
             }
           } catch {}
         }, 'image/png');
@@ -561,7 +567,7 @@ const itExists = async (pidcard: string) => {
       const statusInfo = getEl('statusInfo');
       const name = getInput('name');
       if (statusInfo && name) statusInfo.innerHTML = name.value;
-      window.setTimeout(() => { /* 姿态调整入口占位 */ }, 500);
+      window.setTimeout(() => { startAdjustingTheAngle(); }, 500);
     } else {
       try {
         notifyError('无此人信息，请先进行信息采集');
@@ -571,6 +577,122 @@ const itExists = async (pidcard: string) => {
     }
   } catch (e) {
     notifyError('校验人员失败');
+  }
+};
+
+const startAdjustingTheAngle = () => {
+  recordingModeb = (document.getElementById('recordingMode') as HTMLSelectElement)?.value;
+  isstart = true;
+  const startBtn = getEl('start-btn') as HTMLButtonElement;
+  if (startBtn) startBtn.disabled = true;
+  if (flagAdjustingTheAngle === 0) {
+    flagAdjustingTheAngle = 1;
+    videoAnalytics();
+    adjustingTheAngleId = window.setInterval(() => {
+      videoAnalytics();
+    }, 1000);
+  }
+};
+
+const stopAdjustingTheAngle = () => {
+  if (adjustingTheAngleId) {
+    window.clearInterval(adjustingTheAngleId);
+    adjustingTheAngleId = null;
+  }
+};
+
+const videoAnalytics = async () => {
+  const recordingModea = (document.getElementById('recordingMode') as HTMLSelectElement)?.value;
+  if (recordingModeb !== recordingModea) {
+    isstart = false;
+    stopAdjustingTheAngle();
+    if (isclearInfo) {
+      informationMatching();
+    } else {
+      const startBtn = getEl('start-btn') as HTMLButtonElement;
+      if (startBtn) startBtn.disabled = true;
+    }
+    const statusInfo = getEl('statusInfo');
+    if (statusInfo) statusInfo.innerHTML = '';
+    return;
+  }
+
+  const videoEl = document.getElementById('video') as HTMLVideoElement;
+  const videoEl2 = document.getElementById('video2') as HTMLVideoElement;
+
+  if (!videoEl || !videoEl2 || !videoEl.videoWidth || !videoEl2.videoWidth) {
+    console.error('Video elements not ready');
+    return;
+  }
+
+  // 创建并处理第一个Canvas
+  const canvas2 = document.createElement('canvas');
+  const context2 = canvas2.getContext('2d');
+  if (!context2) return;
+  canvas2.width = videoEl.videoWidth;
+  canvas2.height = videoEl.videoHeight;
+  context2.drawImage(videoEl, 0, 0, canvas2.width, canvas2.height);
+
+  // 使用Promise包装toBlob
+  const canvas2Blob = new Promise<Blob>((resolve) => {
+    canvas2.toBlob((blob) => {
+      if (blob) resolve(blob);
+    }, 'image/png');
+  });
+
+  // 创建并处理第二个Canvas
+  const canvas3 = document.createElement('canvas');
+  const context3 = canvas3.getContext('2d');
+  if (!context3) return;
+  canvas3.width = videoEl2.videoWidth;
+  canvas3.height = videoEl2.videoHeight;
+  context3.drawImage(videoEl2, 0, 0, canvas3.width, canvas3.height);
+
+  // 使用Promise包装toBlob
+  const canvas3Blob = new Promise<Blob>((resolve) => {
+    canvas3.toBlob((blob) => {
+      if (blob) resolve(blob);
+    }, 'image/png');
+  });
+
+  // 确保所有Canvas的Blob都完成后再执行AJAX请求
+  try {
+    const [blob1, blob2] = await Promise.all([canvas2Blob, canvas3Blob]);
+    const response = await adjustingTheAngle(blob1, blob2);
+
+    flagAdjustingTheAngle = 0;
+    stopSnapshotInterval();
+
+    if (isstart === true) {
+      const statusInfo = getEl('statusInfo');
+      if (!statusInfo) return;
+
+      switch (response) {
+        case 0:
+          statusInfo.innerHTML = '没有人脸或多个人脸';
+          break;
+        case 1:
+          statusInfo.innerHTML = '亮度过高请远离';
+          break;
+        case 2:
+          statusInfo.innerHTML = '亮度过低请靠近';
+          break;
+        case 3:
+          stopAdjustingTheAngle();
+          const name = getInput('name');
+          if (name) {
+            statusInfo.innerHTML = name.value + '录制中,请保持位置20秒';
+          }
+          // 这里可以调用开始录制的函数
+          // startVideo();
+          break;
+        default:
+          break;
+      }
+    }
+  } catch (error) {
+    console.error('Error in video analytics:', error);
+    flagAdjustingTheAngle = 0;
   }
 };
 
@@ -764,9 +886,9 @@ const handleTestInfoLogin = () => {
     notifyWarn('请选择任务批次');
     return;
   }
-  // 预留姿态调整/自动开始逻辑（与原 HTML 中 adjustingTheAngle 行为对齐）
+  // 开始姿态调整
   window.setTimeout(() => {
-    // 此处可接入姿态调整或直接触发后续流程
+    startAdjustingTheAngle();
   }, 1000);
 };
 
@@ -822,6 +944,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   stopSnapshotInterval();
+  stopAdjustingTheAngle();
   if (startinformationMatching) window.clearInterval(startinformationMatching);
   if (readIDIntervalId) window.clearInterval(readIDIntervalId);
   try {

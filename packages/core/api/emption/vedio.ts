@@ -51,3 +51,16 @@ export const judgePerson = (pidCard: string) =>{
     params: {pidCard}
   })
 }
+
+export const adjustingTheAngle = (nirFile: Blob, rbgFile: Blob) => {
+  const formData = new FormData();
+  formData.append('nirFile', nirFile, 'snapshot1.jpg');
+  formData.append('rbgFile', rbgFile, 'snapshot2.jpg');
+  return defHttp.post({
+    url: adminPath + '/face/faceWeb/adjustingTheAngle1',
+    params: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+}

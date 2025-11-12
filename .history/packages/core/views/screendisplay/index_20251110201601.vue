@@ -69,6 +69,7 @@
           <HeaderStatistics
             :title="'总人数'"
             :value="statistics.headcount || 0"
+            :icon="statIcon1"
             :card-id="'headcount'"
             :jump-title="'总人数'"
             :background-image="titBgImg"
@@ -77,6 +78,7 @@
           <HeaderStatistics
             :title="'总次数'"
             :value="statistics.totalTimes || 0"
+            :icon="statIcon2"
             :card-id="'totalTimes'"
             :jump-title="'总次数'"
             :background-image="titBgImg"
@@ -85,6 +87,7 @@
           <HeaderStatistics
             :title="'回访人数'"
             :value="statistics.returnVisitors || 0"
+            :icon="statIcon3"
             :card-id="'returnVisitors'"
             :jump-title="'回访人数'"
             :background-image="titBgImg"
@@ -93,6 +96,7 @@
           <HeaderStatistics
             :title="'建模人数'"
             :value="statistics.modelers || 0"
+            :icon="statIcon4"
             :card-id="'modelers'"
             :jump-title="'建模人数'"
             :background-image="titBgImg"
@@ -239,6 +243,10 @@ import HeaderStatistics from '@jeesite/core/views/emotion/components/HeaderStati
 import jzxz1Img from '@jeesite/assets/images/screeninformation/jzxz1.png';
 import jzxz2Img from '@jeesite/assets/images/screeninformation/jzxz2.png';
 import logoImg from '@jeesite/assets/images/screeninformation/jcdsj_logo.png';
+import statIcon1 from '@jeesite/assets/images/emotion/总人数.png';
+import statIcon2 from '@jeesite/assets/images/emotion/总次数.png';
+import statIcon3 from '@jeesite/assets/images/emotion/今日检测人数.png';
+import statIcon4 from '@jeesite/assets/images/emotion/今日检测次数.png';
 import titBgImg from '@jeesite/assets/images/img-北京/tit-01.png';
 const { prefixCls } = useDesign('screendisplay');
 
@@ -1483,6 +1491,12 @@ onUnmounted(() => {
     :deep(.data_box) {
       cursor: default;
       pointer-events: none;
+      /* HeaderStatistics组件已经通过内联样式设置了背景图片tit-01.png */
+      /* 如果需要覆盖，可以在这里设置 */
+      /* background-image: url('@jeesite/assets/images/tit-01.png'); */
+      /* background-repeat: no-repeat; */
+      /* background-position: center center; */
+      /* background-size: 90% 85%; */
     }
   }
 

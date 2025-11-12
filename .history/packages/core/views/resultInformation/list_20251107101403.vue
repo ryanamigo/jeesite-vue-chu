@@ -5,7 +5,7 @@
 -->
 <template>
   <div>
-    <!-- 文件上传输入 -->
+    <!-- 文件上传输入（隐藏） -->
     <input
       ref="videoFileInputRef"
       type="file"
@@ -31,13 +31,31 @@
         </div>
       </template>
     </BasicTable>
+
+    <!-- 标注对话框 -->
+    <a-modal
+      v-model:open="annotationModalVisible"
+      title="标注"
+      :width="500"
+      @ok="handleConfirmAnnotation"
+      @cancel="handleCancelAnnotation"
+    >
+      <a-textarea
+        v-model:value="annotationText"
+        :rows="8"
+        placeholder="请输入注释"
+        style="background-color: #262626; color: rgba(255, 255, 255, 0.8)"
+      />
+    </a-modal>
+
     <!-- 未检测人员对话框 -->
     <a-modal
       v-model:open="untestedModalVisible"
       title="未检测人员"
       :width="800"
       :footer="null"
-    >sx
+    >
+      <a-table
         :columns="untestedColumns"
         :data-source="untestedList"
         :pagination="false"
@@ -57,10 +75,11 @@ import { Icon } from '@jeesite/core/components/Icon';
 import { BasicTable, BasicColumn, useTable } from '@jeesite/core/components/Table';
 import { FormProps } from '@jeesite/core/components/Form';
 import { Modal } from 'ant-design-vue';
+import { isEmpty } from '@jeesite/core/utils/is';
 import {
   getResultInformationList,
   deleteRelevantInformationByVideoId,
-  updateAnnotat0ionInfo,
+  updateAnnotationInfo,
   exportPdfFile,
   exportAllPdf,
   exportTaskExcel,
@@ -85,6 +104,8 @@ const getTitle = computed(() => ({
 }));
 
 const videoFileInputRef = ref<HTMLInputElement | null>(null);
+const annotationModalVisible = ref(false);
+const annotationText = ref('');
 const currentAnnotationRecord = ref<ResultInformationItem | null>(null);
 const untestedModalVisible = ref(false);
 const untestedList = ref<any[]>([]);
@@ -335,6 +356,38 @@ function handleDetail(record: ResultInformationItem) {
   });
 }
 
+// 标注
+function handleAnnotation(record: ResultInformationItem) {
+  currentAnnotationRecord.value = record;
+  annotationText.value = record.annotation || '';
+  annotationModalVisible.value = true;
+}
+
+// 确认标注
+async function handleConfirmAnnotation() {
+  if (!currentAnnotationRecord.value) return;
+
+  try {
+    await updateAnnotationInfo({
+      pidCard: currentAnnotationRecord.value.pidcard,
+      annotation: annotationText.value,
+      annotationType: 1,
+    });
+    showMessage('标注成功');
+    annotationModalVisible.value = false;
+    reload();
+  } catch (error) {
+    showMessage('标注失败', 'error');
+  }
+}
+
+// 取消标注
+function handleCancelAnnotation() {
+  annotationModalVisible.value = false;
+  annotationText.value = '';
+  currentAnnotationRecord.value = null;
+}
+
 // 删除
 async function handleDelete(record: ResultInformationItem) {
   try {
@@ -536,6 +589,7 @@ async function handleBatchDelete() {
 
 // 全选
 function handleSelectAll() {
+  // BasicTable 的 rowSelection 已经支持全选功能
   showMessage('请使用表格左上角的全选复选框', 'info');
 }
 </script>

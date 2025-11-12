@@ -1,0 +1,432 @@
+<% layout('/layouts/default.html', {title: '部职别管理' , libs: ['layout','zTree']}){ %>
+    <style>
+        /*滚动条整体样式*/
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 1px;
+        }
+
+        .selected {
+            background-color: rgb(5 148 183);
+            /* 示例颜色 */
+            /*border: 1px solid #007bff; !* 可选的边框 *!*/
+            width: 30%;
+            border-radius: 9%;
+        }
+
+        /*滚动条里面小方块*/
+        ::-webkit-scrollbar-thumb {
+            border-radius: 10px;
+            background-color: #2d9fed;
+            background-image:
+                -webkit-linear-gradient(45deg,
+                    rgba(255, 255, 255, .2) 25%,
+                    transparent 25%,
+                    transparent 50%,
+                    rgba(255, 255, 255, .2) 50%,
+                    rgba(255, 255, 255, .2) 75%,
+                    transparent 75%,
+                    transparent);
+        }
+
+        /*滚动条里面轨道*/
+        ::-webkit-scrollbar-track {
+            -webkit-box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+            /*border-radius: 10px;*/
+            background: #0c3e7b;
+        }
+
+        input[type="text"] {
+            border: 0;
+            outline: 0;
+            border: solid 1px #494640;
+            box-shadow: 0 0 10px #3c8dbc;
+            border-radius: 4px;
+            background-color: transparent;
+            caret-color: #ffffff;
+            /* 光标颜色 */
+            /*width: 280px;*/
+            height: 30px;
+            color: #d7e4ed;
+        }
+
+        input[type="text"]:focus {
+            outline: 1px solid #39949b;
+        }
+
+        .btnSelfConfirm {
+            width: 80px;
+            /*height: 100%;*/
+            border: 0;
+            border-radius: 22px;
+            background-color: #494640;
+            box-shadow: 0 0 15px #97bdd4;
+            color: #FFFFFF;
+            font-size: 15px;
+            margin-left: 20%;
+            margin-top: 10%;
+        }
+
+        .btnSelfConfirm {
+            cursor: pointer;
+            /* 显示鼠标指针为手型 */
+        }
+
+        .btnSelfConfirm:active {
+            transform: translateY(2px);
+            /* 按下时按钮向下移动2px */
+        }
+
+        .underline {
+            text-decoration: underline;
+            /* 当鼠标悬停在 .generated-div 上时，添加下划线 */
+        }
+
+        /*    .triangle {*/
+        /*    cursor: pointer;*/
+        /*    display: inline-block;*/
+        /*    width: 0;*/
+        /*    height: 0;*/
+        /*    margin-right: 5px;*/
+        /*    vertical-align: middle;*/
+        /*    border-style: solid;*/
+        /*}*/
+
+        /*.right-triangle {*/
+        /*    border-width: 5px 0 5px 8px;*/
+        /*    border-color: transparent transparent transparent #aaaaaa; !* 右三角 *!*/
+        /*}*/
+
+        /*.down-triangle {*/
+        /*    border-width: 8px 5px 0 5px;*/
+        /*    border-color: #aaaaaa transparent transparent transparent; !* 下三角 *!*/
+        /*}*/
+    </style>
+
+
+    <div class="ui-layout-west">
+        <div class="main-content">
+            <div class="box box-main">
+                <div class="box-header">
+                    <div class="box-title">
+                        <i class="fa icon-grid"></i> ${text('任务批次')}
+                    </div>
+                    <div class="box-tools pull-right">
+                        <button type="button" class="btn btn-box-tool" id="btnAdd" title="${text('新增任务')}"><i
+                                class="fa fa-plus"></i></button>
+                        <button type="button" class="btn btn-box-tool" id="btnRefresh" title="${text('刷新')}"><i
+                                class="fa fa-refresh"></i></button>
+
+                    </div>
+                </div>
+                <div class="ui-layout-content">
+                    <div id="tree" class="ztree"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="ui-layout-center">
+        <iframe id="mainFrame" name="mainFrame" class="ui-layout-content p0"
+            src="${ctx}/result/resultInformation/list"></iframe>
+    </div>
+
+
+    <!-- 遮罩层和弹出框 -->
+    <div id="overlay"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
+        <div
+            style="width:400px;height: 300px; background:#1a1a1a; padding:20px; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);">
+            <label for="taskInput" style="color: #FFFFFF; display: block;margin-top: 5%; font-size: 17px;">任务名称:</label>
+            <input type="text" id="taskInput" name="taskInput"
+                style="width: 350px; display: block; margin-bottom: 10px;background-color: #1a1a1a;">
+            <label style="color: #FFFFFF; display: block; margin-top: 13%;font-size: 17px;">${text('部别')}：</label>
+            <div style="display: block; margin-bottom: 10px;">
+                <#form:treeselect id="ppositionName" title="${text('部别选择')}" path="ppositionName"
+                    labelPath="ppositionName" url="${ctx}/sys/company/treeData" callbackFuncName="treeselectCallback"
+                    chkboxType="{'Y':'s','N':'sp'}" btnClass="btn-sm" allowClear="true" canSelectRoot="false"
+                    canSelectParent="false" checkbox="true" />
+            </div>
+            <button id="confirmBtn" class="btnSelfConfirm" style="background-color: #1e5edb;">确认</button>
+            <button id="cancelBtn" class="btnSelfConfirm">取消</button>
+        </div>
+    </div>
+    <% } %>
+        <script src="${ctxStatic}/js/toastr.min.js"></script>
+        <link href="${ctxStatic}/css/toastr.min.css" rel="stylesheet">
+        <script>
+            toastr.options = {
+                positionClass: 'toast-bottom-right'
+            };
+            // 获取元素
+            const btnAdd = document.getElementById('btnAdd');
+            const overlay = document.getElementById('overlay');
+            const cancelBtn = document.getElementById('cancelBtn');
+            const confirmBtn = document.getElementById('confirmBtn');
+            const taskInput = document.getElementById('taskInput');
+            const ppositionName = document.getElementById('ppositionName')
+            // 显示遮罩层和对话框
+            btnAdd.addEventListener('click', function () {
+                overlay.style.display = 'block';
+                taskInput.value = ''; // 清空输入框
+
+            });
+
+            // 隐藏遮罩层和对话框
+            function closeOverlay() {
+                overlay.style.display = 'none';
+            }
+            let department = ''
+            let departmentsName = ''
+            function treeselectCallback(id, act, index, layero, nodes) {
+                if (id == 'ppositionName' && (act == 'ok' || act == 'clear')) {
+                    var win = layero.iframeWindow();
+                    log(nodes);  // 选择的节点数据
+                    var filteredNodes = nodes.filter(function (node) {
+                        return node.check_Child_State === -1;
+                    });
+                    // 提取 filteredNodes 中所有元素的 code 属性
+                    var codeArray = filteredNodes.map(function (node) {
+                        return node.code;
+                    });
+                    // 将 codeArray 中的元素用分号分隔连接成一个字符串
+                    var codeString = codeArray.join(';');
+                    // 输出保存的字符串
+                    department = codeString
+
+                    var nameArray = filteredNodes.map(function (node) {
+                        return node.name;
+                    });
+                    // 将 codeArray 中的元素用分号分隔连接成一个字符串
+                    var nameString = nameArray.join('；');
+                    // 输出保存的字符串
+                    departmentsName = nameString
+                }
+            }
+
+            cancelBtn.addEventListener('click', closeOverlay);
+
+            confirmBtn.addEventListener('click', function () {
+                // 检查输入框是否为空
+                if (taskInput.value.trim() === '') {
+                    toastr.error("任务名称不能为空！");
+                    return;
+                }
+                if (departmentsName.trim() === '') {
+                    toastr.error("部别选择不能为空！");
+                    return;
+                }
+
+                // 发送数据到后端
+                $.ajax({
+                    url: '${ctx}/test/testNumber/insertTestNumberInformation?testNumberName=' + taskInput.value + '&department=' + department + '&departmentsName=' + departmentsName,
+                    type: 'POST',
+                    success: function (response) {
+                        toastr.success("任务添加成功！")
+                        closeOverlay();
+                        // 刷新页面
+                        $('#tree').empty();
+                        treeLoad()
+                    },
+                    error: function (xhr, status, error) {
+                        toastr.error("任务添加失败！");
+                    }
+                });
+            });
+
+            $('body').layout({
+                west__initClosed: $(window).width() <= 767, // 是否默认关闭
+                west__size: window.lang == 'en' ? 215 : 200
+            });
+            //# // 主页框架
+            var win = $("#mainFrame")[0].contentWindow;
+            treeLoad()
+            //# // 树结构初始化加载
+            // var setting = {view:{selectedMulti:false},data:{key:{title:"testNumberName"},simpleData:{enable:true}},
+            //     async:{enable:true,autoParam:["id=parentCode"],url:"${ctx}/test/testNumber/findTestNumberByLimit"},
+            //     callback:{onClick:function(event, treeId, treeNode){
+            //             console.log( treeNode)
+            //             console.log(treeId)
+            //             console.log(event)
+            //             tree.expandNode(treeNode);
+            //             //win.$('button[type=reset]').click();
+            //             win.$('#pposition').val(treeNode.id);
+            //             // win.$('#officeName').val(treeNode.name);
+            //             win.page(1);
+            //         }}
+            // }, tree, loadTree = function(){
+            //     js.ajaxSubmit(setting.async.url+"?___t="+new Date().getTime(), {
+            //         // ctrlPermi:'${ctrlPermi}'/*1拥有的权限 2管理的权限*/,
+            //         parentCode:'${parameter.parentCode!}'}, function(data){
+            //         console.log(data)
+            //         tree = $.fn.zTree.init($("#tree"), setting, data);
+            //         var level = -1, nodes;
+            //         while (++level <= 1) {
+            //             nodes = tree.getNodesByParam("level", level);
+            //             console.log(nodes)
+            //             if (nodes.length > 10) { break; }
+            //             for(var i=0; i<nodes.length; i++) {
+            //                 tree.expandNode(nodes[i], true, false, false);
+            //             }
+            //         }
+            //     }, null, null, js.text('loading.message'));
+            // };loadTree();
+            function treeLoad() {
+                $.ajax({
+                    url: '${ctx}/test/testNumber/findTestNumberByLimit',
+                    type: 'POST',
+                    processData: false,
+                    contentType: false,
+                    success: function (response) {
+                        // 获取具有 id 为 "tree" 的元素
+                        var treeElement = $('#tree');
+                        // 遍历接口返回的数据，生成对应的 div 元素并添加到 "tree" 元素中
+                        response.forEach(function (item) {
+                            var newDiv = $('<div class="generated-div" id="item.testNumber" style="overflow: auto;margin-top: 20px;margin-left: 15%;color: #FFFFFF;font-size: 15px;cursor: pointer">');
+                            // var triangle = $('<span class="triangle right-triangle"></span>'); // 初始为右三角
+                            var contentDiv = $('<div class="content-div" style="display: none;"></div>'); // 用于显示加载的内容
+                            // 设置 div 的文本和 id
+                            newDiv.text(item.testNumberName).attr('id', item.testNumber);
+
+                            // 将三角形和内容 div 添加到 newDiv 前面
+                            // newDiv.prepend(triangle);
+                            newDiv.append(contentDiv);
+                            // 添加到 "tree" 元素中
+                            treeElement.append(newDiv);
+                            // 为每个生成的 div 元素添加点击事件
+                            newDiv.click(function (event) {
+                                if (event.target === this) {
+                                    win.$('#testNumber').val(item.testNumber);
+                                    win.$('#testNumberName').val(item.testNumberName);
+                                    win.$('#ppositionNameCode').val('');
+                                    win.$('#ppositionName').val('');
+                                    win.page(1);
+                                    // 清除其他 div 的选中样式
+                                    // $('.generated-div').removeClass('selected');
+
+                                    // 为当前点击的 div 添加选中样式
+                                    //   $(this).addClass('selected');
+                                    // 切换三角形的方向
+                                    // triangle.toggleClass('right-triangle down-triangle');
+                                    // 检查内容 div 是否已经加载数据
+                                    if (contentDiv.is(':empty')) {
+                                        // AJAX 请求获取数据
+                                        $.ajax({
+                                            url: '${ctx}/test/testNumber/findCompanyByTestNUmber?testNumber=' + item.testNumber,
+                                            type: 'POST',
+                                            contentType: 'application/xml',
+                                            success: function (data) {
+                                                data.forEach(function (detail, index) {
+                                                    // 创建一个唯一的ID，结合companyCode和索引
+                                                    var uniqueId = 'company-' + detail.companyCode + '-' + index + item.testNumber;
+                                                    var newDiv = $('<div>', {
+                                                        id: uniqueId,
+                                                        style: "margin-top:15px;margin-left:15%",
+                                                        text: detail.companyName,
+                                                        class: 'detailDiv'
+                                                    });
+                                                    contentDiv.append(newDiv);
+                                                    $('.detailDiv').on('mouseover', function () {
+                                                        $(this).css('text-decoration', 'underline'); // 添加下划线样式
+                                                    });
+
+                                                    $('.detailDiv').on('mouseout', function () {
+                                                        $(this).css('text-decoration', 'none'); // 移除下划线样式
+                                                    });
+                                                    // 添加事件监听器到新创建的div
+                                                    document.getElementById(uniqueId).addEventListener('click', function () {
+                                                        console.log(detail.companyCode)
+
+                                                        win.$('#testNumber').val(item.testNumber);
+                                                        win.$('#testNumberName').val(item.testNumberName);
+                                                        win.$('#ppositionNameCode').val(detail.companyCode);
+                                                        win.$('#ppositionName').val(detail.companyName);
+                                                        win.page(1);
+                                                    });
+                                                });
+                                                contentDiv.show(); // 显示内容 div
+                                            },
+                                            error: function (jqXHR, textStatus, errorThrown) {
+                                                console.error('There was a problem with the AJAX operation:', textStatus, errorThrown);
+                                            }
+                                        });
+                                        win.$('#testNumber').val(item.testNumber);
+                                        win.$('#testNumberName').val(item.testNumberName);
+                                        win.page(1);
+                                    } else {
+                                        // 如果已加载数据，则清空并隐藏内容 div
+                                        contentDiv.empty().hide();
+                                    }
+                                }
+                            });
+                            //右击显示
+                            newDiv.on('contextmenu', function (event) {
+                                // 阻止默认的右键菜单
+                                event.preventDefault();
+                                console.log(event.pageY)
+                                // 创建上下文菜单
+                                var contextMenu = $('<div id="contextMenu" style="display: flex; border-radius: 4px; flex-direction: column; position: absolute; top: ' + event.pageY + 'px; left: ' + event.pageX + 'px; border: 1px solid #ccc; background-color: #fff; padding: 5px;"></div>');
+
+                                var deleteButton = $('<button style="border: none;padding: 0;background-color: white;color: #8B8589;"><i class="fa fa-trash-o"></i><span style="margin-left: 5px;">删除任务</button>').on('click', function () {
+                                    deleteTask(event);
+                                });
+                                // 调用你想要在右键点击时执行的函数
+                                contextMenu.append(deleteButton);
+                                // 将上下文菜单添加到 body 中
+                                $('body').append(contextMenu);
+                                // 监听全局点击事件，隐藏菜单
+                                $(document).one('click', function () {
+                                    contextMenu.hide();
+                                });
+                            });
+
+                            // 定义你的自定义函数
+                            function deleteTask(event) {
+                                // alert('你右击了 ' + $(event.target).attr('id'));
+                                console.log(item.testNumber);
+                                var number = item.testNumber;
+                                // 在这里添加你想要的任何逻辑
+                                $.ajax({
+                                    url: '${ctx}/subject/subjectInformation/deleteByTestNumber',
+                                    // url: '${ctx}/sys/company/delete?companyCode='+companyCode ,
+                                    data: { testNumber: number },
+                                    type: 'POST',
+                                    success: function (data) {
+                                        location.reload();
+                                    },
+                                    error: function (jqXHR, textStatus, errorThrown) {
+                                        console.error('There was a problem with the AJAX operation:', textStatus, errorThrown);
+                                    }
+                                });
+                            }
+                        });
+                    },
+                    error: function () {
+                        console.error('Error saving image snapshot');
+                    }
+                });
+            }
+
+
+            //# // 工具栏按钮绑定
+            $('#btnExpand').click(function () {
+                tree.expandAll(true);
+                $(this).hide();
+                $('#btnCollapse').show();
+            });
+            $('#btnCollapse').click(function () {
+                tree.expandAll(false);
+                $(this).hide();
+                $('#btnExpand').show();
+            });
+            $('#btnRefresh').click(function () {
+                $('#tree').empty();
+                treeLoad()
+
+            });
+            //# // 调用子页分页函数
+            function page() {
+                win.page();
+            }
+        </script>

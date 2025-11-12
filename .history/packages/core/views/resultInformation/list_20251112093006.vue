@@ -37,7 +37,8 @@
       title="未检测人员"
       :width="800"
       :footer="null"
-    >sx
+    >
+      <a-table
         :columns="untestedColumns"
         :data-source="untestedList"
         :pagination="false"
@@ -60,7 +61,7 @@ import { Modal } from 'ant-design-vue';
 import {
   getResultInformationList,
   deleteRelevantInformationByVideoId,
-  updateAnnotat0ionInfo,
+  updateAnnotationInfo,
   exportPdfFile,
   exportAllPdf,
   exportTaskExcel,
@@ -288,15 +289,34 @@ const untestedColumns = [
 const [registerTable, { reload, getSelectRows }] = useTable({
   api: getResultInformationList,
   beforeFetch: (params: any) => {
-    // 根据选中的任务和部门设置查询参数
+    // 1. 保留原有的任务相关参数（testNumber、testNumberName）
     if (props.selectedTask) {
-      params.testNumber = props.selectedTask.testNumber;
-      params.testNumberName = props.selectedTask.testNumberName;
+      params.testNumber = props.selectedTask.testNumber; // 任务编号
+      params.testNumberName = props.selectedTask.testNumberName; // 任务名称
     }
+
+    // 2. 调整部门相关参数（原ppositionNameCode/ppositionName 替换为 ppositionName/pposition）
+    // 注意：需确认 props.selectedDepartment 中是否存在 pposition 字段（按参数名映射，若字段名不同需修改）
     if (props.selectedDepartment) {
-      params.ppositionNameCode = props.selectedDepartment.companyCode;
-      params.ppositionName = props.selectedDepartment.companyName;
+      params.ppositionName = props.selectedDepartment.companyName; // 部门名称（沿用原companyName）
+      params.pposition = props.selectedDepartment.pposition; // 岗位/部门编码（需确保props中有该字段，无则调整来源）
     }
+
+    // 3. 新增参数：根据实际来源补充（以下为常见场景，需按你的业务逻辑修改）
+    // 场景1：参数来自搜索表单（useSearchForm: true 时，表单字段名需与参数名一致，会自动带入，无需手动写）
+    // 场景2：参数来自其他props/状态，需手动赋值
+    params.pidcard = props.pidcard || params.pidcard; // 身份证号（示例：来自props或表单）
+    params.pname = props.pname || params.pname; // 姓名（示例：来自props或表单）
+    params.pgender = props.pgender || params.pgender; // 性别（示例：来自props或表单）
+    params.alarmStatus = props.alarmStatus || params.alarmStatus; // 告警状态（示例：来自props或表单）
+    params.psychologyStatus = props.psychologyStatus || params.psychologyStatus; // 心理状态（示例：来自props或表单）
+
+    // 4. 分页与排序参数（组件通常会自动带入，手动补充默认值防止缺失）
+    params.pageNo = params.pageNo || 1; // 页码默认1
+    params.pageSize = params.pageSize || 10; // 每页条数默认10
+    params.orderBy = params.orderBy || ''; // 排序字段（如："create_time DESC"，组件排序后会自动赋值）
+
+    // 最终返回整合后的所有参数
     return params;
   },
   columns: tableColumns,

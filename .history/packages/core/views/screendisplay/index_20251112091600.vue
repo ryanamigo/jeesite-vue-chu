@@ -1483,6 +1483,12 @@ onUnmounted(() => {
     :deep(.data_box) {
       cursor: default;
       pointer-events: none;
+      /* HeaderStatistics组件已经通过内联样式设置了背景图片tit-01.png */
+      /* 如果需要覆盖，可以在这里设置 */
+      /* background-image: url('@jeesite/assets/images/tit-01.png'); */
+      /* background-repeat: no-repeat; */
+      /* background-position: center center; */
+      /* background-size: 90% 85%; */
     }
   }
 

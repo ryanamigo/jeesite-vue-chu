@@ -24,8 +24,25 @@ export function generateModifyVars(dark = false) {
   // const modifyVars = getThemeVariables({ dark: false });
   const { darkAlgorithm, defaultAlgorithm, defaultSeed } = theme;
   const mapToken = dark ? darkAlgorithm(defaultSeed) : defaultAlgorithm(defaultSeed);
-  const modifyVars = (convertLegacyToken as any).default(mapToken);
-  // const modifyVars = convertLegacyToken(mapToken);
+  
+  // 处理 convertLegacyToken 的不同导出方式
+  let convertFn: any = convertLegacyToken;
+  
+  // 尝试多种可能的导出结构
+  if (typeof convertFn === 'function') {
+    // 直接是函数，无需处理
+  } else if (convertFn && typeof convertFn.default === 'function') {
+    convertFn = convertFn.default;
+  } else if (convertFn && convertFn.default && typeof convertFn.default.default === 'function') {
+    convertFn = convertFn.default.default;
+  } else if (typeof convertFn !== 'function') {
+    throw new Error(
+      `convertLegacyToken: Unable to resolve function. ` +
+      `Module structure: ${JSON.stringify(Object.keys(convertFn || {}))}`
+    );
+  }
+  
+  const modifyVars = convertFn(mapToken);
   // !!dark && console.log('modifyVars', dark, modifyVars);
 
   return {

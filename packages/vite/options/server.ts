@@ -5,6 +5,7 @@
  */
 import type { ServerOptions, ProxyOptions } from 'vite';
 import { IncomingMessage } from 'node:http';
+import type { Server } from 'http';
 
 type ProxyItem = [string, string, boolean];
 type ProxyList = ProxyItem[];
@@ -20,6 +21,25 @@ export function createServerOptions(viteEnv: ViteEnv): ServerOptions {
     proxy: createProxy(viteEnv.VITE_PROXY),
     warmup: {
       clientFiles: ['./index.html', './src/{views,components}/*'],
+    },
+    // 监听服务器级别的错误
+    onError: (err, req, res, next) => {
+      // 如果是代理连接错误，静默处理或输出警告
+      if (err.code === 'ECONNREFUSED') {
+        console.warn(
+          `[vite] Proxy warning: Cannot connect to backend service. ` +
+          `Make sure the backend is running.`
+        );
+        if (res && !res.headersSent) {
+          res.writeHead(503, {
+            'Content-Type': 'text/plain;charset=utf-8',
+          });
+          res.end('Service Unavailable: Backend service is not running');
+        }
+        return;
+      }
+      // 其他错误继续正常处理
+      next(err);
     },
   };
 }

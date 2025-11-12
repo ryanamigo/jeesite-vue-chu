@@ -37,7 +37,8 @@
       title="未检测人员"
       :width="800"
       :footer="null"
-    >sx
+    >
+      <a-table
         :columns="untestedColumns"
         :data-source="untestedList"
         :pagination="false"
@@ -60,7 +61,7 @@ import { Modal } from 'ant-design-vue';
 import {
   getResultInformationList,
   deleteRelevantInformationByVideoId,
-  updateAnnotat0ionInfo,
+  updateAnnotationInfo,
   exportPdfFile,
   exportAllPdf,
   exportTaskExcel,

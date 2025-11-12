@@ -1474,6 +1474,7 @@ onUnmounted(() => {
 
   .visual_conTop {
     display: flex;
+    flex-direction: row; 
     gap: 10px;
     height: 25%;
     flex-shrink: 0;

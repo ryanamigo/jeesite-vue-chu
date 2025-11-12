@@ -5,7 +5,7 @@
 -->
 <template>
   <div>
-    <!-- 文件上传输入 -->
+    <!-- 文件上传输入（隐藏） -->
     <input
       ref="videoFileInputRef"
       type="file"
@@ -37,7 +37,8 @@
       title="未检测人员"
       :width="800"
       :footer="null"
-    >sx
+    >
+      <a-table
         :columns="untestedColumns"
         :data-source="untestedList"
         :pagination="false"
@@ -57,10 +58,11 @@ import { Icon } from '@jeesite/core/components/Icon';
 import { BasicTable, BasicColumn, useTable } from '@jeesite/core/components/Table';
 import { FormProps } from '@jeesite/core/components/Form';
 import { Modal } from 'ant-design-vue';
+import { isEmpty } from '@jeesite/core/utils/is';
 import {
   getResultInformationList,
   deleteRelevantInformationByVideoId,
-  updateAnnotat0ionInfo,
+  updateAnnotationInfo,
   exportPdfFile,
   exportAllPdf,
   exportTaskExcel,
@@ -536,6 +538,7 @@ async function handleBatchDelete() {
 
 // 全选
 function handleSelectAll() {
+  // BasicTable 的 rowSelection 已经支持全选功能
   showMessage('请使用表格左上角的全选复选框', 'info');
 }
 </script>

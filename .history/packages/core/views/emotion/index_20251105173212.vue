@@ -355,6 +355,8 @@ const getFilterParams = () => {
   if (params.endAge === '' || params.endAge === null || params.endAge === undefined) {
     params.endAge = null;
   }
+  
+  // testNumbers 确保是数组，空数组保持不变
   if (!Array.isArray(params.testNumbers)) {
     params.testNumbers = params.testNumbers ? (Array.isArray(params.testNumbers) ? params.testNumbers : [params.testNumbers]) : [];
   }

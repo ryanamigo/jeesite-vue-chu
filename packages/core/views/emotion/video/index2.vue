@@ -149,17 +149,34 @@ const clearInfo = () => {
   formData2 = new FormData();
   const startBtn = getEl('start-btn') as HTMLButtonElement;
   if (startBtn) startBtn.disabled = true;
-  const name = getInput('name');
-  const idNumber = getInput('idNumber');
-  const age = getInput('age');
-  if (name) name.value = '';
-  if (idNumber) idNumber.value = '';
-  if (age) age.value = '';
-  clearTreeSelect();
+
+  // 清空绑定的数据模型
+  pername.value = '';
+  peridNumber.value = '';
+  perage.value = '';
+
+  // 清空部门选择与相关缓存
+  currentCompanyId.value = '' as any;
+  companyName = null;
+  companyCode = null;
+
+  // 清空本地文件状态
+  shotFile = null;
+  idFile = null;
+
+  // 清空性别选择
+  try {
+    (document.getElementById('male') as HTMLInputElement).checked = false;
+    (document.getElementById('female') as HTMLInputElement).checked = false;
+  } catch {}
+
+  // 清空画布
   const idCanvas = document.getElementById('idcanvas') as HTMLCanvasElement | null;
   const snapshot = document.getElementById('snapshot') as HTMLCanvasElement | null;
   if (idCanvas) { const ctx = idCanvas.getContext('2d'); ctx?.clearRect(0, 0, idCanvas.width, idCanvas.height); }
   if (snapshot) { const ctx2 = snapshot.getContext('2d'); ctx2?.clearRect(0, 0, snapshot.width, snapshot.height); }
+
+  // 重新触发自动读卡
   try { autoReadIDCard(); } catch {}
 };
 const notifyError = (msg: string) => {
@@ -209,6 +226,8 @@ const clearTreeSelect = () => {
     if (code) code.value = '';
     if (name) name.value = '';
     companyName = null;
+    companyCode = null;
+    currentCompanyId.value = undefined as any;
   } catch {}
 };
 
@@ -308,8 +327,8 @@ const openReader1 = () => {
             if (msgJson.rCode === '0') {
               const name = getInput('name');
               const idNumber = getInput('idNumber');
-              if (name) name.value = msgJson.name || '';
-              if (idNumber) idNumber.value = msgJson.certNo || '';
+              pername.value = msgJson.name || '';
+              peridNumber.value = msgJson.certNo || '';
 
               const idCanvas = document.getElementById('idcanvas') as HTMLCanvasElement | null;
               if (idCanvas) {
@@ -324,7 +343,7 @@ const openReader1 = () => {
                     try {
                       idFile = new File([blob], 'idFile.png', { type: 'image/png' });
                       if (!formData2) formData2 = new FormData();
-                      formData2.append('idFile', idFile);
+                      // 不在此处追加到任何表单，改为在保存时统一装载
                     } catch {}
                   }, 'image/png');
                 };
@@ -359,8 +378,7 @@ const openReader1 = () => {
                   ) {
                     age--;
                   }
-                  const ageInput = getInput('age');
-                  if (ageInput) ageInput.value = String(age);
+                  perage.value = String(age);
                 }
               } catch {}
 
@@ -518,9 +536,9 @@ const informationMatching = () => {
               if (statusInfo) statusInfo.innerHTML = resp[0].name;
               const startBtn = getEl('start-btn') as HTMLButtonElement;
               if (startBtn) startBtn.disabled = true;
-              (document.getElementById('name') as HTMLInputElement)?.value !== undefined && ((document.getElementById('name') as HTMLInputElement).value = resp[0].name || '');
-              (document.getElementById('idNumber') as HTMLInputElement)?.value !== undefined && ((document.getElementById('idNumber') as HTMLInputElement).value = resp[0].pidcard || '');
-              (document.getElementById('age') as HTMLInputElement)?.value !== undefined && ((document.getElementById('age') as HTMLInputElement).value = resp[0].age || '');
+              pername.value = resp[0].name || '';
+              peridNumber.value = resp[0].pidcard || '';
+              perage.value = resp[0].age || '';
               if (resp[0].gender === '男') {
                 (document.getElementById('male') as HTMLInputElement).checked = true;
                 (document.getElementById('female') as HTMLInputElement).checked = false;
@@ -754,23 +772,24 @@ let pername = ref('');
 let peridNumber = ref('');
 let perage = ref('');
 
-
-
 const saveInfo = async () => {
   try {
-    let formData3 = new FormData();
+    const formData3 = new FormData();
 
-    formData3.append('name', pername.value);
-    formData3.append('idNumber', peridNumber.value);
+    formData3.append('pname', pername.value);
+    formData3.append('pidcard', peridNumber.value);
     formData3.append('age', perage.value);
-    formData3.append('shotFile', shotFile);
-    formData3.append('idFile', shotFile);
-    formData3.append('gender',"女");
+    if (shotFile) formData3.append('shotFile', shotFile);
+    if (idFile) formData3.append('idFile', idFile);
+    const genderInput = document.querySelector('input.gender:checked') as HTMLInputElement | null;
+    formData3.append('pgender', genderInput?.value || '');
     const targetCompany = companyTreeData.value.find(item => item.id === currentCompanyId.value)
-    formData3.append('company.companyName',targetCompany.name);
-    formData3.append('company.companyCode', targetCompany.code)
+    formData3.append('companyName',targetCompany.name);
+    formData3.append('companyCode', targetCompany.code)
     // console.log()
     await insertOrModifyInformation(formData3)
+    // 保存成功后清空所有信息
+    clearInfo();
   } finally {
     try { autoReadIDCard(); } catch {}
   }

@@ -116,12 +116,14 @@
 </template>
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
-import { faceRecognitionBySnapshot, getCompanyTreeData, getTasksData, getVideoStatus,insertOrModifyInformation, judgePerson, adjustingTheAngle } from '../../../api/emption/vedio';
+import { faceRecognitionBySnapshot, getCompanyTreeData, getTasksData, getVideoStatus,insertOrModifyInformation, judgePerson, adjustingTheAngle, insertVideoInformation } from '../../../api/emption/vedio';
+import { useGlobSetting } from '@jeesite/core/hooks/setting';
 import { log } from 'console';
 
 const startBtnDisabled = ref(true);
 const companyTreeData = ref()
 const currentCompanyId = ref()
+const { adminPath } = useGlobSetting();
 
 let cameraStream: MediaStream | null = null;
 let cameraStream2: MediaStream | null = null;
@@ -138,6 +140,14 @@ let adjustingTheAngleId: number | null = null;
 let flagAdjustingTheAngle = 0; // 姿态调整标志（0：未开始，1：开始）
 let recordingModeb: string | undefined;
 let isstart: boolean; // 录制开始状态
+
+// 视频录制相关变量
+let mediaRecorder: MediaRecorder | null = null;
+let mediaRecorder2: MediaRecorder | null = null;
+let videoData: Blob[] = [];
+let videoData2: Blob[] = [];
+let recordingInterrupted = 0; // 被迫中断标志位
+let videoScreen: number | null = null;
 
 const getEl = (id: string) => document.getElementById(id) as HTMLElement;
 const getInput = (id: string) => document.getElementById(id) as HTMLInputElement;
@@ -683,8 +693,8 @@ const videoAnalytics = async () => {
           if (name) {
             statusInfo.innerHTML = name.value + '录制中,请保持位置20秒';
           }
-          // 这里可以调用开始录制的函数
-          // startVideo();
+          // 开始录制视频
+          startVideo();
           break;
         default:
           break;
@@ -696,9 +706,223 @@ const videoAnalytics = async () => {
   }
 };
 
+const startVideo = () => {
+  stopAdjustingTheAngle();
+
+  // 停止任何当前正在运行的录制，开始当前的录制
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    mediaRecorder.stop();
+  }
+  if (mediaRecorder2 && mediaRecorder2.state === 'recording') {
+    mediaRecorder2.stop();
+  }
+
+  // 清空视频数据数组
+  videoData = [];
+  videoData2 = [];
+
+  // 检查摄像头流是否可用
+  if (!cameraStream || !cameraStream2) {
+    notifyError('摄像头未就绪，无法开始录制');
+    return;
+  }
+
+  // 创建媒体录制
+  mediaRecorder = new MediaRecorder(cameraStream, { mimeType: 'video/webm' });
+  mediaRecorder2 = new MediaRecorder(cameraStream2, { mimeType: 'video/webm' });
+
+  // 开始录制
+  mediaRecorder.start();
+  mediaRecorder2.start();
+
+  // 处理视频数据
+  mediaRecorder.addEventListener('dataavailable', ev => {
+    videoData.push(ev.data);
+  });
+
+  mediaRecorder2.addEventListener('dataavailable', ev => {
+    if (ev.data && ev.data.size > 0) {
+      videoData2.push(ev.data);
+    }
+  });
+
+  // 录制停止事件
+  mediaRecorder.addEventListener('stop', () => {
+    const videoBlob = new Blob(videoData, { type: 'video/webm' });
+    if (recordingInterrupted === 1) {
+      setTimeout(() => {
+        const statusInfo = getEl('statusInfo');
+        if (statusInfo) statusInfo.innerHTML = '';
+      }, 3000);
+      recordingInterrupted = 0;
+      notifyError('请重新录制！');
+      recordingEnds();
+    } else {
+      // 正常录制完成，开始下载流程
+      const statusInfo = getEl('statusInfo');
+      if (statusInfo) statusInfo.innerHTML = '';
+      download();
+    }
+  });
+
+  mediaRecorder2.addEventListener('stop', () => {
+    const videoBlob2 = new Blob(videoData2, { type: 'video/webm' });
+  });
+
+  startCountdown(20); // 开始20秒倒计时
+};
+
+const startCountdown = (duration: number) => {
+  let timer = duration;
+  const progressBar = getEl('progressBar');
+  if (!progressBar) return;
+
+  progressBar.innerHTML = '<div id="progressFill"></div>';
+  const progressFill = getEl('progressFill');
+  if (!progressFill) return;
+
+  let step = progressBar.offsetWidth / duration;
+  const countdownTimer = setInterval(() => {
+    const minutes = Math.floor(timer / 60);
+    const seconds = timer % 60;
+    const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+    if (progressFill) {
+      progressFill.style.width = step * (duration - timer) + 'px';
+      progressFill.textContent = formattedTime;
+    }
+
+    const statusInfo = getEl('statusInfo');
+    if (statusInfo) statusInfo.innerHTML = formattedTime;
+
+    if (--timer < 0) {
+      clearInterval(countdownTimer);
+      stopSnapshotInterval();
+      if (videoScreen) clearInterval(videoScreen);
+      if (progressBar) progressBar.style.color = '#91f2f4';
+
+      // 停止录制
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+      }
+      if (mediaRecorder2 && mediaRecorder2.state === 'recording') {
+        mediaRecorder2.stop();
+      }
+    }
+  }, 1000);
+};
+
+const download = async () => {
+  if (videoData.length === 0) {
+    notifyWarn('请先录制视频');
+    return;
+  }
+
+  notifyWarn('正在保存，请稍候...');
+
+  const formData = new FormData();
+
+  // 任务批次编号
+  const taskSelect = document.getElementById('taskSelection') as HTMLSelectElement;
+  if (!taskSelect) {
+    notifyError('请选择任务批次');
+    return;
+  }
+
+  const testNumber = taskSelect.value;
+  const testNumberName = taskSelect.options[taskSelect.selectedIndex].text;
+  const name = getInput('name');
+  const idNumber = getInput('idNumber');
+
+  const videoBlob = new Blob(videoData, { type: 'video/webm' });
+  const videoBlob2 = new Blob(videoData2, { type: 'video/webm' });
+
+  formData.append('nirVideoFile', videoBlob2);
+  formData.append('videoFile', videoBlob);
+  formData.append('pname', name?.value || '');
+  formData.append('pidCard', idNumber?.value || '');
+  formData.append('testNumber', testNumber);
+  formData.append('testNumberName', testNumberName);
+
+  try {
+    await insertVideoInformation(formData);
+    notifyWarn('视频保存成功！');
+    recordingEnds();
+    
+  } catch (error) {
+    console.error('Error saving video:', error);
+    notifyError('视频保存失败！');
+    recordingEnds();
+  }
+};
+
+const recordingEnds = () => {
+  // 清空个人信息
+  const name = getInput('name');
+  const idNumber = getInput('idNumber');
+  const age = getInput('age');
+
+  if (name) name.value = '';
+  if (idNumber) idNumber.value = '';
+  if (age) age.value = '';
+
+  // 清空性别选择
+  try {
+    (document.getElementById('male') as HTMLInputElement).checked = false;
+    (document.getElementById('female') as HTMLInputElement).checked = false;
+  } catch {}
+
+  // 清空部门选择
+  currentCompanyId.value = '' as any;
+  companyName = null;
+  companyCode = null;
+
+  // 清除canvas内容
+  const idCanvas = document.getElementById('idcanvas') as HTMLCanvasElement;
+  const snapshotCanvas = document.getElementById('snapshot') as HTMLCanvasElement;
+
+  if (idCanvas) {
+    const ctx1 = idCanvas.getContext('2d');
+    ctx1?.clearRect(0, 0, idCanvas.width, idCanvas.height);
+  }
+
+  if (snapshotCanvas) {
+    const ctx2 = snapshotCanvas.getContext('2d');
+    ctx2?.clearRect(0, 0, snapshotCanvas.width, snapshotCanvas.height);
+  }
+
+  formData2 = new FormData();
+
+  // 重置进度条
+  const progressBar = getEl('progressBar');
+  if (progressBar) {
+    progressBar.innerHTML = '<div id="progressFill"></div>';
+  }
+
+  // 重置界面状态
+  const selfName = getEl('selfName');
+  if (selfName) {
+    selfName.innerHTML = '视频录制';
+    (selfName as HTMLElement).style.left = '5%';
+  }
+
+  const recordingMode = (document.getElementById('recordingMode') as HTMLSelectElement)?.value;
+  const startBtn = getEl('start-btn') as HTMLButtonElement;
+  const recordingModeSelect = document.getElementById('recordingMode') as HTMLSelectElement;
+
+  if (startBtn) startBtn.disabled = false;
+  if (recordingModeSelect) recordingModeSelect.disabled = false;
+
+  // 如果是自动录制模式，重新启动信息匹配
+  if (recordingMode === 'automaticRecording') {
+    setTimeout(() => {
+      informationMatching();
+    }, 6000);
+  }
+};
+
 const startRecording = () => {
   const selfName = getEl('selfName');
-  // debugger
   if (selfName && (selfName as HTMLElement).style.backgroundColor === 'rgb(5, 148, 183)') {
     startBtnDisabled.value = true;
     const statusInfo = getEl('statusInfo');
@@ -717,7 +941,6 @@ const startRecording = () => {
       if (!selectedTask) return;
       if (currentCompanyId.value&& name?.value && idNumber?.value && age?.value) {
         window.clearInterval(checker);
-        // debugger
         itExists(idNumber.value);
       }
     }, 5000);
@@ -758,7 +981,6 @@ const handleSnapshot = () => {
   offscreenContext.restore();
 
   offscreenCanvas.toBlob(async (blob) => {
-    // debugger
     // if (!blob) return;
     try {
       const rectData = await faceRecognitionBySnapshot(blob);
@@ -806,10 +1028,14 @@ const handleSnapshot = () => {
 
           // 将画布内容转换为 Blob 对象
           Canvas.toBlob(function (blob) {
-            shotFile = new File([blob], 'snapshot.png', { type: 'image/png' });
+            if (blob) {
+              shotFile = new File([blob], 'snapshot.png', { type: 'image/png' });
+            }
           }, 'image/png');
         };
-        image.src = URL.createObjectURL(blob); // 将Blob对象转换为URL        
+        if (blob) {
+          image.src = URL.createObjectURL(blob); // 将Blob对象转换为URL
+        }        
       } else {
         // 接口未返回有效结果，保留本地预览
         notifyWarn('照片不合格，请调整姿态后重试');
@@ -947,6 +1173,15 @@ onBeforeUnmount(() => {
   stopAdjustingTheAngle();
   if (startinformationMatching) window.clearInterval(startinformationMatching);
   if (readIDIntervalId) window.clearInterval(readIDIntervalId);
+
+  // 停止媒体录制器
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    mediaRecorder.stop();
+  }
+  if (mediaRecorder2 && mediaRecorder2.state === 'recording') {
+    mediaRecorder2.stop();
+  }
+
   try {
     if (socket && socket.readyState === 1) {
       socket.send('EST_StopReadIDCard#');

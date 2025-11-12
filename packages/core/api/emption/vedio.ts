@@ -1,5 +1,6 @@
 import { defHttp } from '@jeesite/core/utils/http/axios';
 import { useGlobSetting } from '@jeesite/core/hooks/setting';
+import { url } from 'inspector';
 
 const { adminPath } = useGlobSetting();
 
@@ -63,4 +64,14 @@ export const adjustingTheAngle = (nirFile: Blob, rbgFile: Blob) => {
       'Content-Type': 'multipart/form-data',
     },
   });
+}
+
+export const insertVideoInformation = (formData: FormData) => {
+  return defHttp.post({
+    url:adminPath  + '/emotion/emotionVideo/insertVideoInformation',
+    params: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  })
 }

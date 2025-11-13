@@ -148,6 +148,7 @@ let videoData: Blob[] = [];
 let videoData2: Blob[] = [];
 let recordingInterrupted = 0; // 被迫中断标志位
 let videoScreen: number | null = null;
+let recordingLock = false; // 录制互斥锁，防止并发启动
 
 const getEl = (id: string) => document.getElementById(id) as HTMLElement;
 const getInput = (id: string) => document.getElementById(id) as HTMLInputElement;
@@ -429,9 +430,10 @@ const stopSnapshotInterval = () => {
     window.clearInterval(intervalId);
     intervalId = null;
   }
-};
+}
 
 const startMediaDevices = () => {
+  console.log('startMediaDevices')
   const targetDeviceName = 'AXZW6C (0c40:0c80)';
   navigator.mediaDevices.enumerateDevices()
     .then(function (devices) {
@@ -707,6 +709,10 @@ const videoAnalytics = async () => {
 };
 
 const startVideo = () => {
+  // 并发保护：若已在录制流程中，直接返回
+  if (recordingLock) return;
+  recordingLock = true;
+
   stopAdjustingTheAngle();
 
   // 停止任何当前正在运行的录制，开始当前的录制
@@ -724,6 +730,7 @@ const startVideo = () => {
   // 检查摄像头流是否可用
   if (!cameraStream || !cameraStream2) {
     notifyError('摄像头未就绪，无法开始录制');
+    recordingLock = false;
     return;
   }
 
@@ -857,6 +864,9 @@ const download = async () => {
 };
 
 const recordingEnds = () => {
+  // 释放录制互斥锁
+  recordingLock = false;
+
   // 清空个人信息
   const name = getInput('name');
   const idNumber = getInput('idNumber');

@@ -29,5 +29,8 @@
     "name": "ThinkGem",
     "email": "thinkgem@163.com",
     "url": "https://gitee.com/thinkgem"
+  },
+  "devDependencies": {
+    "sass-embedded": "^1.93.3"
   }
 }

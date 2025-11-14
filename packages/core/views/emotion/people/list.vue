@@ -47,7 +47,6 @@
   import { FormProps } from '@jeesite/core/components/Form';
   import { isEmpty } from '@jeesite/core/utils/is';
   import { getPersonList, getPersonStatistics, importDatabaseData, exportDatabase, importFile, requestAllModeling, requestIndividualModeling, deletePerson, exportPersonReport, updatePositionAndName } from '@jeesite/core/api/emption/people';
-  import {xiangqing} from '@jeesite/core/views/emotion/people/xiangqing.vue';
 
   const props = defineProps({
     treeCodes: Array as PropType<String[]>,
@@ -363,7 +362,17 @@
   }
 
   function onRowDetail(record: any) {
-    openDrawer(true, record);
+    // 跳转到详情页 /emotion/xiangqing，并携带人员基本信息
+    router.push({
+      path: '/emotion/xiangqing',
+      query: {
+        pname: record.pname || '',
+        pgender: record.pgender || '',
+        age: record.age || '',
+        pidcard: record.pidcard || '',
+        ppositionName: record.ppositionName || '',
+      },
+    });
   }
 
   async function onRowModeling(record: any) {

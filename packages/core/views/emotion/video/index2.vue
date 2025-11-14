@@ -264,6 +264,17 @@ const toggleInfoInputs = () => {
   clearTreeSelect();
   if (progressBar) progressBar.innerHTML = '<div id="progressFill"></div>';
   const mode = (document.getElementById('recordingMode') as HTMLSelectElement)?.value;
+
+  // 模式切换时，若正在录制或姿态检测，立即停止
+  try {
+    if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+  } catch {}
+  try {
+    if (mediaRecorder2 && mediaRecorder2.state === 'recording') mediaRecorder2.stop();
+  } catch {}
+  isstart = false;
+  stopAdjustingTheAngle();
+
   if (startBtn) startBtn.style.display = 'block';
   if (mode === 'manualRecording') {
     if (startBtn) startBtn.disabled = true;
@@ -602,7 +613,7 @@ const startAdjustingTheAngle = () => {
     videoAnalytics();
     adjustingTheAngleId = window.setInterval(() => {
       videoAnalytics();
-    }, 1000);
+    }, 2000);
   }
 };
 
@@ -679,6 +690,19 @@ const videoAnalytics = async () => {
       const statusInfo = getEl('statusInfo');
       if (!statusInfo) return;
 
+      // 若正在录制且姿势不达标，立即中断录制
+      if (mediaRecorder && mediaRecorder.state === 'recording' && response !== 3) {
+        recordingInterrupted = 1;
+        statusInfo.innerHTML = '姿势不符合，已停止录制';
+        try {
+          if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+        } catch {}
+        try {
+          if (mediaRecorder2 && mediaRecorder2.state === 'recording') mediaRecorder2.stop();
+        } catch {}
+        return;
+      }
+
       switch (response) {
         case 0:
           statusInfo.innerHTML = '没有人脸或多个人脸';
@@ -690,11 +714,6 @@ const videoAnalytics = async () => {
           statusInfo.innerHTML = '亮度过低请靠近';
           break;
         case 3:
-          stopAdjustingTheAngle();
-          const name = getInput('name');
-          if (name) {
-            statusInfo.innerHTML = name.value + '录制中,请保持位置20秒';
-          }
           // 开始录制视频
           startVideo();
           break;
@@ -712,8 +731,6 @@ const startVideo = () => {
   // 并发保护：若已在录制流程中，直接返回
   if (recordingLock) return;
   recordingLock = true;
-
-  stopAdjustingTheAngle();
 
   // 停止任何当前正在运行的录制，开始当前的录制
   if (mediaRecorder && mediaRecorder.state === 'recording') {
@@ -800,7 +817,10 @@ const startCountdown = (duration: number) => {
     }
 
     const statusInfo = getEl('statusInfo');
-    if (statusInfo) statusInfo.innerHTML = formattedTime;
+    // 仅在录制状态下显示秒数
+    if (statusInfo && mediaRecorder && mediaRecorder.state === 'recording') {
+      statusInfo.innerHTML = formattedTime;
+    }
 
     if (--timer < 0) {
       clearInterval(countdownTimer);
@@ -875,6 +895,15 @@ const recordingEnds = () => {
   if (name) name.value = '';
   if (idNumber) idNumber.value = '';
   if (age) age.value = '';
+  pername.value = '';
+  peridNumber.value = '';
+  perage.value = '';
+  shotFile = null;
+  idFile = null;
+
+  // 停止姿态检测，确保手动录制只录一次
+  isstart = false;
+  stopAdjustingTheAngle();
 
   // 清空性别选择
   try {

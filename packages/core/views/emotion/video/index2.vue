@@ -288,7 +288,8 @@ const toggleInfoInputs = () => {
       }
     }, 1000);
   } else {
-    if (isclearInfo) informationMatching();
+    // 自动模式：无条件启动信息匹配，确保循环识别
+    informationMatching();
     if (startBtn) startBtn.disabled = true;
     if (name) name.value = '';
     if (idNumber) idNumber.value = '';
@@ -610,16 +611,14 @@ const startAdjustingTheAngle = () => {
   if (startBtn) startBtn.disabled = true;
   if (flagAdjustingTheAngle === 0) {
     flagAdjustingTheAngle = 1;
+    // 改为：先执行一次检测，后续在每次响应后延迟1秒再触发
     videoAnalytics();
-    adjustingTheAngleId = window.setInterval(() => {
-      videoAnalytics();
-    }, 2000);
   }
 };
 
 const stopAdjustingTheAngle = () => {
   if (adjustingTheAngleId) {
-    window.clearInterval(adjustingTheAngleId);
+    window.clearTimeout(adjustingTheAngleId);
     adjustingTheAngleId = null;
   }
 };
@@ -700,6 +699,10 @@ const videoAnalytics = async () => {
         try {
           if (mediaRecorder2 && mediaRecorder2.state === 'recording') mediaRecorder2.stop();
         } catch {}
+        // 后端返回后，延迟1秒再进行下一次检测（若仍处于检测状态）
+        if (isstart) {
+          adjustingTheAngleId = window.setTimeout(() => { videoAnalytics(); }, 1000);
+        }
         return;
       }
 
@@ -719,6 +722,11 @@ const videoAnalytics = async () => {
           break;
         default:
           break;
+      }
+
+      // 后端返回后，延迟1秒再进行下一次检测（若仍处于检测状态）
+      if (isstart) {
+        adjustingTheAngleId = window.setTimeout(() => { videoAnalytics(); }, 1000);
       }
     }
   } catch (error) {
@@ -954,9 +962,11 @@ const recordingEnds = () => {
 
   // 如果是自动录制模式，重新启动信息匹配
   if (recordingMode === 'automaticRecording') {
+    // 恢复“视频录制”面板为选中状态，便于 informationMatching 的前置条件通过
+    setStyles('selfName', 'rgb(5, 148, 183)', '5px');
     setTimeout(() => {
       informationMatching();
-    }, 6000);
+    }, 1000);
   }
 };
 

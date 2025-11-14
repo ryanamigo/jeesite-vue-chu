@@ -46,7 +46,8 @@
   import { useDrawer } from '@jeesite/core/components/Drawer';
   import { FormProps } from '@jeesite/core/components/Form';
   import { isEmpty } from '@jeesite/core/utils/is';
-import { getPersonList, getPersonStatistics, importDatabaseData, exportDatabase, importFile, requestAllModeling, requestIndividualModeling, deletePerson, exportPersonReport, updatePositionAndName } from '@jeesite/core/api/emption/people';
+  import { getPersonList, getPersonStatistics, importDatabaseData, exportDatabase, importFile, requestAllModeling, requestIndividualModeling, deletePerson, exportPersonReport, updatePositionAndName } from '@jeesite/core/api/emption/people';
+  import {xiangqing} from '@jeesite/core/views/emotion/people/xiangqing.vue';
 
   const props = defineProps({
     treeCodes: Array as PropType<String[]>,

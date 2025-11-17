@@ -108,6 +108,6 @@ const handleClick = () => {
   justify-content: center;
   align-items: center;
   width: 50%;
-  float: right;
+  float: r.ight;
 }
 </style>

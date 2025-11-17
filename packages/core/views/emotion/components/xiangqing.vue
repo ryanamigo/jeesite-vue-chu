@@ -1589,15 +1589,21 @@ const handleExportPdf = async () => {
   createMessage.info('正在生成PDF...');
   try {
     const response: any = await exportPdf(videoId.value);
-    const blob = new Blob([response], { type: 'application/pdf' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    const fileName = `心理评估报告_${formState.pname || formState.pidcard}_${new Date().toLocaleDateString()}.pdf`;
-    a.href = url;
-    a.download = fileName;
-    a.click();
-    window.URL.revokeObjectURL(url);
-    createMessage.success('PDF导出成功，已开始下载');
+    const rawData = response?.data ?? response;
+    let messageText = '';
+    if (rawData instanceof Blob) {
+      messageText = await rawData.text();
+    } else if (typeof rawData === 'string') {
+      messageText = rawData;
+    } else if (rawData && typeof rawData === 'object') {
+      messageText = rawData.message || rawData.msg || '';
+    }
+
+    if (!messageText) {
+      messageText = 'PDF生成成功';
+    }
+
+    createMessage.success(messageText);
     exportButtonLabel.value = '导出成功';
     setTimeout(() => (exportButtonLabel.value = '导出本次报告'), 1200);
   } catch (error) {

@@ -32,7 +32,6 @@
         :row-class-name="getRowClassName"
         class="table-box"
         :row-key="config.rowKey"
-        :row-selection="rowSelection"
         :loading="tableLoading"
         :pagination="false"
       />
@@ -169,7 +168,6 @@ const dynamicColumns = computed(() => {
     },
   ];
 
-  // 任务列
   if (props.config.showTask) {
     cols.push({
       title: '任务',
@@ -179,7 +177,6 @@ const dynamicColumns = computed(() => {
     });
   }
 
-  // 测试时间
   cols.push({
     title: '测试时间',
     dataIndex: 'createdAt',
@@ -187,42 +184,39 @@ const dynamicColumns = computed(() => {
     align: 'center',
   });
 
-      // 查看视频列
-      if (props.config.showVideo) {
-        cols.push({
-          title: '查看视频',
-          key: 'video',
-          align: 'center',
-          customRender: ({ record }: { record: RowData }) => {
-            const videoRecord = record as VideoRowData;
-            const videoBtn = h(
-              'a',
-              {
-                style: {
-                  color: isCollectAccount.value ? '#999' : '#d7d717',
-                  textDecoration: 'underline',
-                  cursor: isCollectAccount.value ? 'not-allowed' : 'pointer',
-                  pointerEvents: isCollectAccount.value ? 'none' : 'auto'
-                },
-                onClick: () => {
-                  if (!isCollectAccount.value) {
-                    // 使用路由路径而不是name，因为HTML中使用的是路径
-                    router.push({
-                      path: '/emotion/emotionResult/checkVideoForm',
-                      query: { videoId: videoRecord.videoId }
-                    });
-                  }
-                },
-                class: 'addTabPage'
-              },
-              '查看'
-            );
-            return h('div', [videoBtn]);
+  if (props.config.showVideo) {
+    cols.push({
+      title: '查看视频',
+      key: 'video',
+      align: 'center',
+      customRender: ({ record }: { record: RowData }) => {
+        const videoRecord = record as VideoRowData;
+        const videoBtn = h(
+          'a',
+          {
+            style: {
+              color: isCollectAccount.value ? '#999' : '#d7d717',
+              textDecoration: 'underline',
+              cursor: isCollectAccount.value ? 'not-allowed' : 'pointer',
+              pointerEvents: isCollectAccount.value ? 'none' : 'auto'
+            },
+            onClick: () => {
+              if (!isCollectAccount.value) {
+                router.push({
+                  path: '/emotion/emotionResult/checkVideoForm',
+                  query: { videoId: videoRecord.videoId }
+                });
+              }
+            },
+            class: 'addTabPage'
           },
-        });
-      }
+          '查看'
+        );
+        return h('div', [videoBtn]);
+      },
+    });
+  }
 
-  // 标注列
   if (props.config.showAnnotation) {
     cols.push({
       title: '标注',
@@ -236,11 +230,6 @@ const dynamicColumns = computed(() => {
           {
             style: 'color: #FFFFFF; cursor: pointer;',
             title: videoRecord.annotation || '',
-            onMouseenter: (e: MouseEvent) => {
-              if (videoRecord.annotation) {
-                // 可以添加tooltip显示完整标注内容
-              }
-            }
           },
           annotationText
         );
@@ -249,17 +238,14 @@ const dynamicColumns = computed(() => {
     });
   }
 
-  // 操作列
   cols.push({
     title: '操作',
     key: 'operation',
     align: 'center',
     width: 200,
     customRender: ({ record }: { record: RowData }) => {
-      // 详情按钮
       const hasDetail = props.config.identifierField === 'pidcard' || 
                        (props.config.identifierField === 'videoId' && props.config.pageType !== 'invalidVideo');
-      
       const detailBtn = hasDetail ? h('a', {
         style: {
           color: isCollectAccount.value ? '#999' : '#00f2ff',
@@ -284,9 +270,11 @@ const dynamicColumns = computed(() => {
           }
         },
         class: 'addTabPage'
-      }, '详情') : null;
+      }, [
+        h('i', { class: 'icon-list', style: 'margin-right: 4px;' }, ''),
+        '详情'
+      ]) : null;
 
-      // 删除按钮
       const deleteBtn = h('a', {
         style: {
           color: isCollectAccount.value ? '#999' : '#dd4b39',
@@ -295,14 +283,16 @@ const dynamicColumns = computed(() => {
           pointerEvents: isCollectAccount.value ? 'none' : 'auto'
         },
         onClick: () => !isCollectAccount.value && handleSingleDelete(record)
-      }, '删除');
+      }, [
+        h('i', { class: 'fa fa-trash-o', style: 'margin-right: 4px;' }, ''),
+        '删除'
+      ]);
 
       const buttons = detailBtn ? [detailBtn, deleteBtn] : [deleteBtn];
       return h('div', buttons);
     },
   });
 
-  // 导出报告列
   if (props.config.showExport) {
     cols.push({
       title: '导出报告',
@@ -312,7 +302,7 @@ const dynamicColumns = computed(() => {
         const exportBtn = h(
           'a',
           {
-            style: 'color: #00a45a; text-decoration: underline;',
+            style: 'color: #00a45a; text-decoration: underline; cursor: pointer;',
             disabled: isCollectAccount.value,
             onClick: () => !isCollectAccount.value && handleSingleExport(record)
           },
@@ -323,16 +313,30 @@ const dynamicColumns = computed(() => {
     });
   }
 
+  cols.push({
+    title: '管理',
+    key: 'manage',
+    align: 'center',
+    width: 100,
+    customRender: ({ record }: { record: RowData }) => {
+      const identifier = props.config.rowKey === 'pidcard'
+        ? (record as BaseRowData).pidcard
+        : (record as VideoRowData).videoId;
+      return h('input', {
+        type: 'checkbox',
+        checked: selectedRowKeys.value.includes(identifier),
+        disabled: isCollectAccount.value,
+        onChange: (e: Event) => {
+          const target = e.target as HTMLInputElement;
+          handleCheckboxChange(identifier, target.checked);
+        },
+        style: 'cursor: pointer;',
+      });
+    },
+  });
+
   return cols;
 });
-
-const rowSelection = computed(() => ({
-  selectedRowKeys: selectedRowKeys.value,
-  onChange: (keys: string[]) => {
-    selectedRowKeys.value = keys;
-    checkAllFlag.value = keys.length > 0 && keys.length === tableData.value.length;
-  },
-}));
 
 // ---------------------- 工具函数 ----------------------
 const getRowClassName = (_: any, index: number) => {
@@ -398,6 +402,19 @@ const handleExport = async (record: RowData) => {
   }
 };
 
+const handleCheckboxChange = (key: string, checked: boolean) => {
+  if (checked) {
+    if (!selectedRowKeys.value.includes(key)) {
+      selectedRowKeys.value = [...selectedRowKeys.value, key];
+    }
+  } else {
+    selectedRowKeys.value = selectedRowKeys.value.filter(item => item !== key);
+  }
+  checkAllFlag.value =
+    selectedRowKeys.value.length > 0 &&
+    selectedRowKeys.value.length === tableData.value.length;
+};
+
 // ---------------------- 事件处理 ----------------------
 const handleCheckAll = () => {
   if (checkAllFlag.value) {
@@ -412,6 +429,8 @@ const handleCheckAll = () => {
   checkAllFlag.value = !checkAllFlag.value;
 };
 
+const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 const handleBatchExport = async () => {
   if (selectedRowKeys.value.length === 0) {
     message.info('请选择要导出的记录');
@@ -420,19 +439,23 @@ const handleBatchExport = async () => {
 
   exportLoading.value = true;
   try {
-    const exportPromises = selectedRowKeys.value.map(key => {
+    for (const key of selectedRowKeys.value) {
       const record = tableData.value.find(item => {
-        const identifier = props.config.rowKey === 'pidcard' 
-          ? (item as BaseRowData).pidcard 
+        const identifier = props.config.rowKey === 'pidcard'
+          ? (item as BaseRowData).pidcard
           : (item as VideoRowData).videoId;
         return identifier === key;
       });
-      return record ? handleExport(record) : Promise.resolve();
-    });
-    await Promise.all(exportPromises);
-    message.success('全部导出任务已发起');
+
+      if (record) {
+        await handleExport(record);
+        // 稍作延迟，避免浏览器拦截连续下载
+        await wait(300);
+      }
+    }
+    message.success('批量导出完成');
   } catch (err) {
-    message.error(`部分导出失败: ${err}`);
+    message.error(`批量导出失败: ${err}`);
   } finally {
     exportLoading.value = false;
   }

@@ -10,6 +10,7 @@
 
     <!-- 顶部区域 -->
     <div class="head_top">
+      <img class="img-responsive" :src="logoImg" />
       <!-- 时间筛选按钮 -->
       <div class="time_filtering">
         <button
@@ -21,7 +22,6 @@
           {{ btn.label }}
         </button>
       </div>
-      <img class="img-responsive" :src="logoImg" />
       <div class="time_clock">
         <div class="date">
           <div class="week">
@@ -1346,49 +1346,57 @@ onUnmounted(() => {
 .head_top {
   position: relative;
   height: 10vh;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 20px;
-  background: linear-gradient(180deg, #0a1e3c 0%, #1a2e4c 100%);
-  box-sizing: border-box;
   width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+
+  .img-responsive {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 1;
+  }
 
   .time_filtering {
     position: absolute;
-    top: 15px;
-    left: 100px;
+    bottom: 15px;
+    left: 20px;
     display: flex;
     gap: 10px;
+    z-index: 2;
 
     .button {
-      background-color: #052452;
+      background-color: rgba(5, 36, 82, 0.8);
       color: white;
-      border: 1px solid #052452;
+      border: 1px solid rgba(255, 255, 255, 0.3);
       border-radius: 8px;
       padding: 8px 16px;
       cursor: pointer;
       transition: background-color 0.3s, border-color 0.3s, transform 0.3s;
+      backdrop-filter: blur(4px);
 
       &:hover {
-        background-color: #063a6b;
+        background-color: rgba(6, 58, 107, 0.9);
+        border-color: rgba(255, 255, 255, 0.5);
       }
 
       &.selected {
         transform: scale(1.1);
         border-color: white;
-        background-color: #0a4a8a;
+        background-color: rgba(10, 74, 138, 0.9);
+        box-shadow: 0 0 10px rgba(154, 254, 254, 0.5);
       }
     }
   }
 
-  .img-responsive {
-    height: 60px;
-    margin-left: 200px;
-  }
-
   .time_clock {
-    margin-left: auto;
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    z-index: 2;
 
     .date {
       .week {
@@ -1399,16 +1407,19 @@ onUnmounted(() => {
         .wek {
           font-size: 14px;
           margin-bottom: 5px;
+          text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
         }
 
         .day {
           font-size: 16px;
           margin-bottom: 5px;
+          text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
         }
 
         .time {
           font-size: 20px;
           font-weight: bold;
+          text-shadow: 0 0 5px rgba(0, 0, 0, 0.8);
         }
       }
     }
@@ -1484,7 +1495,7 @@ onUnmounted(() => {
   .visual_conTop {
     display: flex;
     gap: 10px;
-    height: 20%;
+    height: 15%;
     flex-shrink: 0;
     margin-bottom: 3px;
     width: 100%;

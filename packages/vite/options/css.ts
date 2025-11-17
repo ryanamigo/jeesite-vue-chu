@@ -12,7 +12,13 @@ export function createCSSOptions(): CSSOptions {
       less: {
         modifyVars: generateModifyVars(),
         javascriptEnabled: true,
+        // 优化 Less 编译性能
+        compress: false,
+        // 减少编译时间
+        math: 'always',
       },
     },
+    // 禁用 CSS 源码映射，提高编译速度
+    devSourcemap: false,
   };
 }

@@ -1282,46 +1282,17 @@ body {
 .task-filter :deep(.ant-select-selector) {
   display: flex !important;
   align-items: center;
-  overflow-x: auto !important;
-  overflow-y: hidden !important;
-  white-space: nowrap !important;
+  overflow-x: auto;
+  white-space: nowrap;
   padding-right: 24px !important;
-  max-height: 30px !important;
-  /* 自定义滚动条样式，让滚动更明显 */
-  scrollbar-width: thin;
-  scrollbar-color: #1e9fff rgba(255, 255, 255, 0.3);
-}
-
-/* Webkit 浏览器滚动条样式 */
-.task-filter :deep(.ant-select-selector)::-webkit-scrollbar {
-  height: 4px;
-}
-
-.task-filter :deep(.ant-select-selector)::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 2px;
-}
-
-.task-filter :deep(.ant-select-selector)::-webkit-scrollbar-thumb {
-  background: #1e9fff;
-  border-radius: 2px;
-}
-
-.task-filter :deep(.ant-select-selector)::-webkit-scrollbar-thumb:hover {
-  background: #1890ff;
 }
 
 .task-filter :deep(.ant-select-selection-overflow) {
   flex-wrap: nowrap !important;
-  overflow-x: auto !important;
-  overflow-y: hidden !important;
-  width: 100%;
-  max-width: 100%;
 }
 
 .task-filter :deep(.ant-select-selection-overflow-item) {
   margin-right: 6px !important;
-  flex-shrink: 0 !important;
 }
 
 :deep(.ant-select-selection-item),

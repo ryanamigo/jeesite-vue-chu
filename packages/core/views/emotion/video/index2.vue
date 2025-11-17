@@ -140,6 +140,7 @@ let adjustingTheAngleId: number | null = null;
 let flagAdjustingTheAngle = 0; // 姿态调整标志（0：未开始，1：开始）
 let recordingModeb: string | undefined;
 let isstart: boolean; // 录制开始状态
+let countdownTimerId: number | null = null; // 录制倒计时定时器ID
 
 // 视频录制相关变量
 let mediaRecorder: MediaRecorder | null = null;
@@ -267,7 +268,16 @@ const toggleInfoInputs = () => {
 
   // 模式切换时，若正在录制或姿态检测，立即停止
   try {
-    if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      // 标记为中断录制，本次视频不保存
+      recordingInterrupted = 1;
+      // 清理录制倒计时，避免影响下一次录制
+      if (countdownTimerId) {
+        clearInterval(countdownTimerId);
+        countdownTimerId = null;
+      }
+      mediaRecorder.stop();
+    }
   } catch {}
   try {
     if (mediaRecorder2 && mediaRecorder2.state === 'recording') mediaRecorder2.stop();
@@ -528,58 +538,62 @@ const informationMatching = () => {
   isclearInfo = false;
   if (startinformationMatching) window.clearInterval(startinformationMatching);
   startinformationMatching = window.setInterval(async () => {
-    const selfName = getEl('selfName');
     const mode = (document.getElementById('recordingMode') as HTMLSelectElement)?.value;
-    if (selfName && (selfName as HTMLElement).style.backgroundColor === 'rgb(5, 148, 183)') {
-      if (mode === 'automaticRecording') {
-        const selectedTask = (document.getElementById('taskSelection') as HTMLSelectElement)?.value || '';
-        if (!selectedTask) return;
-        isclearInfo = true;
-        if (startinformationMatching) { window.clearInterval(startinformationMatching); startinformationMatching = null; }
-        const videoEl = document.getElementById('video') as HTMLVideoElement;
-        // console.log('Video element:', videoEl);
-        // console.log('Video width:', videoEl?.videoWidth, 'height:', videoEl?.videoHeight);
-        // console.log('Video readyState:', videoEl?.readyState);
-        if (!videoEl || !videoEl.videoWidth) {
-          console.error('Video element not ready or no dimensions');
+    const selfName = getEl('selfName');
+    // 仅在“视频录制”面板被选中且为自动录制模式时，才执行连续扫脸
+    if (
+      mode === 'automaticRecording' &&
+      selfName &&
+      (selfName as HTMLElement).style.backgroundColor === 'rgb(5, 148, 183)'
+    ) {
+      const selectedTask = (document.getElementById('taskSelection') as HTMLSelectElement)?.value || '';
+      if (!selectedTask) return;
+      const videoEl = document.getElementById('video') as HTMLVideoElement;
+      // console.log('Video element:', videoEl);
+      // console.log('Video width:', videoEl?.videoWidth, 'height:', videoEl?.videoHeight);
+      // console.log('Video readyState:', videoEl?.readyState);
+      if (!videoEl || !videoEl.videoWidth) {
+        console.error('Video element not ready or no dimensions');
+        return;
+      }
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      canvas.width = videoEl.videoWidth;
+      canvas.height = videoEl.videoHeight;
+      ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          console.error('Canvas toBlob failed - no blob generated');
           return;
         }
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-        canvas.width = videoEl.videoWidth;
-        canvas.height = videoEl.videoHeight;
-        ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob(async (blob) => {
-          if (!blob) {
-            console.error('Canvas toBlob failed - no blob generated');
-            return;
-          }
-          // console.log('Blob generated:', blob.size, 'bytes, type:', blob.type);
-          try {
-            const resp = await faceRecognitionBySnapshot(blob);
-            if (resp && resp[0] && resp[0].name) {
-              stopSnapshotInterval();
-              const statusInfo = getEl('statusInfo');
-              if (statusInfo) statusInfo.innerHTML = resp[0].name;
-              const startBtn = getEl('start-btn') as HTMLButtonElement;
-              if (startBtn) startBtn.disabled = true;
-              pername.value = resp[0].name || '';
-              peridNumber.value = resp[0].pidcard || '';
-              perage.value = resp[0].age || '';
-              if (resp[0].gender === '男') {
-                (document.getElementById('male') as HTMLInputElement).checked = true;
-                (document.getElementById('female') as HTMLInputElement).checked = false;
-              } else if (resp[0].gender === '女') {
-                (document.getElementById('male') as HTMLInputElement).checked = false;
-                (document.getElementById('female') as HTMLInputElement).checked = true;
-              }
-              // 开始姿态调整
-              window.setTimeout(() => { startAdjustingTheAngle(); }, 500);
+        // console.log('Blob generated:', blob.size, 'bytes, type:', blob.type);
+        try {
+          const resp = await faceRecognitionBySnapshot(blob);
+          if (resp && resp[0] && resp[0].name) {
+            // 识别成功后，标记并停止持续扫脸
+            isclearInfo = true;
+            if (startinformationMatching) { window.clearInterval(startinformationMatching); startinformationMatching = null; }
+            stopSnapshotInterval();
+            const statusInfo = getEl('statusInfo');
+            if (statusInfo) statusInfo.innerHTML = resp[0].name;
+            const startBtn = getEl('start-btn') as HTMLButtonElement;
+            if (startBtn) startBtn.disabled = true;
+            pername.value = resp[0].name || '';
+            peridNumber.value = resp[0].pidcard || '';
+            perage.value = resp[0].age || '';
+            if (resp[0].gender === '男') {
+              (document.getElementById('male') as HTMLInputElement).checked = true;
+              (document.getElementById('female') as HTMLInputElement).checked = false;
+            } else if (resp[0].gender === '女') {
+              (document.getElementById('male') as HTMLInputElement).checked = false;
+              (document.getElementById('female') as HTMLInputElement).checked = true;
             }
-          } catch {}
-        }, 'image/png');
-      }
+            // 开始姿态调整
+            window.setTimeout(() => { startAdjustingTheAngle(); }, 500);
+          }
+        } catch {}
+      }, 'image/png');
     }
   }, 1000);
 };
@@ -692,7 +706,7 @@ const videoAnalytics = async () => {
       // 若正在录制且姿势不达标，立即中断录制
       if (mediaRecorder && mediaRecorder.state === 'recording' && response !== 3) {
         recordingInterrupted = 1;
-        statusInfo.innerHTML = '姿势不符合，已停止录制，正在返回人脸比对';
+        statusInfo.innerHTML = '姿势不符合，已停止录制';
         try {
           if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
         } catch {}
@@ -700,13 +714,18 @@ const videoAnalytics = async () => {
           if (mediaRecorder2 && mediaRecorder2.state === 'recording') mediaRecorder2.stop();
         } catch {}
 
+        // 清理录制倒计时，避免影响下一次录制
+        if (countdownTimerId) {
+          clearInterval(countdownTimerId);
+          countdownTimerId = null;
+        }
+
         // 中断本次姿态检测流程
         isstart = false;
         stopAdjustingTheAngle();
 
         // 自动录制模式下，显式回到人脸比对流程
-        const mode = (document.getElementById('recordingMode') as HTMLSelectElement)?.value;
-        if (mode === 'automaticRecording') {
+        if (recordingModeb === 'automaticRecording') {
           setStyles('selfName', 'rgb(5, 148, 183)', '5px');
           setTimeout(() => {
             informationMatching();
@@ -815,6 +834,12 @@ const startVideo = () => {
 };
 
 const startCountdown = (duration: number) => {
+  // 启动新一轮倒计时前，先清理上一轮的定时器
+  if (countdownTimerId) {
+    clearInterval(countdownTimerId);
+    countdownTimerId = null;
+  }
+
   let timer = duration;
   const progressBar = getEl('progressBar');
   if (!progressBar) return;
@@ -824,7 +849,7 @@ const startCountdown = (duration: number) => {
   if (!progressFill) return;
 
   let step = progressBar.offsetWidth / duration;
-  const countdownTimer = setInterval(() => {
+  countdownTimerId = window.setInterval(() => {
     const minutes = Math.floor(timer / 60);
     const seconds = timer % 60;
     const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
@@ -841,7 +866,10 @@ const startCountdown = (duration: number) => {
     }
 
     if (--timer < 0) {
-      clearInterval(countdownTimer);
+      if (countdownTimerId) {
+        clearInterval(countdownTimerId);
+        countdownTimerId = null;
+      }
       stopSnapshotInterval();
       if (videoScreen) clearInterval(videoScreen);
       if (progressBar) progressBar.style.color = '#91f2f4';

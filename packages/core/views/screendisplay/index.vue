@@ -365,7 +365,7 @@ const initChart1 = async () => {
         textStyle: {
           color: 'white',
         },
-        padding: [30, 0, 0, 0],
+        padding: [10, 0, 0, 0],
       },
       series: [
         {
@@ -424,13 +424,13 @@ const initChart2 = async () => {
           color: 'white',
         },
         left: 'right',
-        top: 'top',
-        padding: [30, 0, 0, 0],
+        top: '5%',
+        padding: [0, 0, 0, 0],
       },
       grid: {
         left: '3%',
         right: '4%',
-        top: '10%',
+        top: '18%',
         bottom: '10%',
         containLabel: true,
       },
@@ -540,13 +540,13 @@ const initChart3 = async () => {
           color: 'white',
         },
         left: 'right',
-        top: 'top',
-        padding: [30, 0, 0, 0],
+        top: '5%',
+        padding: [0, 0, 0, 0],
       },
       grid: {
         left: '3%',
         right: '4%',
-        top: '10%',
+        top: '18%',
         bottom: '10%',
         containLabel: true,
       },
@@ -594,7 +594,7 @@ const initChart3 = async () => {
             focus: 'series',
           },
           data: normalCount,
-          barMaxWidth: 80,
+          barMaxWidth: 50,
         },
         {
           name: '一般',
@@ -607,6 +607,7 @@ const initChart3 = async () => {
             focus: 'series',
           },
           data: mediumCount,
+          barMaxWidth: 50,
         },
         {
           name: '关注',
@@ -619,6 +620,7 @@ const initChart3 = async () => {
             focus: 'series',
           },
           data: followCount,
+          barMaxWidth: 50,
         },
       ],
     };
@@ -666,13 +668,13 @@ const initChart4 = async () => {
           color: 'white',
         },
         left: 'right',
-        top: 'top',
-        padding: [30, 0, 0, 0],
+        top: '5%',
+        padding: [0, 0, 0, 0],
       },
       grid: {
         left: '3%',
         right: '4%',
-        top: '10%',
+        top: '18%',
         bottom: '10%',
         containLabel: true,
       },
@@ -775,13 +777,13 @@ const initChart5 = async () => {
           color: 'white',
         },
         left: 'right',
-        top: 'top',
-        padding: [30, 0, 0, 0],
+        top: '5%',
+        padding: [0, 0, 0, 0],
       },
       grid: {
         left: '3%',
         right: '4%',
-        top: '10%',
+        top: '18%',
         bottom: '10%',
         containLabel: true,
       },
@@ -879,13 +881,13 @@ const initChart8 = async () => {
           color: 'white',
         },
         left: 'right',
-        top: 'top',
-        padding: [30, 0, 0, 0],
+        top: '5%',
+        padding: [0, 0, 0, 0],
       },
       grid: {
         left: '3%',
         right: '4%',
-        top: '10%',
+        top: '18%',
         bottom: '10%',
         containLabel: true,
       },
@@ -996,13 +998,13 @@ const initChart9 = async () => {
           color: 'white',
         },
         left: 'right',
-        top: 'top',
-        padding: [30, 0, 0, 0],
+        top: '5%',
+        padding: [0, 0, 0, 0],
       },
       grid: {
         left: '3%',
         right: '4%',
-        top: '10%',
+        top: '18%',
         bottom: '10%',
         containLabel: true,
       },
@@ -1046,7 +1048,7 @@ const initChart9 = async () => {
           itemStyle: {
             color: '#4CAF50',
           },
-          barMaxWidth: 80,
+          barMaxWidth: 50,
           emphasis: {
             focus: 'series',
           },
@@ -1063,6 +1065,7 @@ const initChart9 = async () => {
             focus: 'series',
           },
           data: mediumCount,
+          barMaxWidth: 50,
         },
         {
           name: '关注',
@@ -1075,6 +1078,7 @@ const initChart9 = async () => {
             focus: 'series',
           },
           data: followCount,
+          barMaxWidth: 50,
         },
       ],
     };
@@ -1414,7 +1418,7 @@ onUnmounted(() => {
 .visual {
   width: 100%;
   height: calc(100vh - 10vh);
-  padding: 10px;
+  padding: 8px;
   box-sizing: border-box;
   overflow: hidden;
 
@@ -1424,7 +1428,7 @@ onUnmounted(() => {
     height: 100%;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
   }
 
   .visual_right {
@@ -1433,7 +1437,7 @@ onUnmounted(() => {
     height: 100%;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
   }
 
   .visual_con {
@@ -1442,14 +1446,14 @@ onUnmounted(() => {
     height: 100%;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
   }
 
   .visual_box {
     background: rgba(5, 36, 82, 0.3);
     border: 1px solid rgba(68, 135, 213, 0.3);
     border-radius: 4px;
-    padding: 10px;
+    padding: 8px;
     box-sizing: border-box;
     flex: 1;
     min-height: 0;
@@ -1457,11 +1461,11 @@ onUnmounted(() => {
     flex-direction: column;
 
     .visual_title {
-      height: 30px;
-      line-height: 30px;
+      height: 28px;
+      line-height: 28px;
       font-size: 16px;
       font-weight: bold;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       border-bottom: 1px solid rgba(68, 135, 213, 0.3);
       flex-shrink: 0;
 
@@ -1480,9 +1484,9 @@ onUnmounted(() => {
   .visual_conTop {
     display: flex;
     gap: 10px;
-    height: 25%;
+    height: 20%;
     flex-shrink: 0;
-    margin-bottom: 10px;
+    margin-bottom: 3px;
     width: 100%;
 
     :deep(.data_box) {
@@ -1491,6 +1495,7 @@ onUnmounted(() => {
       flex: 1;
       min-width: 0;
       max-width: none;
+      height: 100%;
     }
   }
 
@@ -1498,7 +1503,7 @@ onUnmounted(() => {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 3px;
     min-height: 0;
 
     .visual_conBot_chart {

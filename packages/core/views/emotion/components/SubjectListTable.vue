@@ -26,7 +26,7 @@
           {{ deleteLoading ? '删除中...' : '批量删除' }}
         </button>
       </div>
-      <a-table
+      <Table
         :columns="dynamicColumns"
         :data-source="tableData"
         :row-class-name="getRowClassName"
@@ -42,8 +42,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import { Modal } from 'ant-design-vue';
-import { message } from 'ant-design-vue'; 
+import { Modal, Table, message } from 'ant-design-vue'; 
 import { useStorage } from '@vueuse/core';
 import { 
   judgmentAccount, 

@@ -6,9 +6,7 @@
     </BasicTitle>
     <div class="flex flex-1 cursor-pointer items-center justify-self-stretch" v-if="search || toolbar">
       <div :class="getInputSearchCls" v-if="search">
-        <FormItemRest>
-          <AInput :placeholder="t('common.searchText')" size="small" allowClear v-model:value="searchValue" />
-        </FormItemRest>
+        <AInput :placeholder="t('common.searchText')" size="small" allowClear v-model:value="searchValue" />
       </div>
       <Dropdown @click.prevent v-if="toolbar">
         <Icon icon="i-ant-design:setting-outlined" class="px-1" />
@@ -30,7 +28,7 @@
   import { PropType } from 'vue';
   import { defineComponent, computed, ref, watch } from 'vue';
 
-  import { Dropdown, Menu, Input, Form } from 'ant-design-vue';
+  import { Dropdown, Menu, Input } from 'ant-design-vue';
   import { Icon } from '@jeesite/core/components/Icon';
   import { BasicTitle } from '@jeesite/core/components/Basic';
 
@@ -79,7 +77,6 @@
       MenuItem: Menu.Item,
       MenuDivider: Menu.Divider,
       AInput: Input,
-      FormItemRest: Form.ItemRest,
     },
     props,
     emits: ['strictly-change', 'search'],

@@ -31,27 +31,20 @@
         </div>
       </template>
     </BasicTable>
-    <!-- 未检测人员遮罩层 -->
-    <div
-      v-show="untestedModalVisible"
-      class="untested-panel"
-      @click="handleCloseUntestedModal"
-    ></div>
-    <!-- 未检测人员弹窗 -->
-    <div v-show="untestedModalVisible" class="untested-people-mask">
-      <div class="untest-tree">
-        <a-table
-          :columns="untestedColumns"
-          :data-source="untestedList"
-          :pagination="false"
-          size="small"
-          :row-class-name="(_, index) => (index % 2 === 0 ? 'even-row' : 'odd-row')"
-        />
-      </div>
-      <div class="untest-button">
-        <a-button class="untest-cancel" @click="handleCloseUntestedModal">关闭</a-button>
-      </div>
-    </div>
+    <!-- 未检测人员对话框 -->
+    <a-modal
+      v-model:open="untestedModalVisible"
+      title="未检测人员"
+      :width="800"
+      :footer="null"
+    >sx
+        :columns="untestedColumns"
+        :data-source="untestedList"
+        :pagination="false"
+        size="small"
+        :row-class-name="(_, index) => (index % 2 === 0 ? 'even-row' : 'odd-row')"
+      />
+    </a-modal>
   </div>
 </template>
 
@@ -67,7 +60,7 @@ import { Modal } from 'ant-design-vue';
 import {
   getResultInformationList,
   deleteRelevantInformationByVideoId,
-  updateAnnotationInfo,
+  updateAnnotat0ionInfo,
   exportPdfFile,
   exportAllPdf,
   exportTaskExcel,
@@ -295,43 +288,26 @@ const untestedColumns = [
 const [registerTable, { reload, getSelectRows }] = useTable({
   api: getResultInformationList,
   beforeFetch: (params: any) => {
-    // 按照HTML页面的传参逻辑，确保所有参数都被传递
-    // 编号
-    params.pidcard = params.pidcard || '';
-    // 姓名
-    params.pname = params.pname || '';
-    // 性别
-    params.pgender = params.pgender || '';
-    // 部别名称（从表单的fieldLabel获取，或从selectedDepartment获取）
-    params.ppositionName = params.ppositionName || '';
-    // 部别代码
-    params.pposition = params.pposition || '';
-    // 跟踪预警状态
-    params.alarmStatus = params.alarmStatus || '';
-    // 综合心理
-    params.psychologyStatus = params.psychologyStatus || '';
-    // 测试任务名称
-    params.testNumberName = params.testNumberName || '';
-    // 测试任务编号
-    params.testNumber = params.testNumber || '';
-    
-    // 根据选中的任务设置查询参数（优先级高于表单输入）
+    // 根据选中的任务和部门设置查询参数
     if (props.selectedTask) {
       params.testNumber = props.selectedTask.testNumber;
-      params.testNumberName = props.selectedTask.testNumberName || params.testNumberName;
+      params.testNumberName = props.selectedTask.testNumberName;
     }
-    
-    // 根据选中的部门设置查询参数（优先级高于表单输入）
     if (props.selectedDepartment) {
-      params.pposition = props.selectedDepartment.companyCode || params.pposition;
-      params.ppositionName = props.selectedDepartment.companyName || params.ppositionName;
+      // 注意这里修改为与resulr.html一致的字段名
+      params.pposition = props.selectedDepartment.companyCode;
+      params.ppositionName = props.selectedDepartment.companyName;
+      // 移除这个可能导致问题的字段
+      // params.ppositionNameCode = props.selectedDepartment.companyCode;
     }
     
-    // 确保orderBy参数存在（即使为空字符串）
-    // orderBy通常由表格排序自动生成，但确保它被传递
-    params.orderBy = params.orderBy || '';
-    
-    // pageNo和pageSize由useTable自动处理，不需要手动设置
+    // 确保参数类型正确
+    if (params.alarmStatus !== undefined && params.alarmStatus !== null) {
+      params.alarmStatus = String(params.alarmStatus);
+    }
+    if (params.psychologyStatus !== undefined && params.psychologyStatus !== null) {
+      params.psychologyStatus = String(params.psychologyStatus);
+    }
     
     return params;
   },
@@ -456,20 +432,12 @@ async function handleUntestedPeople() {
         testNumberName: props.selectedTask?.testNumberName,
       }));
       untestedModalVisible.value = true;
-      // 禁止body滚动
-      document.body.style.overflow = 'hidden';
     } else {
       showMessage('该任务所有人员均已检测');
     }
   } catch (error) {
     showMessage('查询失败', 'error');
   }
-}
-
-// 关闭未检测人员弹窗
-function handleCloseUntestedModal() {
-  untestedModalVisible.value = false;
-  document.body.style.overflow = 'visible';
 }
 
 // 导出整体报告
@@ -600,68 +568,4 @@ function handleSelectAll() {
     font-size: 16px;
   }
 }
-
-// 未检测人员遮罩层
-.untested-panel {
-  width: 100%;
-  height: 100%;
-  background-color: #000;
-  opacity: 0.4;
-  // IE兼容透明度
-  // filter: alpha(opacity=40);
-  position: fixed;
-  left: 0;
-  top: 0;
-  z-index: 9998;
-}
-
-// 未检测人员弹窗
-.untested-people-mask {
-  width: 50%;
-  height: 80%;
-  background: #1a1a1a;
-  border-radius: 5px;
-  position: fixed;
-  left: 40%;
-  top: 30%;
-  margin: -150px 0 0 -150px;
-  border: 1px solid black;
-  padding: 10px;
-  z-index: 9999;
-
-  .untest-tree {
-    width: 90%;
-    height: 85%;
-    background-color: #262626;
-    display: block;
-    margin-left: 5%;
-    max-height: 85%;
-    overflow: auto;
-    border: 0;
-    outline: 0;
-    border-radius: 4px;
-    background-color: transparent;
-    color: #dddddd;
-  }
-
-  .untest-button {
-    position: relative;
-    top: 10%;
-
-    .untest-cancel {
-      position: relative;
-      left: 35%;
-      width: 20%;
-      background-color: #444444;
-      color: rgba(255, 255, 255, 0.8);
-      border: 0;
-      border-radius: 22px;
-      box-shadow: 0 0 15px #97bdd4;
-      font-size: 15px;
-      margin-left: 25px;
-      top: 80%;
-    }
-  }
-}
 </style>
-

@@ -2,7 +2,13 @@
   <div :class="prefixCls" style="height: 100vh;">
     <!-- 顶部导出按钮（对应HTML的height: 4vh） -->
     <div class="export-bar">
-      <button id="downloadPDF" @click="handleExportPdf">导出本次报告</button>
+      <button
+        id="downloadPDF"
+        :disabled="exportLoading"
+        @click="handleExportPdf"
+      >
+        {{ exportLoading ? '正在导出...' : exportButtonLabel }}
+      </button>
     </div>
 
     <!-- 主内容区 -->
@@ -106,11 +112,11 @@
 
           <!-- 右侧中：指标说明和建议（对应HTML的.rightMid，height: 25%） -->
           <div class="rightMid">
-            <h4 class="card-title" style="margin-left: 20px; margin-bottom: 20px;">指标说明和建议</h4>
-            <div>
-              <h3 style="margin-left: 30px" class="suggestion-item">{{ annotationType || '暂无指标说明' }}</h3>
-              <h3 style="margin-left: 30px" class="suggestion-item">{{ annotation || '暂无详细建议' }}</h3>
-              <h3 style="margin-left: 30px" class="suggestion-item">{{ annotationSum || '暂无总结信息' }}</h3>
+            <h4 class="card-title">指标说明和建议</h4>
+            <div class="suggestion-list">
+              <h3 class="suggestion-item">{{ annotationType || '暂无指标说明' }}</h3>
+              <h3 class="suggestion-item">{{ annotation || '暂无详细建议' }}</h3>
+              <h3 class="suggestion-item">{{ annotationSum || '暂无总结信息' }}</h3>
             </div>
           </div>
 
@@ -224,6 +230,8 @@ const annotationType = ref('');
 const annotation = ref('');
 const annotationSum = ref('');
 const radarImages = ref<{ label: string; url: string }[]>([]);
+const exportLoading = ref(false);
+const exportButtonLabel = ref('导出本次报告');
 const indexTableData = ref<any[]>([]);
 const videoId = ref<string>('');
 const taskOptions = ref<Array<{ testNumber: string; testNumberName: string }>>([]); // 任务列表（对应HTML的taskSelection）
@@ -312,7 +320,7 @@ onMounted(() => {
   loadInitialData();
 });
 
-// 初始化页面参数（对应HTML行458-464）
+// 初始化页面参数
 const initPageParams = () => {
   const { pname, pgender, age, pidcard, ppositionName, sid } = route.query;
   // 确保所有参数都被正确获取，包括HTML中的sid参数
@@ -328,7 +336,7 @@ const chartInitialized = ref(false);
 let initChartRetryCount = 0;
 const MAX_RETRY_COUNT = 20; // 最大重试次数，避免无限循环
 
-// 初始化图表（对应HTML中showChart函数的初始化逻辑）
+// 初始化图表
 const initChart = () => {
   // 如果重试次数过多，停止重试
   if (initChartRetryCount >= MAX_RETRY_COUNT) {
@@ -1571,7 +1579,13 @@ const handleExportPdf = async () => {
     createMessage.warning('缺少videoId，无法导出PDF');
     return;
   }
-  
+
+  if (exportLoading.value) {
+    return;
+  }
+
+  exportLoading.value = true;
+  exportButtonLabel.value = '正在导出...';
   createMessage.info('正在生成PDF...');
   try {
     const response: any = await exportPdf(videoId.value);
@@ -1584,9 +1598,15 @@ const handleExportPdf = async () => {
     a.click();
     window.URL.revokeObjectURL(url);
     createMessage.success('PDF导出成功，已开始下载');
+    exportButtonLabel.value = '导出成功';
+    setTimeout(() => (exportButtonLabel.value = '导出本次报告'), 1200);
   } catch (error) {
     console.error('PDF导出失败：', error);
     createMessage.error('PDF导出失败，请检查网络或联系管理员');
+    exportButtonLabel.value = '导出失败，请重试';
+    setTimeout(() => (exportButtonLabel.value = '导出本次报告'), 1500);
+  } finally {
+    exportLoading.value = false;
   }
 };
 
@@ -1848,21 +1868,25 @@ $prefixCls: 'psychology-detail';
 
       .rightMid {
         height: 25%; // 对应HTML的.rightMid height: 25%
-        align-items: center; // 对应HTML的align-items: center
-        justify-content: center; // 对应HTML的justify-content: center
         display: flex;
         flex-direction: column;
+        align-items: flex-start;
+        justify-content: flex-start;
+        padding-left: 20px;
         .card-title {
           color: rgba(154, 254, 254, 0.89);
           font-size: 20px; // 对应HTML的h4 font-size: 20px
-          margin-left: 20px; // 对应HTML的style="margin-left: 20px"
-          margin-bottom: 20px; // 对应HTML的margin-bottom: 20px
-          padding-top: 0;
+          margin: 0 0 20px 0;
+          padding: 0;
           border-bottom: none;
-          padding-bottom: 0;
+        }
+        .suggestion-list {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
         }
         .suggestion-item {
-          margin-left: 30px; // 对应HTML的style="margin-left: 30px"
+          margin-left: 10px; // 对应HTML的style="margin-left: 30px"
           line-height: 1.5; 
           color: rgba(255, 255, 255, 0.84); 
           font-size: 18px; // 对应HTML的h3 font-size: 18px

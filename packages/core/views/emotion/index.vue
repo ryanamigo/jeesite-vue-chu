@@ -72,11 +72,20 @@
           <!-- 时间筛选项 -->
           <div class="filter-item time-filter">
             <p class="filter-label">时间</p>
-            <div class="layui-form" id="ID-laydate-range">
-              <div class="date-range">
-                <input type="text" autocomplete="off" v-model="filterParams.startTime" class="layui-input" placeholder="开始日期" id="startTime">
-                <span class="date-separator">-</span>
-                <input type="text" autocomplete="off" v-model="filterParams.endTime" class="layui-input" placeholder="结束日期" id="endTime">
+            <div class="layui-form">
+              <div class="layui-form-item" style="display: inline-block;">
+                <div class="layui-inline">
+                  <div class="layui-inline" id="ID-laydate-range"
+                    style="display: flex; align-items: center; justify-content: flex-start;">
+                    <div class="layui-input-inline" style="flex: 1;">
+                      <input type="text" autocomplete="off" v-model="filterParams.startTime" class="layui-input laydate" placeholder="开始日期" id="startTime" name="startTime" readonly>
+                    </div>
+                    <div class="layui-form-mid" style="color: #ffffff; flex: 0 0 auto;">-</div>
+                    <div class="layui-input-inline" style="flex: 1;">
+                      <input type="text" autocomplete="off" v-model="filterParams.endTime" class="layui-input laydate" placeholder="结束日期" id="endTime" name="endTime" readonly>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -115,8 +124,8 @@
           <!-- 性别筛选项 -->
           <div class="filter-item gender-filter">
             <p class="filter-label">性别</p>
-            <select v-model="filterParams.gender" class="layui-select" id="gender">
-              <option value="">请选</option>
+            <select v-model="filterParams.gender" class="layui-select" id="gender" :class="{ 'placeholder-selected': !filterParams.gender }">
+              <option value="">请选择性别</option>
               <option value="男">男</option>
               <option value="女">女</option>
             </select>
@@ -126,9 +135,9 @@
           <div class="filter-item age-filter">
             <p class="filter-label">年龄</p>
             <div class="age-range">
-              <input type="number" v-model="filterParams.startAge" class="layui-input" placeholder="最小" min="0" step="1" id="startAge">
+              <input type="number" v-model="filterParams.startAge" class="layui-input" placeholder="最小年龄" min="0" step="1" id="startAge">
               <span class="age-separator">-</span>
-              <input type="number" v-model="filterParams.endAge" class="layui-input" placeholder="最大" min="0" step="1" id="endAge">
+              <input type="number" v-model="filterParams.endAge" class="layui-input" placeholder="最大年龄" min="0" step="1" id="endAge">
             </div>
           </div>
 
@@ -403,6 +412,14 @@ const handleReset = () => {
     endAge: null
   };
   
+  // 清空日期选择器的显示值
+  nextTick(() => {
+    const startTimeEl = document.getElementById('startTime');
+    const endTimeEl = document.getElementById('endTime');
+    if (startTimeEl) startTimeEl.value = '';
+    if (endTimeEl) endTimeEl.value = '';
+  });
+  
   // 清空 localStorage
   localStorage.removeItem('key');
   
@@ -516,42 +533,115 @@ const fetchTaskList = async () => {
 
 Chart.register(ChartDataLabels);
 
+// 动态加载 layui
+const loadLayui = () => {
+  return new Promise((resolve, reject) => {
+    // 如果已经加载，直接返回
+    if (window.layui && window.layui.laydate) {
+      resolve(window.layui);
+      return;
+    }
+
+    // 检查是否正在加载
+    if (window.__layuiLoading) {
+      const checkInterval = setInterval(() => {
+        if (window.layui && window.layui.laydate) {
+          clearInterval(checkInterval);
+          resolve(window.layui);
+        }
+      }, 100);
+      return;
+    }
+
+    // 加载 layui CSS
+    if (!document.querySelector('link[href*="layui.css"]')) {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = '/js/static/css/layui.css';
+      document.head.appendChild(link);
+    }
+
+    // 加载 layui JS
+    if (!window.layui) {
+      window.__layuiLoading = true;
+      const script = document.createElement('script');
+      script.src = '/js/static/js/layui.js';
+      script.onload = () => {
+        window.__layuiLoading = false;
+        if (window.layui) {
+          window.layui.use(['laydate'], function() {
+            resolve(window.layui);
+          });
+        } else {
+          reject(new Error('layui 加载失败'));
+        }
+      };
+      script.onerror = () => {
+        window.__layuiLoading = false;
+        reject(new Error('layui 脚本加载失败'));
+      };
+      document.head.appendChild(script);
+    } else if (window.layui) {
+      window.layui.use(['laydate'], function() {
+        resolve(window.layui);
+      });
+    }
+  });
+};
+
 // 初始化日期选择器
-const initDatePicker = () => {
+const initDatePicker = async () => {
   // 等待DOM渲染完成
-  nextTick(() => {
-    // 动态加载layui（如果已加载则直接使用）
+  await nextTick();
+  
+  try {
+    // 确保 layui 已加载
+    await loadLayui();
+    
+    // 再次等待 DOM 确保元素存在
+    await nextTick();
+    
+    const startTimeEl = document.getElementById('startTime');
+    const endTimeEl = document.getElementById('endTime');
+    const rangeEl = document.getElementById('ID-laydate-range');
+    
+    if (!startTimeEl || !endTimeEl || !rangeEl) {
+      console.warn('日期选择器元素未找到，延迟重试');
+      setTimeout(() => initDatePicker(), 200);
+      return;
+    }
+
     if (window.layui && window.layui.laydate) {
       const laydate = window.layui.laydate;
+      // 日期范围 - 左右面板独立选择模式（与HTML页面保持一致）
       laydate.render({
         elem: '#ID-laydate-range',
         theme: '#1e9fff',
-        range: ['#startTime', '#endTime']
-      });
-    } else if (window.layui) {
-      // 如果layui已加载但laydate未加载，使用use加载
-      window.layui.use(['laydate'], function() {
-        const laydate = window.layui.laydate;
-        laydate.render({
-          elem: '#ID-laydate-range',
-          theme: '#1e9fff',
-          range: ['#startTime', '#endTime']
-        });
-      });
-    } else {
-      // 如果layui未加载，延迟尝试
-      setTimeout(() => {
-        if (window.layui && window.layui.laydate) {
-          const laydate = window.layui.laydate;
-          laydate.render({
-            elem: '#ID-laydate-range',
-            theme: '#1e9fff',
-            range: ['#startTime', '#endTime']
-          });
+        range: ['#startTime', '#endTime'],
+        done: (value, date, endDate) => {
+          // 当日期选择完成时，同步更新 v-model
+          if (value) {
+            const dates = value.split(' - ');
+            if (dates.length === 2) {
+              filterParams.value.startTime = dates[0];
+              filterParams.value.endTime = dates[1];
+            }
+          } else {
+            // 清空时也更新
+            filterParams.value.startTime = '';
+            filterParams.value.endTime = '';
+          }
         }
-      }, 500);
+      });
+      console.log('日期选择器初始化成功');
+    } else {
+      console.error('layui.laydate 未找到');
     }
-  });
+  } catch (error) {
+    console.error('日期选择器初始化失败：', error);
+    // 如果加载失败，延迟重试
+    setTimeout(() => initDatePicker(), 500);
+  }
 };
 
 const initCharts = () => {
@@ -1014,17 +1104,21 @@ body {
   white-space: nowrap;
 }
 .time-filter {
-  flex: 0 0 calc(22% - 8px);
+  flex: 0 0 auto;
+  min-width: 0;
 }
-.date-range {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  width: 100%;
+.time-filter .layui-form {
+  width: auto;
 }
-.date-separator {
-  color: #fff;
-  font-size: 16px;
+.time-filter .layui-form-item {
+  margin-bottom: 0;
+  width: auto;
+}
+.time-filter .layui-input-inline {
+  margin-right: 0;
+}
+.time-filter .layui-form-mid {
+  padding: 0 5px;
 }
 .dept-filter {
   flex: 0 0 calc(13% - 8px);
@@ -1035,11 +1129,31 @@ body {
 .layui-select {
   width: 100%;
 }
+
+/* 性别筛选框的 placeholder 颜色，与时间筛选框一致 */
+.gender-filter .layui-select {
+  color: #333;
+}
+
+/* 当选中 placeholder option（值为空）时，文字颜色为灰色 */
+.gender-filter .layui-select.placeholder-selected {
+  color: #999;
+}
+
+/* 设置 option 的颜色 */
+.gender-filter .layui-select option {
+  color: #333;
+}
+
+.gender-filter .layui-select option[value=""] {
+  color: #999;
+}
+
 .gender-filter {
-  flex: 0 0 calc(8% - 8px);
+  flex: 0 0 calc(12% - 8px);
 }
 .age-filter {
-  flex: 0 0 calc(13% - 8px);
+  flex: 0 0 calc(15% - 8px);
 }
 .age-range {
   display: flex;
@@ -1061,17 +1175,29 @@ body {
   background-color: #0096ff;
   color: #fff;
   border: none;
-  padding: 6px 15px;
+  padding: 6px 25px;
   cursor: pointer;
   border-radius: 4px;
+  text-align: center;
+  min-width: 80px;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .reset-btn {
   background-color: #00b42a;
   color: #fff;
   border: none;
-  padding: 6px 15px;
+  padding: 6px 25px;
   cursor: pointer;
   border-radius: 4px;
+  text-align: center;
+  min-width: 80px;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 /*部别 输入框的css*/
 :deep(.treeselect .form-control),
@@ -1096,6 +1222,11 @@ body {
   width: 100%;
 }
 
+/* 时间筛选框 placeholder 颜色（layui 默认） */
+.layui-input::placeholder {
+  color: #999;
+}
+
 /* TreeSelect 和 Select 组件样式 */
 :deep(.ant-select),
 :deep(.ant-tree-select) {
@@ -1107,6 +1238,90 @@ body {
   height: 30px !important;
   border-radius: 2px !important;
   background-color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* 部别和任务筛选框的 placeholder 颜色，与时间筛选框一致 */
+.dept-filter :deep(.ant-select-selection-placeholder),
+.dept-filter :deep(.ant-tree-select-selection-placeholder),
+.task-filter :deep(.ant-select-selection-placeholder) {
+  color: #999 !important;
+  opacity: 1 !important;
+}
+
+/* 任务多选框内已选标签样式，参照原HTML页面（蓝色背景#1e9fff，白色文字） */
+.task-filter :deep(.ant-select-selection-item) {
+  background-color: #1e9fff !important;
+  border: none !important;
+  border-radius: 2px !important;
+  color: #ffffff !important;
+  padding: 0 8px 0 8px !important;
+  line-height: 28px !important;
+}
+
+.task-filter :deep(.ant-select-selection-item-content) {
+  color: #ffffff !important;
+}
+
+/* 删除图标（叉号）样式 */
+.task-filter :deep(.ant-select-selection-item-remove) {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+.task-filter :deep(.ant-select-selection-item-remove:hover) {
+  color: #ffffff !important;
+  opacity: 0.8 !important;
+}
+
+/* 确保下拉箭头（三角图标）显示 */
+.task-filter :deep(.ant-select-arrow) {
+  color: #fd2f2f !important;
+  display: inline-block !important;
+}
+
+.task-filter :deep(.ant-select-selector) {
+  display: flex !important;
+  align-items: center;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  white-space: nowrap !important;
+  padding-right: 24px !important;
+  max-height: 30px !important;
+  /* 自定义滚动条样式，让滚动更明显 */
+  scrollbar-width: thin;
+  scrollbar-color: #1e9fff rgba(255, 255, 255, 0.3);
+}
+
+/* Webkit 浏览器滚动条样式 */
+.task-filter :deep(.ant-select-selector)::-webkit-scrollbar {
+  height: 4px;
+}
+
+.task-filter :deep(.ant-select-selector)::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+.task-filter :deep(.ant-select-selector)::-webkit-scrollbar-thumb {
+  background: #1e9fff;
+  border-radius: 2px;
+}
+
+.task-filter :deep(.ant-select-selector)::-webkit-scrollbar-thumb:hover {
+  background: #1890ff;
+}
+
+.task-filter :deep(.ant-select-selection-overflow) {
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  width: 100%;
+  max-width: 100%;
+}
+
+.task-filter :deep(.ant-select-selection-overflow-item) {
+  margin-right: 6px !important;
+  flex-shrink: 0 !important;
 }
 
 :deep(.ant-select-selection-item),

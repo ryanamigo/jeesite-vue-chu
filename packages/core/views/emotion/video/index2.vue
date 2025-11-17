@@ -692,17 +692,27 @@ const videoAnalytics = async () => {
       // 若正在录制且姿势不达标，立即中断录制
       if (mediaRecorder && mediaRecorder.state === 'recording' && response !== 3) {
         recordingInterrupted = 1;
-        statusInfo.innerHTML = '姿势不符合，已停止录制';
+        statusInfo.innerHTML = '姿势不符合，已停止录制，正在返回人脸比对';
         try {
           if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
         } catch {}
         try {
           if (mediaRecorder2 && mediaRecorder2.state === 'recording') mediaRecorder2.stop();
         } catch {}
-        // 后端返回后，延迟1秒再进行下一次检测（若仍处于检测状态）
-        if (isstart) {
-          adjustingTheAngleId = window.setTimeout(() => { videoAnalytics(); }, 1000);
+
+        // 中断本次姿态检测流程
+        isstart = false;
+        stopAdjustingTheAngle();
+
+        // 自动录制模式下，显式回到人脸比对流程
+        const mode = (document.getElementById('recordingMode') as HTMLSelectElement)?.value;
+        if (mode === 'automaticRecording') {
+          setStyles('selfName', 'rgb(5, 148, 183)', '5px');
+          setTimeout(() => {
+            informationMatching();
+          }, 1000);
         }
+
         return;
       }
 

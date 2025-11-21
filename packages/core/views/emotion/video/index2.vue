@@ -31,13 +31,38 @@
       >
         <option v-for="item in taskList" :key="item.id" :value="item.testNumber">{{item.testNumberName}}</option>
       </select>
+      <div style="margin-top: 10px;">
+        <!-- 普通用户展示的后端返回数据表格状态 -->
+        <div v-if="showYourFeature">
+          <div style="display:flex; justify-content: space-between; align-items: center; margin: 6px 10% 8px 10%;">
+            <span style="color:#91f2f4;">人员状态数据</span>
+            <button class="clear-data-btn" @click="clearResultRows">清空数据</button>
+          </div>
+          <div style="margin: 0 10%; border: 1px solid #3c8dbc;">
+            <table style="width:100%; border-collapse: collapse; color:#d7e4ed; font-size: 13px;">
+              <thead style="background: #0d2a55; position: sticky; top: 0;">
+                <tr>
+                  <th style="border-bottom:1px solid #3c8dbc; padding:6px; text-align:left; width: 45%;">指标</th>
+                  <th style="border-bottom:1px solid #3c8dbc; padding:6px; text-align:left;">值</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="label in metricLabels" :key="label" style="background: rgba(9,32,70,0.5);">
+                  <td style="border-bottom:1px solid #163b73; padding:6px;">{{ label }}</td>
+                  <td style="border-bottom:1px solid #163b73; padding:6px;">{{ getMetricValue(label) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
       <!-- 更新数据 -->
-      <div id="findVideoStatusByDate">
+      <!-- <div id="findVideoStatusByDate">
         <div id="videoStatusTree"></div>
         <div id="refreshStatus">
           <button id="refreshStausBtn" class="btn btn-success btn-sm" @click="renderVideoStatus">更新数据</button>
         </div>
-      </div>
+      </div> -->
     </div>
 
     <!-- 中 -->
@@ -115,15 +140,95 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { ref, onMounted, onBeforeUnmount, nextTick, computed } from 'vue';
 import { faceRecognitionBySnapshot, getCompanyTreeData, getTasksData, getVideoStatus,insertOrModifyInformation, judgePerson, adjustingTheAngle, insertVideoInformation } from '../../../api/emption/vedio';
 import { useGlobSetting } from '@jeesite/core/hooks/setting';
 import { log } from 'console';
+import { useUserStore } from '@jeesite/core/store/modules/user';
 
 const startBtnDisabled = ref(true);
 const companyTreeData = ref()
 const currentCompanyId = ref()
 const { adminPath } = useGlobSetting();
+const userStore = useUserStore()
+const formData3 = new FormData();
+
+const showYourFeature = computed(() => {
+  const newPermissionName = userStore.getUserInfo.remarks;
+  console.log(newPermissionName, '-当前用户的权限') 
+  if(newPermissionName === '普通用户'){
+    formData3.append('isRecordVideo', 'true')
+    return true
+  }
+  formData3.append('isRecordVideo', 'false')
+  return false
+});
+
+// 普通用户展示的后端返回数据表格状态
+const resultRows = ref<any[]>([]);
+const tableHeaders = ref<string[]>([]);
+
+// 任务过滤：根据用户角色过滤 test 任务
+const isTestTask = (item: any) => {
+  const name = String(item?.testNumberName ?? '').toLowerCase();
+  const no = String(item?.testNumber ?? '').toLowerCase();
+  return name.includes('test') || no.includes('test');
+};
+
+const filterTasksByRole = (list: any[]) => {
+  try {
+    const roleRemark = userStore.getUserInfo?.remarks;
+    if (roleRemark === '普通用户') {
+      // 普通用户：不显示 test 任务
+      return (list || []).filter((it) => !isTestTask(it));
+    }
+    if (roleRemark === '测试用户') {
+      // 测试用户：仅显示 test 任务
+      return (list || []).filter((it) => isTestTask(it));
+    }
+  } catch {}
+  // 其他角色：不过滤
+  return list || [];
+};
+
+// 固定10行的指标标题
+const metricLabels = [
+  '心理分级',
+  '跟踪预警',
+  '攻击性',
+  '压力',
+  '紧张',
+  '疲劳',
+  '魅力',
+  '精力',
+  '抑郁',
+  '自我调节',
+];
+
+// 可能的后端字段名映射（尽量兼容多种命名）
+const labelToKeys: Record<string, string[]> = {
+  '心理分级': ['psychology', '心理分级', 'psychologicalLevel', 'xinliFenji', 'psy_level'],
+  '跟踪预警': ['tracking', '跟踪预警', 'trackingWarning', 'yujing', 'warning'],
+  '攻击性': ['avg_aggression', '攻击性', 'aggressiveness', 'gongjixing', 'aggr'],
+  '压力': ['avg_stress', '压力', 'stress', 'yali'],
+  '紧张': ['avg_tension', '紧张', 'tension', 'jinzhang'],
+  '疲劳': ['avg_fatigue', '疲劳', 'fatigue', 'pilao'],
+  '魅力': ['avg_charm', '魅力', 'charm', 'meili'],
+  '精力': ['avg_energy', '精力', 'energy', 'jingli'],
+  '抑郁': ['avg_depression', '抑郁', 'depression', 'yiyu'],
+  '自我调节': ['avg_self_regulation', '自我调节', 'selfRegulation', 'tiaojie', 'self_adjust'],
+};
+
+const getMetricValue = (label: string): any => {
+  const first = (resultRows.value && resultRows.value[0]) || {} as any;
+  const keys = labelToKeys[label] || [label];
+  for (const k of keys) {
+    if (first && Object.prototype.hasOwnProperty.call(first, k)) {
+      return first[k];
+    }
+  }
+  return '';
+};
 
 let cameraStream: MediaStream | null = null;
 let cameraStream2: MediaStream | null = null;
@@ -150,6 +255,7 @@ let videoData2: Blob[] = [];
 let recordingInterrupted = 0; // 被迫中断标志位
 let videoScreen: number | null = null;
 let recordingLock = false; // 录制互斥锁，防止并发启动
+let mustClickClearDataBeforeNextRecord = false; // 录制结束后，必须点击“清空数据”才能继续录制
 
 const getEl = (id: string) => document.getElementById(id) as HTMLElement;
 const getInput = (id: string) => document.getElementById(id) as HTMLInputElement;
@@ -159,6 +265,12 @@ const snapshotCanvasRef = ref<HTMLCanvasElement | null>(null);
 
 const notifyWarn = (msg: string) => {
   try { (window as any).toastr?.warning(msg); } catch {}
+};
+
+// 清空普通用户展示的结果数据（允许再次录制）
+const clearResultRows = () => {
+  resultRows.value = [];
+  mustClickClearDataBeforeNextRecord = false;
 };
 
 const clearInfo = () => {
@@ -324,7 +436,7 @@ const autoReadIDCard = () => {
     if (socket && socket.readyState === 1) {
       socket.send('EST_Reader_ReadIDCard#|1');
     } else {
-      try { (window as any).toastr?.warning('未找到控件，请检查控件是否安装.'); } catch {}
+      try { (window as any).toastr?.warning(''); } catch {}
     }
   } catch {
     try { (window as any).toastr?.warning('连接异常,请检查是否成功安装控件.'); } catch {}
@@ -336,7 +448,7 @@ const stopAutoReadIDCard = () => {
     if (socket && socket.readyState === 1) {
       socket.send('EST_StopReadIDCard#');
     } else {
-      try { (window as any).toastr?.warning('未找到控件，请检查控件是否安装.'); } catch {}
+      try { (window as any).toastr?.warning(''); } catch {}
     }
   } catch {
     try { (window as any).toastr?.warning('连接异常,请检查是否成功安装控件.'); } catch {}
@@ -916,9 +1028,32 @@ const download = async () => {
   formData.append('pidCard', idNumber?.value || '');
   formData.append('testNumber', testNumber);
   formData.append('testNumberName', testNumberName);
+  // 根据当前用户角色，追加是否录制权限标记
+  try {
+    const remark = userStore.getUserInfo?.remarks;
+    formData.append('isRecordVideo', remark === '普通用户' ? 'true' : 'false');
+  } catch {}
 
   try {
-    await insertVideoInformation(formData);
+    const resp = await insertVideoInformation(formData);
+    // 尝试解析返回数据填充表格
+    try {
+      const data = (resp && (resp.data ?? resp)) as any;
+      let rows: any[] = [];
+      if (Array.isArray(data)) {
+        rows = data;
+      } else if (data && typeof data === 'object') {
+        // 如果后端返回对象，优先取 data.list 或 records，否则将对象包成数组
+        rows = Array.isArray(data.list) ? data.list : (Array.isArray(data.records) ? data.records : [data]);
+      }
+      // 仅当有有效数据时更新
+      if (rows && rows.length > 0) {
+        resultRows.value = rows;
+        // 取第一行的 key 作为表头
+        const first = rows[0];
+        tableHeaders.value = Object.keys(first ?? {});
+      }
+    } catch {}
     notifyWarn('视频保存成功！');
     recordingEnds();
     
@@ -932,6 +1067,8 @@ const download = async () => {
 const recordingEnds = () => {
   // 释放录制互斥锁
   recordingLock = false;
+  // 要求用户点击“清空数据”后才能继续下一次录制
+  mustClickClearDataBeforeNextRecord = true;
 
   // 清空个人信息
   const name = getInput('name');
@@ -1010,6 +1147,11 @@ const recordingEnds = () => {
 
 const startRecording = () => {
   const selfName = getEl('selfName');
+  // 若上一次录制已结束但尚未点击“清空数据”，拦截
+  if (mustClickClearDataBeforeNextRecord) {
+    notifyWarn('请先点击“清空数据”，然后再开始录制');
+    return;
+  }
   if (selfName && (selfName as HTMLElement).style.backgroundColor === 'rgb(5, 148, 183)') {
     startBtnDisabled.value = true;
     const statusInfo = getEl('statusInfo');
@@ -1211,8 +1353,6 @@ let perage = ref('');
 
 const saveInfo = async () => {
   try {
-    const formData3 = new FormData();
-
     formData3.append('pname', pername.value);
     formData3.append('pidcard', peridNumber.value);
     formData3.append('age', perage.value);
@@ -1233,7 +1373,7 @@ const saveInfo = async () => {
 };
 
 
-const taskList = ref([])
+const taskList = ref<any[]>([])
 onMounted(async () => {
   try {
     const companyNameEl = getEl('companyName');
@@ -1246,9 +1386,12 @@ onMounted(async () => {
   formData2 = new FormData();
   await startMediaDevices();
   informationMatching();
-  // await getTasksData();
-  const taskDataList = await getTasksData()
-  taskList.value = taskDataList
+  // 加载任务并按角色过滤
+  const rawTasks = await getTasksData();
+  const list = Array.isArray(rawTasks)
+    ? rawTasks
+    : (Array.isArray((rawTasks as any)?.data) ? (rawTasks as any).data : (Array.isArray((rawTasks as any)?.list) ? (rawTasks as any).list : []));
+  taskList.value = filterTasksByRole(list);
   companyTreeData.value = await getCompanyTreeData();
 
   const progressBar = getEl('progressBar');
@@ -1541,6 +1684,30 @@ img:nth-child(1) { height: 50px; }
   transform: translate(-50%, -50%);
   color: white;
   font-size: 20px;
+}
+
+/* 提升“清空数据”按钮可见性 */
+.clear-data-btn {
+  background-color: #ff4d4f;
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  box-shadow: 0 0 14px rgba(255, 77, 79, 0.55);
+  outline: 2px solid rgba(255, 255, 255, 0.15);
+}
+.clear-data-btn:hover {
+  background-color: #ff6b6d;
+  box-shadow: 0 0 18px rgba(255, 107, 109, 0.7);
+}
+.clear-data-btn:active {
+  transform: translateY(1px);
+}
+.clear-data-btn:focus-visible {
+  outline: 2px solid #ffd7d7;
 }
 
 .treeselect .form-control,

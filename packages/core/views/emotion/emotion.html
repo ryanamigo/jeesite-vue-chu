@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<% layout('/layouts/default.html', {title: 'emotion_result管理', libs: ['dataGrid']}){ %>
+<html lang="en">
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    li {
+        list-style: none;
+    }
+    body{
+        height: 100vh; /* Changed from 100% to 100vh to ensure it takes the full viewport height */
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        background: url('/js/static/image/win2.jpg') no-repeat center center;
+        background-size: cover;
+        line-height: 1.15;
+        display: flex; /* Added to enable flex layout */
+        flex-direction: column; /* Set the direction of flex items in the body to column */
+        overflow: hidden; /* 隐藏溢出的内容 */
+    }
+    .content {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+    }
+
+    .header {
+        position: relative;
+        height: 17vh;
+        display: flex; /* Add flex display to align children inline */
+        justify-content: space-around; /* Distribute space evenly around the children */
+    }
+    .data_box {
+        position: relative;
+        flex: 1; /* Make each data_box take equal width */
+        float: left;
+        width: 20%;
+        height: 100%;
+        cursor: pointer; /* Added cursor pointer to indicate it's clickable */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: url(${ctxStatic}/images/tit-01.png) no-repeat center center;
+        background-size: 90% 85%;
+    }
+    .data_box .textInfo {
+        float: left;
+        text-align: center; /* 居中显示文字内容 */
+        width: 50%;
+    }
+    .data_box .textInfo p{
+        text-align: center; /* 居中显示文字内容 */
+        color: #9afefe; /* 设置文字颜色为白色 */
+        font-size: 20px; /* 设置文字大小为16像素，可以根据需要调整 */
+
+    }
+    .data_box .textInfo span {
+        text-align: center; /* 居中显示文字内容 */
+        color: #e2dd0a; /* 设置文字颜色为白色 */
+         font-size: 32px; /* 设置文字大小为16像素，可以根据需要调整 */
+    }
+
+    .data_box .img {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 50%;
+        float: right;
+    }
+
+    .middle{
+        position: relative;
+        height: 6.5vh;
+    }
+    .comprehensive_data{
+        height: 5.5rem;
+    }
+    .fl {
+        display: flex;
+        align-items: center; /* 让内容垂直居中 */
+        width: 20%;
+        height: 100%;
+        float: left;
+    }
+
+    .fl p {
+        margin-left: 20px; /* 向右移动10px */
+        color: rgba(255, 255, 255, 0.98);
+        font-size: 30px;
+        line-height: 32px;
+    }
+    .fr {
+        display: flex;
+        align-items: center; /* 让内容垂直居中 */
+        float: left;
+        width: 80%;
+        height: 100%;
+    }
+    .fr .p{
+        display: inline-block; /* 将p元素转换为行内块元素 */
+        width: 10%;
+        color: white;
+        text-align: right;
+        align-items: center; /* 垂直居中对齐 */
+        margin-right: 5px;
+        font-size: 18px;
+    }
+    /*部别 输入框的css*/
+    .treeselect .form-control, .form-control.laydate {
+        background-color: #ffffff !important;
+        color: #757575;
+    }
+    .input-group-btn .btn, .treeSearchInput button, .treeSearchInput button:hover, .treeSearchInput button:focus {
+        background-color: #ffffff !important;
+        color:  #757575;
+    }
+    .submitBtn:hover{
+        border-color:#e2eae7;
+        background-color:#1e9fff;
+        color:#FFFFFF
+    }
+    .clearBtn:hover{
+        border-color: #e2eae7;
+        background-color:#16b777;
+        color:#FFFFFF
+    }
+    .header, .middle {
+        flex: 0 0 auto; /* 头部和尾部大小固定 */
+    }
+
+    .main_chart {
+        flex: 1 1 auto; /* 主内容区域填充剩余空间 */
+        overflow-y: auto; /* 需要时显示滚动条 */
+        margin: 10px auto 0;
+        padding: 1rem 0.125rem 0.125rem 0.125rem;
+        width: 100%;
+
+    }
+    .chart_box{
+        position: relative;
+        flex: 1; /* Make each data_box take equal width */
+        float: left;
+        width: 50%;
+        height: 68vh;
+        padding: 0rem 3rem;
+        display: flex; /* Added to enable flex layout */
+        justify-content: space-around; /* Distribute space evenly around the children */
+    }
+    .chart_box canvas {
+        width: 100%; /* Ensure the canvas inside chart_box takes up 100% width */
+        height: 100%; /* Ensure the canvas inside chart_box takes up 100% height */
+    }
+    .legendContainer {
+        display: flex;
+        justify-content: space-between; /* 两端对齐 */
+        width: 100%; /* 容器宽度 */
+    }
+    .legend-left{
+        display: flex;
+        flex-direction: row; /* 水平排列 */
+        justify-content: flex-start; /* 左侧标签组左对齐 */
+    }
+    .legend-right{
+        display: flex;
+        flex-direction: row; /* 水平排列 */
+        justify-content: flex-end; /* 右侧标签组右对齐 */
+    }
+    .legend1, .legend2, .legend3 {
+        display: inline-flex; /* 使用flex布局使内容居中 */
+        align-items: center; /* 垂直居中 */
+        justify-content: center; /* 水平居中 */
+        font-weight: 500;
+        color: white;
+        font-size: 16px; /* 统一文字大小 */
+        width: 90px; /* 统一宽度 */
+        height: 30px; /* 统一高度 */
+        margin: 0 2px;
+        border: 1px solid #ddd; /* 添加边框 */
+        box-sizing: border-box; /* 边框和内边距包含在宽度和高度内 */
+    }
+
+    .legend1 {
+        background-color: #4CAF50;
+    }
+
+    .legend2 {
+        background-color: #c8c533;
+    }
+
+    .legend3 {
+        background-color: #f44336;
+    }
+
+
+    .legend4 {
+        font-size: 23px; /* 增大字体 */
+        color: rgba(256, 256, 256, 0.8);
+    }
+    .text2{
+        width:40%;
+        float: right;
+        text-align: center;
+        font-size: 20px; /* 增大字体 */
+        color: rgba(256, 256, 256, 0.8);
+    }
+    /*start510*/
+    #companyName, #companyButton{
+        border-radius: 2px;
+    }
+    #companyButton{
+        height: 34px;
+        border-radius: 2px;
+    }
+    /*end510*/
+</style>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Title</title>
+    <!-- jQuery文件。务必在bootstrap.min.js 之前引入 -->
+    <script src="/js/static/jquery/jquery-3.7.0.min.js"></script>
+    <!-- 最新的 Bootstrap 核心 JavaScript 文件 -->
+    <script src="${ctxStatic}/js/bootstrap.min.js"></script>
+    <!-- 新 Bootstrap 核心 CSS 文件 -->
+    <link rel="stylesheet" type="text/css" href="${ctxStatic}/css/bootstrap.css">
+    <!-- 引入layui的css文件-->
+    <link href="${ctxStatic}/css/layui.css" rel="stylesheet">
+    <!--chart JS-->
+    <script src="${ctxStatic}/js/chart.js"></script>
+    <script src="${ctxStatic}/js/chartjs-plugin-datalabels.js"></script>
+<!--    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>-->
+<!--    <script src="https://cdn.staticfile.net/Chart.js/3.9.1/chart.js"></script>-->
+<!--    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>-->
+
+    <!--layui的js文件-->
+    <script src="${ctxStatic}/js/layui.js"></script>
+    <!--xm-select的js文件-->
+    <script src="${ctxStatic}/js/xm-select.js"></script>
+
+    <script src="${ctxStatic}/js/toastr.min.js"></script>
+    <link href="${ctxStatic}/css/toastr.min.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="content" style="flex: 1; display: flex; flex-direction: column;">
+    <div class="header">
+        <div class="data_box item" id="data_box1">
+            <div class="textInfo">
+                <p>总人数</p>
+                <span class="headcount"></span>
+            </div>
+            <div class="img">
+                <img src="${ctxStatic}/images/总人数.png" style="width: 80%;">
+            </div>
+         </div>
+        <div id="virtualBox1"></div>
+        <div class="data_box item" id="data_box2">
+            <div class="textInfo">
+                <p>总次数</p>
+                <span class="totalTimes"></span>
+            </div>
+            <div class="img">
+                <img src="${ctxStatic}/images/总次数.png" style="width: 80%;">
+            </div>
+        </div>
+        <div id="virtualBox2"></div>
+        <div class="data_box item" id="data_box3">
+            <div class="textInfo">
+                <p>今日检测人数</p>
+                <span class="headcount_today"></span>
+            </div>
+            <div class="img">
+                <img src="${ctxStatic}/images/今日检测人数.png" style="width: 80%;">
+            </div>
+        </div>
+        <div id="virtualBox3"></div>
+        <div class="data_box item" id="data_box4">
+            <div class="textInfo">
+                <p>今日检测次数</p>
+                <span class="totalTimes_today"></span>
+            </div>
+            <div class="img">
+                <img src="${ctxStatic}/images/今日检测次数.png" style="width: 80%;">
+            </div>
+        </div>
+        <div id="virtualBox4"></div>
+        <div class="data_box item" id="data_box5">
+            <div class="textInfo">
+                <p>无效视频数据</p>
+                <span class="ineffectiveVideo"></span>
+            </div>
+            <div class="img">
+                <img src="${ctxStatic}/images/无效视频.png" style="width: 80%;">
+            </div>
+        </div>
+        <div id="virtualBox5"></div>
+    </div>
+
+
+    <div class="middle" id="middle">
+        <div style="border: 1px solid #a7babc;"></div>
+        <div class="comprehensive_data">
+            <div class="fl"><p>综合数据</p></div>
+            <div class="fr">
+                <p class="p">时间</p>
+                <div class="layui-form" style="float: left;width: 40%;margin-right: 7px">
+                    <div class="layui-form-item" style="display: inline-block;">
+                        <div class="layui-inline">
+                            <div class="layui-inline" id="ID-laydate-range" style="  display: flex; align-items: center;justify-content: flex-start;  ">
+                                <div class="layui-input-inline" style="  flex: 1;">
+                                    <input type="text" autocomplete="off" id="startTime" name="startTime" class="layui-input" placeholder="开始日期">
+                                </div>
+                                <div class="layui-form-mid" style="color: #ffffff; flex: 0 0 auto; ">-</div>
+                                <div class="layui-input-inline" style="  flex: 1;">
+                                    <input type="text" autocomplete="off" id="endTime" name="endTime" class="layui-input" placeholder="结束日期">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <p class="p">部别</p>
+                <div class="layui-form layui-row layui-col-space16" style="float: left;width:30%;margin-right: 7px;">
+                    <div class="layui-col-md6">
+                        <#form:treeselect id="company" title="${text('部别选择')}"
+                        path="employee.company.companyCode" labelPath="employee.company.companyName"
+                        url="${ctx}/sys/company/treeData?ctrlPermi=2"
+                        btnClass="" allowClear="true" canSelectRoot="true" canSelectParent="true"
+                        style=" border:1px dashed pink;"/>
+                    </div>
+                </div>
+                 <p class="p">任务</p>
+                <div class="layui-form layui-row layui-col-space16" style="float: left;width: 25%;margin-right: 7px;">
+                    <div class="layui-col-md6">
+                        <div id="task"></div>
+                    </div>
+                    <input type="hidden" id="testNumbers" name="testNumbers" value="">
+                </div>
+                <p class="p">性别</p>
+                <div class="layui-form layui-row layui-col-space16" style="float: left;width:20%;margin-right: 7px;">
+                    <div class="layui-col-md6">
+                        <select name="gender" id="gender">
+                            <option value="" ></option>
+                            <option value="男" type="checkbox" >男</option>
+                            <option value="女" type="checkbox" >女</option>
+                        </select>
+                    </div>
+                </div>
+                <p class="p">年龄</p>
+                <div class="layui-form-item" style="display: inline-block;width: 20%;">
+                    <div class="layui-inline" style=" display: flex; align-items: center;  justify-content: flex-start; width: 100%; ">
+                        <div class="layui-input-inline" style="flex: 0 0 50px;">
+                            <input type="number" name="startAge" id="startAge" placeholder="" autocomplete="off" class="layui-input" min="0" step="1" lay-affix="number">
+                        </div>
+                        <div class="layui-form-mid" style="color: #ffffff;  flex: 0 0 auto;">-</div>
+                        <div class="layui-input-inline" style="flex: 0 0 50px;">
+                            <input type="number" name="endAge" id="endAge" placeholder="" autocomplete="off" class="layui-input" min="0" step="1" lay-affix="number">
+                        </div>
+                    </div>
+                </div>
+                <div class="btn" style="display: inline-block;width: 250px;">
+                    <button class="layui-btn submitBtn" style="display: inline-block;width: 45%;border-color:#1e9fff;background-color:#1e9fff;color:#FFFFFF; font-size: 18px;" id="submitBtn">查询</button>
+                    <button class="layui-btn clearBtn" style="display: inline-block;width:45%; border-color:#16b777;background-color:#16b777;color:#FFFFFF; font-size: 18px;" id="clearBtn">重置</button>
+                </div>
+            </div>
+        </div>
+        <div style="border: 1px solid #a7babc;"></div>
+    </div>
+
+
+    <div class="main_chart" id="mainChart">
+        <div class= "legendContainer" style="height: 5vh">
+            <div class="legend-left">
+                <label for="" class="legend1">正常</label>
+                <label for="" class="legend2">一般</label>
+                <label for="" class="legend3">关注</label>
+                <label for="" class="legend4" style="margin-left: 80px;">综合心理排序</label>
+            </div>
+            <div class="legend-right">
+                <label for="" class="legend4" style="margin-right: 80px;">建模跟踪排序</label>
+                <label for="" class="legend3">关注</label>
+                <label for="" class="legend2">一般</label>
+                <label for="" class="legend1">正常</label>
+            </div>
+        </div>
+        <div class="chart_box" id="chart_box1">
+            <canvas class="chart_box" id="myChart1"></canvas>
+        </div>
+        <div class="chart_box" id="chart_box2">
+            <canvas class="chart_box" id="myChart2"></canvas>
+        </div>
+    </div>
+</div>
+</div>
+</body>
+</html>
+<% } %>
+<!--筛选框以及柱状图表 动态获取数据以及点击跳转详细信息-->
+
+
+<script>
+    toastr.options = {
+        positionClass: 'toast-bottom-right'
+    };
+    /**
+     * @Description: 任务批次 下拉框
+     *
+     * @Author: ljh
+     **/
+    layui.use(["jquery", "xmSelect"], function() {
+        var $ = layui.jquery;
+        var xmSelect = layui.xmSelect;
+        var form = layui.form;
+        $.ajax({
+            url: "${ctx}/test/testNumber/findTestNumberByLimit", // 替换为你的后端数据接口URL
+            dataType: "json",
+            success: function(res) {
+                var data = []; // 初始化空数组用于存放转换后的数据
+                // 使用for循环遍历res.data数组
+                for (var i = 0; i < res.length; i++) {
+                    data.push({
+                        name: res[i].testNumberName, // 将testName属性赋给name
+                        value: res[i].testNumber     // 将id属性赋给value
+                    });
+                }
+                const dataTypes = xmSelect.render({
+                    el: '#task',
+                    name: 'task',
+                    paging: true, //分页
+                    pageSize: 5, //每页条数
+                    height: '500px',
+                    //start510
+                    theme: {
+                        color: '#1e9fff',                 //主题颜色
+                    },
+                    //end510
+                    toolbar: {
+                        show: true,
+                        list: ['ALL', 'CLEAR']
+                    },
+                    data: data, // 使用处理后的数据数组
+                    on : ('change', function(data){
+                        var selectedNames = data.arr.map(item => item.value); // 获取所有选中项的value
+                        var selectedNamesString = selectedNames.join(','); // 将数组转换为逗号分隔的字符串
+                        $('#testNumbers').val(selectedNamesString); // 设置隐藏input的值
+                    })
+                });
+
+            },
+            error: function(xhr, status, error) {
+                toastr.error("请求数据失败: " + error);
+            }
+        });
+    });
+</script>
+<script>
+        /**
+         * @Description: 判断是管理员账号还是部门账号 2024.10.16
+         *
+         * @Author: yzz
+         **/
+        $.ajax({
+            url: '${ctx}/judgmentAccount',
+            type:'POST',
+            success:function (data){
+                if(data === "采集账号"){
+                    document.getElementById('middle').style.display = 'none';
+                    document.getElementById('mainChart').style.display = 'none';
+                }
+            },
+            error: function(xhr, status, error) {
+                console.log("请求失败: " + error);
+            }
+        })
+
+
+
+
+    /**
+     * @Description: 全局变量
+     *
+     * @Author: ljh
+     **/
+    let formData = new FormData();
+    var dataFiltered = {};
+    /**
+     * @Description: 创建myChart图表，并建立柱状图点击事件。
+     *
+     * @Author: ljh
+     **/
+    var aTags = []; // 用于存储已创建的a标签
+    var ctx1 = document.getElementById('myChart1').getContext('2d');
+    var myChart = new Chart(ctx1, {
+        type: 'bar', // 图表类型
+        data: {
+            labels: ['1级', '2级', '3级', '4级', '5级'], // X轴标签
+            datasets: [{ // 数据集
+                label: '正常',
+                data: [0, 0, 0, 0, 0], // y轴数据
+                backgroundColor: '#4CAF50',
+                borderColor: '#4CAF50',
+                borderWidth: 1,
+                stack: 'overlap',
+                barPercentage: 0.3,
+            },
+                {
+                    label: '关注',
+                    backgroundColor: '#c8c533',
+                    borderColor: '#c8c533',
+                    borderWidth: 1,
+                    data:  [0, 0, 0, 0, 0],
+                    stack: 'overlap',
+                    barPercentage: 0.3,
+                },
+                {
+                    label: '重点关注',
+                    backgroundColor: '#f44336',
+                    borderColor: '#f44336',
+                    borderWidth: 1,
+                    data:  [0, 0, 0, 0, 0],
+                    stack: 'overlap',
+                    barPercentage: 0.3,
+                }
+            ]
+        },
+        options: {
+            // 可以在这里添加其他配置选项
+            maintainAspectRatio: false,
+            // 自适应的关键代码
+            plugins:{
+                datalabels: {
+                    display: function(context) {
+                        var value = context.dataset.data[context.dataIndex];
+                        return value > 0;
+                    },
+                    anchor: 'end', // 标签锚点位置，可以是'start', 'end', 'center'等
+                    align: 'top', // 标签对齐方式，可以是'top', 'bottom', 'left', 'right', 'center'等
+                    formatter: function(value, context) {
+                            return value; // 返回要显示的标签内容，这里直接返回数据点的值
+                    },
+                    color: 'white', // 标签颜色
+                    font: {
+                        size: 12 // 标签字体大小
+                    }
+                },
+                legend:{
+                    display: false,
+                },
+
+            },
+            scales: {
+                x: {
+                    display: true,
+                    ticks: {
+                        color: 'white' ,// 设置X轴刻度颜色为白色
+                        font: {
+                            size: 16 // 设置x轴字体大小为16px
+                        },
+                    },
+                    //改变轴线颜色
+                    grid: {
+                        display: false,
+                        borderColor:'white',
+                    },
+                },
+                y: {
+                ticks: {
+                        display: true,
+                        color: 'white' ,// 设置X轴刻度颜色为白色
+                        font: {
+                            size: 16 // 设置Y轴字体大小为16px
+                        }
+                    },
+                    grid: {
+                        display: false,
+                        borderColor:'white',
+
+                    },
+
+                },
+            },
+            onClick: function(event, elements) {
+                const stringsArray = ['myChart1_1', 'myChart1_2', 'myChart1_3', 'myChart1_4', 'myChart1_5'];//跳转的页面的html名称
+                if (elements.length > 0) {  //检查是否有元素被点击。
+                    var index = elements[0].index;  //获取被点击元素的索引
+                    if (!aTags[index]) { //检查是否已经创建了对应索引的a标签。
+                        var aTag = document.createElement('a');
+                        aTag.href = "${ctx}/emotion/emotionResult/" + stringsArray[index];//动态添加
+                        aTag.className = "addTabPage";
+                        if(index == 0){aTag.title = "${text('1级(综合心理排序)列表详情')}";}
+                        else if (index == 1){aTag.title = "${text('2级(综合心理排序)列表详情')}"}
+                        else if (index == 2){aTag.title = "${text('3级(综合心理排序)列表详情')}"}
+                        else if (index == 3){aTag.title = "${text('4级(综合心理排序)列表详情')}"}
+                        else {aTag.title = "${text('5级(综合心理排序)列表详情')}"}
+                        // aTag.title = "${text('列表详情')}";
+                        document.querySelector('#virtualBox1').appendChild(aTag);//virtualBox1 虚拟盒子 无高度
+                        aTags[index] = aTag; // 将已创建的a标签存储在aTags数组中，以便后续引用。
+                    }else {
+                        aTags[index].href = "${ctx}/emotion/emotionResult/" + stringsArray[index]; // 重新加载跳转页面
+                    }
+                    aTags[index].click(); // 模拟a标签点击事件
+                }
+            }
+        },
+        plugins: [ChartDataLabels]
+    });
+
+    /**
+     * @Description: 创建myChart图表，并建立柱状图点击事件。
+     *
+     * @Author: ljh
+     **/
+    var aTags2 = []; // 用于存储已创建的a标签
+    var ctx2 = document.getElementById('myChart2').getContext('2d');
+    var myChart2 = new Chart(ctx2, {
+        type: 'bar', // 图表类型
+        data: {
+            labels: ['1级', '2级', '3级', '4级', '5级'], // X轴标签
+            datasets: [{ // 数据集
+                label: '正常',
+                data:  [0, 0, 0, 0, 0], // y轴数据
+                backgroundColor: '#4CAF50',
+                borderColor: '#4CAF50',
+                borderWidth: 1,
+                stack: 'overlap',
+                barPercentage: 0.3,
+            },
+                {
+                    label: '关注',
+                    backgroundColor: '#c8c533',
+                    borderColor: '#c8c533',
+                    borderWidth: 1,
+                    data:  [0, 0, 0, 0, 0],
+                    stack: 'overlap',
+                    barPercentage: 0.3,
+                },
+                {
+                    label: '重点关注',
+                    backgroundColor:  '#f44336',
+                    borderColor: '#f44336',
+                    borderWidth: 1,
+                    data:  [0, 0, 0, 0, 0],
+                    stack: 'overlap',
+                    barPercentage: 0.3,
+                }
+            ]
+        },
+        options: {
+            // 可以在这里添加其他配置选项
+            maintainAspectRatio: false,
+            // 自适应的关键代码
+            plugins:{
+                datalabels: {
+                    display: function(context) {
+                        var value = context.dataset.data[context.dataIndex];
+                        return value > 0;
+                    },
+                    // display: true, // 显示标签
+                    anchor: 'end', // 标签锚点位置，可以是'start', 'end', 'center'等
+                    align: 'top', // 标签对齐方式，可以是'top', 'bottom', 'left', 'right', 'center'等
+                    formatter: function(value, context) {
+                        return value; // 返回要显示的标签内容，这里直接返回数据点的值
+                    },
+                    color: 'white', // 标签颜色
+                    font: {
+                        size: 13 // 标签字体大小
+                    }
+                },
+                legend:{
+                    display:false,
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        color: 'white' ,// 设置X轴刻度颜色为白色
+                        font: {
+                            size: 16 // 设置x轴字体大小为16px
+                        }
+                    },
+                    grid: {
+                        display: false,
+                        borderColor:'white',
+                    },
+                },
+                y: {
+                    ticks: {
+                        color: 'white', // 设置X轴刻度颜色为白色
+                        font: {
+                            size: 16 // 设置Y轴字体大小为16px
+                        }
+                    },
+                    grid: {
+                        display: false,
+                        borderColor:'white',
+                    },
+                },
+            },
+            onClick: function(event, elements) {
+                const stringsArray = ['myChart2_1', 'myChart2_2', 'myChart2_3', 'myChart2_4', 'myChart2_5'];//跳转的页面的html名称
+                if (elements.length > 0) {
+                    var index = elements[0].index;
+                    if (!aTags2[index]) {
+                        var aTag2 = document.createElement('a');
+                        aTag2.href = "${ctx}/emotion/emotionResult/" + stringsArray[index];//动态添加
+                        aTag2.className = "addTabPage";
+                        // yzz
+                        if(index == 0){aTag2.title = "${text('1级(建模跟踪排序)列表详情')}";}
+                        else if (index == 1){aTag2.title = "${text('2级(建模跟踪排序)列表详情')}"}
+                        else if (index == 2){aTag2.title = "${text('3级(建模跟踪排序)列表详情')}"}
+                        else if (index == 3){aTag2.title = "${text('4级(建模跟踪排序)列表详情')}"}
+                        else {aTag2.title = "${text('5级(建模跟踪排序)列表详情')}"}
+                        // aTag.title = "${text('列表详情')}";
+                        document.querySelector('#virtualBox1').appendChild(aTag2);//virtualBox1 虚拟盒子 无高度
+                        aTags2[index] = aTag2; // 存储已创建的a标签
+                    }
+
+                    aTags2[index].click(); // 模拟a标签点击事件
+                }
+            }
+
+        },
+        plugins: [ChartDataLabels]
+
+    });
+
+    /**
+     * @Description: layui模块的时间选择器
+     *
+     * @Author: ljh
+     **/
+    layui.use(function(){
+        var laydate = layui.laydate;
+        // 日期范围 - 左右面板独立选择模式
+        laydate.render({
+            elem: '#ID-laydate-range',
+            theme: '#1e9fff',
+            range: ['#startTime', '#endTime']
+        });
+        /**
+         * @Description: 查询按钮 功能
+         *
+         * @Author: ljh
+         **/
+        <!-- 将筛选的数据放进dataFiltered 以便调用-->
+        submitBtnClick();
+        function submitBtnClick(){
+            var inputs = document.querySelectorAll('input');
+            var selects = document.querySelectorAll('select');
+            inputs.forEach(input => {
+                dataFiltered[input.id] = input.id === 'testNumbers' && input.value.trim() === '' ? [] : input.value.trim() || null;
+            });
+            selects.forEach(select => {
+                dataFiltered[select.id] = select.value.trim() || null;
+            });
+            console.log('筛选的查询数据',dataFiltered);
+            // ljh   522
+            <!-- 将筛选的dataFiltered数据放进localStorage，供其他HTML跨域使用数据，以便调用-->
+            localStorage.setItem('key', JSON.stringify(dataFiltered));
+            var timestamp = new Date().getTime(); // 获取当前时间戳
+            var previousData = JSON.parse(localStorage.getItem('key')).data; // 获取上一次存储的数据
+            if (JSON.stringify(dataFiltered) !== JSON.stringify(previousData)) {
+                localStorage.setItem('key', JSON.stringify({ timestamp: timestamp, data: dataFiltered }));
+                aTags = []; // 清空aTags数组
+                aTags2 = [];
+            }
+            <!-- 得到这些筛选的参数 放进sendDataToBackend 给后端传参数用 -->
+            var gender = String(dataFiltered.gender);
+            var startTime = String(dataFiltered.startTime);
+            var endTime = String(dataFiltered.endTime);
+            var startAge = String(dataFiltered.startAge);
+            var endAge = String(dataFiltered.endAge);
+            var companyCode = String(dataFiltered.companyCode);
+            var companyName = String(dataFiltered.companyName);
+            var testNumbers;
+            if (dataFiltered.testNumbers && dataFiltered.testNumbers.length === 0) {
+                testNumbers = [];
+            } else {
+                testNumbers = dataFiltered.testNumbers ? dataFiltered.testNumbers.split(',') : [];
+            }
+            sendDataToBackend(gender, startTime, endTime, startAge, endAge, companyCode,companyName,testNumbers,myChart, myChart2);
+        }
+        <!-- 调用方法-->
+        document.getElementById('submitBtn').addEventListener('click', function() {
+            submitBtnClick()
+        });
+        /**
+         * @Description: 重置按钮 功能  清空
+         *
+         * @Author: ljh  522
+         **/
+        document.getElementById('clearBtn').addEventListener('click', function() {
+            document.querySelectorAll('.xm-icon-qingkong').forEach(function(element) {
+                element.click();
+            });
+            var labelContent = document.querySelector('.label-content');
+            if (labelContent) {
+                labelContent.setAttribute('title', ''); // 清空title属性
+                labelContent.innerHTML = ''; // 清空label-content内部的内容
+            }
+
+            var inputs = document.querySelectorAll('input');
+            var selects = document.querySelectorAll('select');
+            inputs.forEach(function(input) {
+                input.value = '';
+            });
+            selects.forEach(function(select) {
+                select.value = '';
+            });
+            // 初始化  522
+            submitBtnClick();
+        });
+    });
+    /**
+     * @Description: 将筛选框中筛选得到的数据，传给后端。得到各柱状图的数据 以及顶部人数数据
+     *
+     * @Author: ljh 522
+     **/
+    function sendDataToBackend( gender, startTime, endTime, startAge, endAge, companyCode,companyName,testNumbers,myChart, myChart2) {
+        let formData2 = new FormData();   //带有时间筛选条件
+        formData2.append('gender', gender);
+        formData2.append('startTime', startTime);
+        formData2.append('endTime', endTime);
+        formData2.append('startAge', startAge);
+        formData2.append('endAge', endAge);
+        formData2.append('testNumbers', testNumbers);
+
+        /**
+         * @Description:  左侧图表
+         *
+         * @Author: ljh 522
+         **/
+        // 请求获取数据
+        $.ajax({
+            url: '${ctx}/emotion/emotionResult/findEmotionResultNumberByLevel?companyCode='+companyCode+'&companyName='+companyName,
+            type: 'POST',
+            processData: false,
+            contentType: false,
+            data: formData2,
+            success: function(dataOne) {
+                //start510
+                var maxDataOne = Math.max.apply(null, dataOne);
+                var yvalue= Math.ceil(maxDataOne / 10) * 10;
+                if(yvalue<5){
+                    yvalue=5;
+                }
+                //end510
+                var data1 = dataOne.slice();
+                var data2 = dataOne.slice();
+                var data3 = dataOne.slice();
+                data1[3] = 0;
+                data1[4] = 0;
+                for (var i = 0; i < 5; i++) {
+                    if (i !== 3) {
+                        data2[i] = 0;
+                    }
+                }
+                for (var i = 0; i < 5; i++) {
+                    if (i !== 4) {
+                        data3[i] = 0;
+                    }
+                }
+                myChart.data.datasets[0].data = data1;
+                myChart.data.datasets[1].data = data2;
+                myChart.data.datasets[2].data = data3;
+                myChart.update();
+                //start510
+                function updateYAxisRange(min, max) {
+                    myChart.options.scales.y.min = min;
+                    myChart.options.scales.y.max = max;
+                    myChart.update(); // 更新图表以反映新的范围
+                }
+                updateYAxisRange(0, yvalue);
+            //    end510
+            },
+            error: function(xhr, status, error) {
+                console.error('Error fetching data:', error);
+                // 处理错误情况，比如显示错误信息给用户
+            }
+        });
+        /**
+         * @Description:  右侧图表
+         *
+         * @Author: ljh 522
+         **/
+        // 请求获取数据
+        $.ajax({
+            url: '${ctx}/emotion/emotionResult/findNumberOfPeopleByTracking?companyCode='+companyCode+'&companyName='+companyName,
+            type: 'POST',
+            processData: false,
+            contentType: false,
+            data: formData2,
+            success: function(dataTwo) {
+                //start510
+                var maxDataTwo = Math.max.apply(null, dataTwo);
+                var yvalue2 = Math.ceil(maxDataTwo / 10) * 10;
+                if(yvalue2<5){
+                    yvalue2=5;
+                }
+                //end510
+                        var data1 = dataTwo.slice(); // 创建data的副本
+                        var data2 = dataTwo.slice(); // 创建data的副本
+                        var data3 = dataTwo.slice(); // 创建data的副本
+                        data1[3] = 0;
+                        data1[4] = 0;
+                        for (var i = 0; i < 5; i++) {
+                            if (i !== 3) {
+                                data2[i] = 0;
+                            }
+                        }
+                        for (var i = 0; i < 5; i++) {
+                            if (i !== 4) {
+                                data3[i] = 0;
+                            }
+                        }
+                        myChart2.data.datasets[0].data = data1;
+                        myChart2.data.datasets[1].data = data2;
+                        myChart2.data.datasets[2].data = data3;
+                        myChart2.update();
+                //start510
+                function updateYAxisRange(min, max) {
+                    myChart2.options.scales.y.min = min;
+                    myChart2.options.scales.y.max = max;
+                    myChart2.update(); // 更新图表以反映新的范围
+                }
+                updateYAxisRange(0, yvalue2);
+                //    end510
+            },
+            error: function(xhr, status, error) {
+                console.error('Error fetching data:', error);
+                // 处理错误情况，比如显示错误信息给用户
+            }
+        });
+
+        /**
+         * @Description: 顶部信息显示部分。得到后端返回的数据并显示。
+         *
+         * @Author: ljh
+         **/
+
+        var allType = 2 ;
+        var dayType = 0 ;
+
+            // 总人数
+            $.ajax({
+                url: '${ctx}/subject/subjectInformation/findInfoNumberByType?companyCode='+companyCode+'&companyName='+companyName+'&type='+allType,
+                type: 'POST',
+                processData: false,
+                contentType: false,
+                data: formData2,
+                success: function(response) {
+                    console.log(companyCode,companyName);
+                    var allPeopleCount = response;
+                    //找到页面上类名为headcount的元素，并将它文本内容更新为allPeopleCount变量的值
+                    $(".headcount").text(allPeopleCount);
+                },
+                error: function(xhr, status, error) {
+                    console.log("请求失败: " + error);
+                }
+            });
+
+            // 总次数
+            $.ajax({
+                url: '${ctx}/emotion/emotionResult/findAllCount?companyCode='+companyCode+'&companyName='+companyName+'&type='+allType,
+                type: 'POST',
+                processData: false,
+                contentType: false,
+                data: formData2,
+                success: function(response) {
+                    var allMidCount = response;
+                    $(".totalTimes").text(allMidCount);
+                },
+                error: function(xhr, status, error) {
+                    console.log("请求失败: " + error);
+                }
+            });
+
+        // 无效视频数据
+        $.ajax({
+            url: '${ctx}/emotion/emotionVideo/getTheNumberOfInvalidVideos?companyCode='+companyCode+'&companyName='+companyName,
+            type: 'POST',
+            processData: false,
+            contentType: false,
+            data: formData2,
+            success: function(response) {
+                var theNumberOfInvalidVideos = response;
+                $(".ineffectiveVideo").text(theNumberOfInvalidVideos);
+            },
+            error: function(xhr, status, error) {
+                console.log("请求失败: " + error);
+            }
+        });
+
+        // 今日检测人数
+        $.ajax({
+            url: '${ctx}/subject/subjectInformation/findInfoNumberByType?companyCode='+companyCode+'&companyName='+companyName+'&type='+dayType,
+            type: 'POST',
+            processData: false,
+            contentType: false,
+            data: formData2,
+            success: function(response) {
+                var dayPeopleCount = response;
+                $(".headcount_today").text(dayPeopleCount);
+            },
+            error: function(xhr, status, error) {
+                console.log("请求失败: " + error);
+            }
+        });
+
+        // 今日检测次数
+        $.ajax({
+            url: '${ctx}/emotion/emotionResult/findAllCount?companyCode='+companyCode+'&companyName='+companyName+'&type='+dayType,
+            type: 'POST',
+            processData: false,
+            contentType: false,
+            data: formData2,
+            success: function(response) {
+                var dayMidCount = response;
+                $(".totalTimes_today").text(dayMidCount);
+            },
+            error: function(xhr, status, error) {
+                console.log("请求失败: " + error);
+            }
+        });
+
+    }
+</script>
+
+<!--header 详细信息 绑定点击事件-->
+<script>
+    /**
+     * @Description: 顶部信息框，点击进入详细信息页面。
+     *
+     * @Author: ljh
+     **/
+    //总人数 详细信息
+    // 确保只生成唯一的a标签
+    let aTag1 = null;
+    document.querySelector('#data_box1').addEventListener("click", function() {
+        if (!aTag1) {
+            aTag1 = document.createElement('a');
+            aTag1.href = "${ctx}/emotion/emotionResult/data_box1_headcount";
+            aTag1.className = "addTabPage";
+            aTag1.title = "${text('总人数详情')}";
+            document.querySelector('#virtualBox1').appendChild(aTag1);
+        }
+        aTag1.click(); // 模拟a标签点击事件
+    });
+
+    //总次数 详细信息
+    let aTag2 = null;
+    document.querySelector('#data_box2').addEventListener("click", function() {
+        if (!aTag2) {
+            aTag2 = document.createElement('a');
+            aTag2.href = "${ctx}/emotion/emotionResult/data_box2_totalTimes";
+            aTag2.className = "addTabPage";
+            aTag2.title = "${text('总次数详情')}";
+            document.querySelector('#virtualBox2').appendChild(aTag2);
+        }
+        aTag2.click(); // 模拟a标签点击事件
+    });
+    // 今日检测人数 详细信息 yzz
+    let aTag3 = null;
+    document.querySelector('#data_box3').addEventListener("click", function() {
+        if (!aTag3) {
+            aTag3 = document.createElement('a');
+            aTag3.href = "${ctx}/emotion/emotionResult/data_box3_headcount_today";
+            aTag3.className = "addTabPage";
+            aTag3.title = "${text('今日检测人数详情')}";
+            document.querySelector('#virtualBox3').appendChild(aTag3);
+        }
+        aTag3.click(); // 模拟a标签点击事件
+    });
+    // 今日检测次数 详细信息 yzz
+    let aTag4 = null;
+    document.querySelector('#data_box4').addEventListener("click", function() {
+        if (!aTag4) {
+            aTag4 = document.createElement('a');
+            aTag4.href = "${ctx}/emotion/emotionResult/data_box4_totalTimes_today";
+            aTag4.className = "addTabPage";
+            aTag4.title = "${text('今日检测次数详情')}";
+            document.querySelector('#virtualBox4').appendChild(aTag4);
+        }
+        aTag4.click(); // 模拟a标签点击事件
+    });
+    // 无效视频数据 详细信息 yzz
+    let aTag5 = null;
+    document.querySelector('#data_box5').addEventListener("click", function() {
+        if (!aTag5) {
+            aTag5 = document.createElement('a');
+            aTag5.href = "${ctx}/emotion/emotionResult/data_box5_ineffectiveVideo";
+            aTag5.className = "addTabPage";
+            aTag5.title = "${text('无效视频数据详情')}";
+            document.querySelector('#virtualBox5').appendChild(aTag5);
+        }
+        aTag5.click(); // 模拟a标签点击事件
+    });
+
+</script>
+
+

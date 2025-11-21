@@ -1362,7 +1362,7 @@ onUnmounted(() => {
 
   .time_filtering {
     position: absolute;
-    bottom: 15px;
+    bottom: 40px;
     left: 20px;
     display: flex;
     gap: 10px;
@@ -1377,6 +1377,7 @@ onUnmounted(() => {
       cursor: pointer;
       transition: background-color 0.3s, border-color 0.3s, transform 0.3s;
       backdrop-filter: blur(4px);
+      height: 40px;
 
       &:hover {
         background-color: rgba(6, 58, 107, 0.9);
@@ -1537,7 +1538,7 @@ onUnmounted(() => {
 
       .visual_table {
         flex: 1;
-        overflow: auto;
+        overflow: hidden;
         min-height: 0;
 
         table {

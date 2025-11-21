@@ -129,7 +129,7 @@ const searchForm: FormProps = {
       fieldLabel: 'ppositionName',
     },
     {
-      label: '跟踪预警状态',
+      label: '状态',
       field: 'alarmStatus',
       component: 'Select',
       componentProps: {
@@ -306,7 +306,7 @@ const [registerTable, { reload, getSelectRows }] = useTable({
     params.ppositionName = params.ppositionName || '';
     // 部别代码
     params.pposition = params.pposition || '';
-    // 跟踪预警状态
+    // 状态
     params.alarmStatus = params.alarmStatus || '';
     // 综合心理
     params.psychologyStatus = params.psychologyStatus || '';
@@ -585,6 +585,74 @@ function handleSelectAll() {
 </script>
 
 <style lang="less" scoped>
+// 确保整个表格容器自适应宽度，不出现滚动条
+:deep(.jeesite-basic-table) {
+  width: 100%;
+  max-width: 100%;
+  overflow: visible;
+  
+  // 表格主体自适应宽度
+  .ant-table-wrapper {
+    width: 100%;
+    max-width: 100%;
+    overflow: visible;
+  }
+  
+  .ant-table {
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .ant-table-container {
+    width: 100%;
+    max-width: 100%;
+    overflow: visible;
+  }
+  
+  // 表格内容区域自适应
+  .ant-table-body {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+// 确保表单区域自适应剩余宽度，不出现滚动条
+:deep(.jeesite-basic-table-form-container) {
+  width: 100%;
+  overflow: visible;
+  display: block;
+  position: relative;
+  
+  .ant-form {
+    width: 100%;
+    display: block;
+  }
+  
+  // 允许表单行换行，自适应容器宽度
+  .ant-row {
+    flex-wrap: wrap; // 允许换行
+    width: 100%;
+    display: flex;
+  }
+  
+  // 表单项自适应宽度
+  .ant-form-item {
+    flex: 1 1 auto; // 允许表单项自适应
+    min-width: 0; // 允许缩小
+  }
+  
+  // 确保表单项内的输入框自适应
+  .ant-form-item-control-input {
+    min-width: 0;
+    width: 100%;
+  }
+  
+  // 表单操作按钮区域自适应
+  .ant-form-item:last-child {
+    flex: 0 0 auto; // 操作按钮不缩放
+  }
+}
+
 :deep(.ant-table-tbody) {
   .odd-row {
     box-shadow: inset 0px 0px 13px #4487d5;

@@ -1,45 +1,27 @@
 <template>
-  <div :class="prefixCls" class="relative h-full w-full bg-light-400 px-4">
+  <div :class="prefixCls" class="relative h-full w-full">
     <AppLocalePicker
       class="enter-x absolute right-3 top-6 text-gray-600"
       :showText="false"
       v-if="!sessionTimeout && showLocale"
     />
-    <AppDarkModeToggle class="enter-x absolute right-5 top-5" v-if="!sessionTimeout" />
 
-    <span class="-enter-x lg:hidden">
-      <AppLogo :alwaysShowTitle="true" />
-    </span>
+    <!-- Logo 区域 -->
+    <div class="login-logo">
+      <a href="#">
+        <b class="login-logo-title">{{ globSetting?.title || title }}</b>
+        <small class="login-logo-version"></small>
+      </a>
+    </div>
 
-    <div class="relative mx-auto h-full py-2 container">
-      <div class="h-full flex">
-        <div class="mr-4 min-h-full pl-4 md:hidden lg:w-13/24 lg:flex lg:flex-col">
-          <div class="my-auto">
-            <AppLogo class="-enter-x logo" />
-            <img :alt="title" src="@jeesite/assets/svg/login-box-bg.svg" class="-enter-x w-1/2" />
-            <div class="-enter-x mt-10 text-white font-medium">
-              <span class="mt-4 inline-block text-3xl"></span>
-            </div>
-            <div class="-enter-x text-md mt-5 text-white font-normal dark:text-gray-500">
-              JeeSite 是一个专业的平台，是一个让你使用放心的平台。<br />
-              前端基于 Vue3、Vite、TypeScript、Ant-Design-Vue、Vben Admin，<br />
-              后台基于 Spring Boot、Apache MyBatis 等，最先进、最经典的技术栈。<br />
-              精致的 UI、规范的代码书写、匠心著作、封装细节、专注业务、快速开发。<br />
-            </div>
-          </div>
-        </div>
-        <div class="h-full w-full flex overflow-auto py-5 lg:my-0 lg:h-auto lg:w-11/24 lg:py-0">
-          <div
-            :class="`${prefixCls}-form`"
-            class="enter-x relative mx-auto my-auto w-full rounded-xl px-5 py-8 shadow-md lg:ml-16 lg:w-2/4 lg:w-auto sm:w-3/4 lg:px-10 lg:py-9 sm:px-8"
-          >
-            <LoginForm @demo-mode="demoMode = $event" />
-            <ForgetPasswordForm :demoMode="demoMode" />
-            <RegisterForm :demoMode="demoMode" />
-            <MobileForm :demoMode="demoMode" />
-            <QrCodeForm :demoMode="demoMode" />
-          </div>
-        </div>
+    <!-- 左侧背景图 -->
+    <div id="backImg2" class="back-img2"></div>
+
+    <!-- 登录框 -->
+    <div class="login-box">
+      <div class="login-box-body">
+        <LoginForm @demo-mode="demoMode = $event" />
+        <ForgetPasswordForm :demoMode="demoMode" />
       </div>
     </div>
   </div>
@@ -47,12 +29,9 @@
 <script lang="ts" setup>
   import { computed, ref } from 'vue';
   import { AppLogo } from '@jeesite/core/components/Application';
-  import { AppLocalePicker, AppDarkModeToggle } from '@jeesite/core/components/Application';
+  import { AppLocalePicker } from '@jeesite/core/components/Application';
   import LoginForm from './LoginForm.vue';
   import ForgetPasswordForm from './ForgetPasswordForm.vue';
-  import RegisterForm from './RegisterForm.vue';
-  import MobileForm from './MobileForm.vue';
-  import QrCodeForm from './QrCodeForm.vue';
   import { useGlobSetting } from '@jeesite/core/hooks/setting';
   import { useDesign } from '@jeesite/core/hooks/web/useDesign';
   import { useLocaleStore } from '@jeesite/core/store/modules/locale';
@@ -104,10 +83,6 @@
     .@{prefix-cls} {
       background-color: @dark-bg;
 
-      &::before {
-        background-image: url('@jeesite/assets/svg/login-bg-dark.svg');
-      }
-
       .ant-input,
       .ant-input-password {
         background-color: #232a3b;
@@ -143,21 +118,73 @@
   .@{prefix-cls} {
     min-height: 100%;
     overflow: hidden;
-    //background-color: #f2fafd;
 
-    @media (max-width: @screen-lg) {
-      //background-color: #3f60b5;
+    // Logo 区域样式
+    .login-logo {
+      position: absolute;
+      top: 18%;
+      left: 20%;
+      z-index: 10;
 
-      .@{prefix-cls}-form {
-        box-shadow: none;
+      .login-logo-title {
+        position: fixed;
+        left: 8%;
+        top: 15%;
+        color: #00b7ee;
+        font-size: 69px;
+        font-weight: bold;
+      }
+
+      .login-logo-version {
+        color: #00b7ee;
+      }
+    }
+
+    // 左侧背景图
+    #backImg2 {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      width: 55%;
+      height: 55%;
+      margin: 13% 0 0 5%;
+      background-image: url('@jeesite/assets/images/login/login2.png');
+      background-size: contain;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-color: transparent;
+      position: relative;
+    }
+
+    // 登录框样式
+    .login-box {
+      position: fixed;
+      top: 10%;
+      left: 50%;
+      height: 80%;
+      width: 55%;
+      background-image: url('@jeesite/assets/images/login/login_box.png');
+      background-size: contain;
+      background-position: center;
+      background-repeat: no-repeat;
+      padding: 20px;
+      color: #FFFFFF;
+      z-index: 10;
+
+      .login-box-body {
+        background-color: rgba(170, 187, 215, 0);
+        margin: 22% 0 0 37%;
+        width:30%;
+
+        h2 {
+          color: #fff;
+        }
       }
     }
 
     &-form {
-      top: -20px;
-      margin: auto;
-      background-color: #fff;
-      box-shadow: 0 0 8px #ddd;
+      background-color: transparent;
+      box-shadow: none;
 
       .ant-form-item {
         margin-bottom: 15px;
@@ -170,78 +197,26 @@
       left: 0;
       width: 100%;
       height: 100%;
-      margin-left: -48%;
-      background-image: url('@jeesite/assets/svg/login-bg.svg');
-      background-position: 100%;
+      background-image: url('@jeesite/assets/images/login/login.png');
+      background-position: center;
       background-repeat: no-repeat;
-      background-size: auto 100%;
+      background-size: cover;
       content: '';
-
-      @media (max-width: @screen-lg) {
-        display: none;
-      }
+      z-index: 0;
     }
 
-    .@{logo-prefix-cls} {
-      // position: absolute;
-      // top: 12px;
-      // height: 30px;
 
-      &.logo {
-        margin-top: -110px;
-        padding-bottom: 80px;
-      }
-
-      &__title {
-        font-size: 18px;
-      }
-
-      img {
-        width: 32px;
-      }
-    }
-
-    .container {
-      max-width: 1280px;
-
-      .@{logo-prefix-cls} {
-        display: flex;
-        width: 60%;
-        height: 80px;
-
-        &__title {
-          font-size: 28px;
-          color: #eee;
-        }
-
-        img {
-          width: 48px;
-        }
-      }
-    }
-
-    &-sign-in-way {
-      .anticon,
-      .iconfont {
-        font-size: 28px;
-        color: #888;
-        cursor: pointer;
-
-        &:hover {
-          color: @primary-color;
-        }
-      }
-    }
 
     input:not([type='checkbox']) {
-      min-width: 360px;
+      min-width: 200px;
+      border-radius: 0 !important;
 
       @media (max-width: @screen-xl) {
-        min-width: 320px;
+        min-width: 280px;
       }
 
       @media (max-width: @screen-lg) {
-        min-width: 260px;
+        min-width: 240px;
       }
 
       @media (max-width: @screen-md) {
@@ -251,6 +226,11 @@
       @media (max-width: @screen-sm) {
         min-width: 160px;
       }
+    }
+
+    .ant-input,
+    .ant-input-password .ant-input {
+      border-radius: 0 !important;
     }
 
     .valid-code input {
@@ -264,6 +244,38 @@
     .ant-divider-inner-text {
       font-size: 14px;
       color: @text-color-secondary;
+    }
+
+    // 按钮样式（对应原 HTML 的 .skin-dark .btn-primary）
+    .ant-btn-primary {
+      background-color: #054d81 !important;
+      border-color: #054d81 !important;
+      color: #fff !important;
+    }
+
+    // 响应式处理
+    @media (max-width: @screen-lg) {
+      .login-logo {
+        .login-logo-title {
+          font-size: 40px;
+        }
+      }
+
+      #backImg2 {
+        width: 100%;
+        height: 50%;
+        margin: 5% 0 0 0;
+      }
+
+      .login-box {
+        position: relative;
+        top: auto;
+        margin: 20px auto;
+        height: auto;
+        width: 90%;
+        max-width: 400px;
+        transform: none;
+      }
     }
   }
 </style>

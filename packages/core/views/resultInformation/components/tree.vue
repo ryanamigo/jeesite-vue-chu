@@ -374,7 +374,7 @@ onMounted(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #0c3e7b;
+  background: #000000;
   color: #ffffff;
 
   .tree-header {
@@ -485,7 +485,7 @@ onMounted(() => {
 
 .task-tree-container .tree-content::-webkit-scrollbar-track {
   -webkit-box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
-  background: #0c3e7b;
+  background: #000000;
 }
 
 // 新增任务弹窗样式

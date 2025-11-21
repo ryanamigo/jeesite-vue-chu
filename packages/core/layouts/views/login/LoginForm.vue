@@ -9,22 +9,28 @@
     @keypress.enter="handleLogin"
   >
     <div class="mb-5"></div>
-    <FormItem name="account" class="enter-x">
-      <Input
-        size="large"
-        v-model:value="formData.account"
-        :placeholder="t('sys.login.account')"
-        class="fix-auto-fill"
-      />
+    <FormItem name="account" class="enter-x login-form-item">
+      <div class="login-input-group">
+        <span class="login-form-label">{{ t('sys.login.account') }}：</span>
+        <Input
+          size="large"
+          v-model:value="formData.account"
+          placeholder="登录账号"
+          class="fix-auto-fill"
+        />
+      </div>
     </FormItem>
-    <FormItem name="password" class="enter-x">
-      <InputPassword
-        size="large"
-        visibilityToggle
-        v-model:value="formData.password"
-        :placeholder="t('sys.login.password')"
-        autocomplete="off"
-      />
+    <FormItem name="password" class="enter-x login-form-item">
+      <div class="login-input-group">
+        <span class="login-form-label">{{ t('sys.login.password') }}：</span>
+        <InputPassword
+          size="large"
+          visibilityToggle
+          v-model:value="formData.password"
+          placeholder="登录密码"
+          autocomplete="off"
+        />
+      </div>
     </FormItem>
     <FormItem v-if="validCodeRefreshTime" name="validCode" class="enter-x valid-code">
       <ValidCode size="large" v-model:value="formData.validCode" :refreshTime="validCodeRefreshTime" />
@@ -66,47 +72,13 @@
       <Button type="primary" size="large" block @click="handleLogin" :loading="loading">
         {{ t('sys.login.loginButton') }}
       </Button>
-      <!-- <Button size="large" class="mt-4 enter-x" block @click="handleRegister">
-        {{ t('sys.login.registerButton') }}
-      </Button> -->
     </FormItem>
-    <ARow class="enter-x md:pl-3">
-      <ACol :md="7" :xs="24">
-        <Button block @click="setLoginState(LoginStateEnum.MOBILE)">
-          {{ t('sys.login.mobileSignInFormTitle') }}
-        </Button>
-      </ACol>
-      <ACol :md="8" :xs="24" class="xs:mx-0 !my-2 md:mx-2 !md:my-0">
-        <Button block @click="setLoginState(LoginStateEnum.QR_CODE)">
-          {{ t('sys.login.qrSignInFormTitle') }}
-        </Button>
-      </ACol>
-      <ACol :md="7" :xs="24">
-        <Button block @click="setLoginState(LoginStateEnum.REGISTER)">
-          {{ t('sys.login.registerButton') }}
-        </Button>
-      </ACol>
-    </ARow>
-
-    <Divider class="enter-x">{{ t('sys.login.otherSignIn') }}</Divider>
-
-    <div class="enter-x flex justify-evenly" :class="`${prefixCls}-sign-in-way`">
-      <Icon icon="i-simple-icons:gitee" color="#d81e06" size="28" @click="handleOauth2" />
-      <Icon icon="i-ant-design:qq-circle-filled" color="#2178e3" size="32" @click="handleOauth2" />
-      <Icon icon="i-ant-design:wechat-filled" color="#2eb60d" size="32" @click="handleOauth2" />
-      <Icon icon="i-ant-design:github-filled" color="#2c2c2c" size="32" @click="handleOauth2" />
-      <a href="https://gitee.com/thinkgem/jeesite-client" target="_blank">
-        <Icon icon="i-ant-design:windows-filled" size="32" style="vertical-align: middle" />
-        <span class="pl-1" style="vertical-align: middle"> {{ t('客户端下载') }}</span>
-      </a>
-    </div>
   </Form>
 </template>
 <script lang="ts" setup>
   import { reactive, ref, toRaw, unref, computed, onMounted } from 'vue';
 
-  import { Checkbox, Form, Input, Row, Col, Button, Divider, message } from 'ant-design-vue';
-  import { Icon } from '@jeesite/core/components/Icon';
+  import { Checkbox, Form, Input, Row, Col, Button, message } from 'ant-design-vue';
   import LoginFormTitle from './LoginFormTitle.vue';
 
   import { useI18n } from '@jeesite/core/hooks/web/useI18n';
@@ -219,10 +191,6 @@
     }
   }
 
-  function handleOauth2(event: Event) {
-    window.location.href = 'https://vue.jeesite.com/js/oauth2/login/gitee?state=vue';
-    event.preventDefault();
-  }
 </script>
 <style>
   .gp {
@@ -233,5 +201,30 @@
   .gp,
   .gp a {
     color: #d21919;
+  }
+
+  .login-form-item {
+    width: 100%;
+  }
+
+  .login-input-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .login-form-label {
+    color: #fff;
+    font-size: 16px;
+    min-width: 48px;
+  }
+
+  .login-input-group .ant-input,
+  .login-input-group .ant-input-affix-wrapper {
+    flex: 1;
+  }
+
+  .login-input-group .ant-input-affix-wrapper .ant-input {
+    flex: 1;
   }
 </style>

@@ -133,6 +133,7 @@
         options: [
           { label: '部级管理员', value: 'administrator', description: '具有查看当前部门所包含小组的人员信息以及相关人员测试结果信息，但不具有数据采集的功能' },
           { label: '普通用户', value: 'Regular_users', description: '只具有采集功能，采集当前任务下相关人员测试数据' },
+          { label: '测试用户', value: 'Test_users', description: '具有查看当前部门所包含小组的人员信息以及相关人员测试结果信息，但不具有数据采集的功能' },
         ],
         help: '请选择用户角色，角色不同，拥有的权限也不同',
       },
@@ -158,9 +159,13 @@
         // 直接使用传入的 data 进行回填
         const res: any = data || {};
         record.value = { ...res, isNewRecord: false };
-
+        const remarkMapUserRole = {
+          '部级管理员': 'administrator',
+          '普通用户': 'Regular_users',
+          '测试用户': 'Test_users',
+        }
         // 角色映射：后端 remarks="部级管理员" => userRoleString='administrator'
-        const roleVal = res?.remarks === '部级管理员' ? 'administrator' : 'Regular_users';
+        const roleVal = remarkMapUserRole[res?.remarks] || 'Regular_users';
 
         setFieldsValue({
           userName: res?.userName || '',
@@ -225,6 +230,8 @@
         data.remarks = '部级管理员';
       } else if (data.userRoleString === 'Regular_users') {
         data.remarks = '普通用户';
+      } else if (data.userRoleString === 'Test_users') {
+        data.remarks = '测试用户';
       }
 
       // 编辑时需要传递 oldLoginCode（原登录账号）；新增时为空

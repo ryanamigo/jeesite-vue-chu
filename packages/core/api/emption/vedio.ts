@@ -46,13 +46,14 @@ export const getCompanyTreeData = () =>{
     }
   })
 }
+//判断是否采集信息
 export const judgePerson = (pidCard: string) =>{
   return defHttp.post({
     url:adminPath + "/subject/subjectInformation/judgePerson",
     params: {pidCard}
   })
 }
-
+//姿态调整
 export const adjustingTheAngle = (nirFile: Blob, rbgFile: Blob) => {
   const formData = new FormData();
   formData.append('nirFile', nirFile, 'snapshot1.jpg');
@@ -65,7 +66,7 @@ export const adjustingTheAngle = (nirFile: Blob, rbgFile: Blob) => {
     },
   });
 }
-
+//保存视频
 export const insertVideoInformation = (formData: FormData) => {
   return defHttp.post({
     url:adminPath  + '/emotion/emotionVideo/insertVideoInformation',

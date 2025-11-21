@@ -10,6 +10,7 @@ import { useGlobSetting } from '@jeesite/core/hooks/setting';
 import { encryptByBase64 } from '@jeesite/core/utils/cipher';
 import { Menu } from '@jeesite/core/router/types';
 import { useAppStore } from '@jeesite/core/store/modules/app';
+import { permissionsListData } from '../emption/permissions';
 
 const { adminPath } = useGlobSetting();
 
@@ -90,6 +91,18 @@ export const switchSkin = (name = '') => {
 
 export const userInfoApi = (mode: ErrorMessageMode = 'message') =>
   defHttp.get<LoginResult>({ url: adminPath + '/index', timeout: 10 * 1000 }, { errorMessageMode: mode });
+
+export const getNewUserInfoApi = async (userName: string) => {
+  const res = await permissionsListData({
+          'employee.company.companyCode': '',
+          'employee.company.companyName': '',
+          ctrlPermi: 2,
+          loginCode: userName,
+          pageNo: 1,
+          pageSize: 1,
+        });
+  return res;
+}
 
 export const authInfoApi = () => defHttp.get<AuthInfo>({ url: adminPath + '/authInfo' });
 

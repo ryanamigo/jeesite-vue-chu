@@ -100,6 +100,7 @@ const untestedList = ref<any[]>([]);
 const searchForm: FormProps = {
   baseColProps: { md: 8, lg: 6 },
   labelWidth: 90,
+  showAdvancedButton: false,
   schemas: [
     {
       label: '编号',
@@ -292,7 +293,7 @@ const untestedColumns = [
   { title: '部别', dataIndex: 'ppositionName', key: 'ppositionName' },
 ];
 
-const [registerTable, { reload, getSelectRows }] = useTable({
+const [registerTable, { reload, getSelectRows, getSelectRowKeys, setSelectedRowKeys, clearSelectedRowKeys, getDataSource }] = useTable({
   api: getResultInformationList,
   beforeFetch: (params: any) => {
     // 按照HTML页面的传参逻辑，确保所有参数都被传递
@@ -342,6 +343,8 @@ const [registerTable, { reload, getSelectRows }] = useTable({
   useSearchForm: true,
   pagination: true,
   canResize: true,
+  rowKey: 'videoId',
+  clickToRowSelect: false,
   rowSelection: {
     type: 'checkbox',
   },
@@ -359,7 +362,7 @@ watch(
 // 详情
 function handleDetail(record: ResultInformationItem) {
   router.push({
-    path: '/subject/subjectInformation/form',
+    path: '/emotion/xiangqing',
     query: {
       sid: record.mid,
       pname: record.pname,
@@ -580,7 +583,32 @@ async function handleBatchDelete() {
 
 // 全选
 function handleSelectAll() {
-  showMessage('请使用表格左上角的全选复选框', 'info');
+  const allData = getDataSource() || [];
+  const selectedKeys = getSelectRowKeys() || [];
+  
+  // 如果没有数据，直接返回
+  if (allData.length === 0) {
+    showMessage('暂无数据', 'warning');
+    return;
+  }
+  
+  // 获取所有行的键（使用 videoId 作为唯一标识）
+  const allKeys = allData.map((item: any) => item.videoId).filter((key: any) => key != null) as string[];
+  
+  // 将选中的键转换为字符串数组以便比较
+  const selectedKeysStr = selectedKeys.map((key) => String(key));
+  
+  // 判断是否已全选（比较选中键的数量和所有键的数量）
+  const isAllSelected = selectedKeysStr.length === allKeys.length && 
+                        allKeys.every((key: string) => selectedKeysStr.includes(key));
+  
+  if (isAllSelected) {
+    // 如果已全选，则取消全选
+    clearSelectedRowKeys();
+  } else {
+    // 如果未全选，则全选所有行
+    setSelectedRowKeys(allKeys);
+  }
 }
 </script>
 

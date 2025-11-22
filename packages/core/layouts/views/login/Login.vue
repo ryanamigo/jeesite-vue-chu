@@ -9,7 +9,7 @@
     <!-- Logo 区域 -->
     <div class="login-logo">
       <a href="#">
-        <b class="login-logo-title">{{ globSetting?.title || title }}</b>
+        <b class="login-logo-title">非接触式心理健康监测预警系统</b>
         <small class="login-logo-version"></small>
       </a>
     </div>

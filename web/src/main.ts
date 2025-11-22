@@ -54,7 +54,15 @@ async function bootstrap() {
   // Dynamic Form
   setupDForm();
 
-  app.mount('#app');
+  // 动态创建或获取挂载容器
+  let container = document.getElementById('app');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'app';
+    document.body.appendChild(container);
+  }
+  
+  app.mount(container);
 }
 
 // 仅开发模式显示

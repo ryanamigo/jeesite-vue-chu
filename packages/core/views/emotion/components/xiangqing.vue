@@ -1928,7 +1928,7 @@ $prefixCls: 'psychology-detail';
         flex-direction: column;
         display: flex;
         width: 55%; // 收缩表格宽度，为热力图留出空间
-        height: 95%; // 对应HTML的height: 90%
+        height: 100%; // 对应HTML的height: 90%
         float: left; // 对应HTML的float: left
             .index-table {
             padding: 0;
@@ -2005,14 +2005,14 @@ $prefixCls: 'psychology-detail';
         display: flex;
         width: 45%; // 加宽热力图区域
         flex: 1;
-        height: 90%; // 对应HTML的height: 90%
+        height: 100%; // 对应HTML的height: 90%
         float: left; // 对应HTML的float: left
         margin-top: -2%; // 对应HTML的margin-top: -2%
         
         .radar-item.container {
           display: flex;
           align-items: center; // 对应HTML的align-items: center
-          height: 14%; // 对应HTML的height: 14%
+          height: 11%; // 对应HTML的height: 14%
           width: 80%; // 确保容器占满宽度
           margin-left: 6%; // 减少左侧留白，让文字更靠近图像
           

@@ -38,6 +38,9 @@
     min-height: 0;
     padding: 12px 12px 0;
     background-color: @content-bg;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 
     &.fixed {
       width: 1200px;

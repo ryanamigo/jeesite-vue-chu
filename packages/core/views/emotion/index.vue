@@ -1065,7 +1065,10 @@ body {
 .content {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
   background: url('/js/static/image/win2.jpg') no-repeat center center;
 }
 
@@ -1268,8 +1271,11 @@ body {
 }
 
 /* 部别和任务筛选框的 placeholder 颜色，与时间筛选框一致 */
+.dept-filter :deep(.ant-tree-select-selection-placeholder) {
+  color: #999 !important; /* 修改这里的颜色值即可改变"请选择部别"的提示颜色 */
+  opacity: 1 !important;
+}
 .dept-filter :deep(.ant-select-selection-placeholder),
-.dept-filter :deep(.ant-tree-select-selection-placeholder),
 .task-filter :deep(.ant-select-selection-placeholder) {
   color: #999 !important;
   opacity: 1 !important;

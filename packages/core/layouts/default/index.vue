@@ -78,18 +78,27 @@
   .ant-layout.@{prefix-cls} {
     display: flex;
     width: 100%;
-    min-height: 100%;
+    height: 100%;
     flex-direction: column;
     background-color: @content-bg;
+    overflow: hidden;
 
-    // .ant-layout {
-    //   min-height: 100%;
-    //   background-color: @content-bg;
-    // }
+    // 确保内部的 ant-layout 也使用 flex 布局
+    .ant-layout {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
 
     &-main {
       width: 100%;
       margin-left: 1px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
     }
   }
 </style>

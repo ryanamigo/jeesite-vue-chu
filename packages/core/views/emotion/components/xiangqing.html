@@ -1,0 +1,2579 @@
+<!--个人详情-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>information</title>
+    <style>
+        body{
+            height: 100vh; /* Changed from 100% to 100vh to ensure it takes the full viewport height */
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            background: url(${ctxStatic}/images/win.png) no-repeat center center;
+            background-size: cover;
+            line-height: 1.15;
+            display: flex; /* Added to enable flex layout */
+            flex-direction: column; /* Set the direction of flex items in the body to column */
+        }
+        input[type="text"],#taskSelection{
+            border:0;
+            outline:0;
+            border: solid 1px #494640;
+            box-shadow: 0 0 10px #3c8dbc;
+            border-radius: 4px;
+            background-color:transparent;
+            caret-color: #ffffff;   /* 光标颜色 */
+            width: 60%;
+            height: 24px;
+            color: #d7e4ed;
+            padding-left: 10px;
+            margin-left: 15px;
+        }
+        input[type="text"]:focus,#taskSelection:focus{
+            outline: 1px solid #39949b;
+        }
+        /*531*/
+        #taskSelection option {
+            background-color: #116ba9; /* 设置背景色为蓝色 */
+            color: white;           /* 设置字体颜色为白色 */
+            font-size: 18px;        /* 设置字体大小为18px */
+        }
+
+        .box1 {
+            display: flex;
+            flex-direction: column;
+            width: 40%;
+            height: 100%;
+            float: left;
+        }
+
+        .box1 .sub-box1 {
+            height: 50%;
+            margin: 5px 5px 5px 5px;
+            box-shadow: 5px 5px 5px 5px #0f426f;
+        }
+        .box1 .sub-box2 {
+            height: 50%;
+            margin: 5px 5px 5px 5px;
+            box-shadow: 5px 5px 5px 5px #0f426f;
+        }
+        .sub-box2-btn button {
+            height: 100%;
+            border:0;
+            outline:0;
+            border: solid 1px #494640;
+            box-shadow: 0 0 10px #3c8dbc;
+            border-radius: 4px;
+            background-color:transparent;
+            caret-color: #ffffff;   /* 光标颜色 */
+            color: #d7e4ed;
+        }
+        .sub-box2-btn button:focus{
+            outline: 1px solid #39949b;
+        }
+
+        .box2 {
+            display: flex;
+            flex-direction: column;
+            width: 58%;
+            height: 100%;
+            float: left;
+        }
+
+        .box2 .right-box {
+            height: 100%;
+            margin: 5px 5px 5px 5px;
+            box-shadow: 5px 5px 5px 5px #0f426f;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .leftSide {
+            margin: 5px 10px 5px 40px;
+            width: 98%;
+        }
+
+        .leftTop {
+            flex-direction: row;
+            display: flex;
+            height: 20%;
+            width: 100%;
+        }
+        .leftButton {
+            flex-direction:column;
+            display: flex;
+            height: 20%;
+            width: 100%;
+        }
+
+        .box2 .rightTop {
+            height: 25%;
+        }
+
+        .box2 .rightMid {
+            height: 25%;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .box2 .rightBtm {
+            height: 50%
+        }
+
+        h4 {
+            color: rgba(154, 254, 254, 0.89);
+            font-size: 20px;
+        }
+        h3 {
+            font-size: 18px;
+        }
+        table {
+            width: 100%;
+            text-align: center;
+        }
+
+        th, td {
+            padding: 5px;
+            font-size: 15px;
+        }
+
+        .chart {
+            flex-direction: column;
+            display: flex;
+            width: 60%;
+            height: 90%;
+            float: left;
+
+        }
+
+        .radarSide {
+            flex-direction: column;
+            display: flex;
+            width: 40%;
+            flex: 1;
+            height: 90%;
+            float: left;
+            margin-top: -2%;
+        }
+        #findSelfInfo {
+            width: 10%;
+            /*height: 100%;*/
+            border:0;
+            border-radius: 22px;
+            background-color: #494640;
+            box-shadow: 0 0 15px #97bdd4;
+            color:#FFFFFF;
+            font-size: 15px;
+            margin: 8px 0 0 30px;
+
+        }
+        button {
+            cursor: pointer; /* 显示鼠标指针为手型 */
+        }
+        button:active {
+            transform: translateY(2px); /* 按下时按钮向下移动2px */
+        }
+        .statusResult{
+            flex-direction: row;
+            margin-bottom: 10px;
+            background-image: linear-gradient(to right, #39cddc, #5989e4);
+            width: 150px;
+            height: 70px;
+            justify-content: center; /* 水平居中 */
+            align-items: center; /* 垂直居中 */
+            text-align: center; /* 文字居中 */
+        }
+        /*滚动条整体样式*/
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 1px;
+        }
+        /*滚动条里面小方块*/
+        ::-webkit-scrollbar-thumb {
+            border-radius: 10px;
+            background-color: #2d9fed;
+            background-image:
+                    -webkit-linear-gradient(
+                            45deg,
+                            rgba(255, 255, 255, .2) 25%,
+                            transparent 25%,
+                            transparent 50%,
+                            rgba(255, 255, 255, .2) 50%,
+                            rgba(255, 255, 255, .2) 75%,
+                            transparent 75%,
+                            transparent
+                    );
+        }
+        /*滚动条里面轨道*/
+        ::-webkit-scrollbar-track {
+            -webkit-box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+            /*border-radius: 10px;*/
+            background: #0c3e7b;
+        }
+        #downloadPDF {
+            display: block;
+            width:12%;
+            height: 100%;
+            /*margin: 20px auto; !* 居中显示并添加上下边距 *!*/
+            background-color: #4381b6; /* 绿色背景 */
+            color: white; /* 白色文字 */
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        /*鼠标悬停事件*/
+        /*.meaningDiv {*/
+        /*    position: absolute;*/
+        /*    display: none;*/
+        /*    background-color: #8ae7e459;*/
+        /*    border: 1px solid #5ea6a6;*/
+        /*    padding: 5px;*/
+        /*    z-index: 1;*/
+        /*}*/
+        .meaningDiv p {
+            color: #2c2828;
+        }
+        .container {
+            display: flex;
+            align-items: center; /* 使元素垂直居中 */
+            height: 14%;
+            margin-left: 12%;
+        }
+    </style>
+</head>
+
+<body style="height: 100vh">
+
+<div style="height: 4vh; display: flex; justify-content: flex-end;margin-right: 35px;align-items: center;text-align: center;font-size: 14px">
+    <button id="downloadPDF">导出本次报告</button>
+</div>
+<div id="layout-wrapper" style="height: 94vh;width: 100%; ">
+
+    <div class="box box1" style="color:rgba(255,255,255,0.84);">
+        <div id="selfInfo" class="sub-box1">
+            <div style="flex-direction: column;">
+                <div class="leftTop">
+                    <div style="flex-direction: column;width: 100%;">
+                        <h4 style="margin-left: 20px">个人信息</h4>
+                        <div id="leftColumn" style="display: flex; flex-direction: column; float: left;width: 50%;">
+                            <div class="leftSide">
+                                <label htmlFor="name"> 姓名 </label>
+                                <input type="text" id="pname" name="pname"
+                                       style="align-items: center;  justify-content: center;">
+                            </div>
+                            <div class="leftSide">
+                                <label htmlFor="pgender"> 性别 </label>
+                                <input type="text" id="pgender" name="pgender"
+                                       style="align-items: center;  justify-content: center;">
+                            </div>
+                            <div class="leftSide">
+                                <label htmlFor="age"> 年龄 </label>
+                                <input type="text" id="age" name="age" style="align-items: center;  justify-content: center;">
+                            </div>
+                        </div>
+                        <div id="rightColumn" style="display: flex; flex-direction: column;float: right;width: 50%;">
+                            <div class="leftSide">
+                                <label htmlFor="pidcard"> 编号 </label>
+                                <input type="text" id="pidcard" name="pidcard"
+                                       style="align-items: center;  justify-content: center;">
+                            </div>
+                            <div class="leftSide">
+                                <label htmlFor="pposition"> 部别 </label>
+                                <input type="text" id="pposition" name="pposition"
+                                       style="align-items: center;  justify-content: center;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="leftButton">
+                    <div style="display: flex; flex-direction: row; width: 100%;height: 11%;">
+                        <select id="taskSelection"  style="text-align: center;width: 30%;margin:8px 0 0 50px;background-color: #116ba9;display: none;"></select>
+                        <input type="text" id="dateRangePicker" style="width: 30%;margin:8px 0 0 30px;background-color: #116ba9;display: none;">
+                        <button id="findSelfInfo" style="display: none">查询</button>
+                    </div>
+                    <div style="width: 100%;height: 88%;overflow-y: auto ;margin-top: 13px;">
+                        <table id="chart1" style="width: 100%;height: 100%;" ></table>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <div class="sub-box2" style="display: flex; flex-direction: column; height: 50%;">
+            <div class="sub-box2-btn" style="display: flex; height: 10%;">
+                <button onclick="showChart('trackingIndex', this)" id="trackingBtn" style="flex: 1;">跟踪</button>
+                <button onclick="showChart('aggressionIndex', this)" id="aggressionBtn" style="flex: 1;">紧张</button>
+                <button onclick="showChart('stressIndex', this)" id="stressBtn" style="flex: 1;">压力</button>
+                <button onclick="showChart('tensionIndex', this)" id="tensionBtn" style="flex: 1;">焦虑</button>
+                <button onclick="showChart('fatigueIndex', this)" id="fatigueBtn" style="flex: 1;">疲劳</button>
+                <button onclick="showChart('charmIndex', this)" id="charmBtn" style="flex: 1;">平衡</button>
+                <button onclick="showChart('energyIndex', this)" id="energyBtn" style="flex: 1;">能量</button>
+                <button onclick="showChart('regulationIndex', this)" id="regulationBtn" style="flex: 1;">稳定</button>
+                <button onclick="showChart('depressionRageIndex', this)" id="depressionRageBtn" style="flex: 1;">压抑</button>
+            </div>
+            <div class="sub-box2-div" style="display: flex;  height: 89%;">
+            </div>
+        </div>
+    </div>
+
+    <div class="box box2" style="color:rgba(255,255,255,0.84);">
+        <div class="right-box">
+            <!--	综合结果（表格）	-->
+            <div class="rightTop">
+                <h4 style="margin-left: 20px">综合结果</h4>
+                <div style="flex-direction: column;  float: left; display: flex; align-items: center; margin-left: 25%">
+                    <div class="statusResult" >
+                        <h2 id="psychologyStatus" style="  line-height: 70px;"> 非正常 </h2>
+                    </div>
+                    <div style="flex-direction: row">
+                        <h2 >心理状态</h2>
+                    </div>
+                </div>
+                <div style="flex-direction: column;  float: right; display: flex; align-items: center; margin-right: 25%">
+                    <div class="statusResult" >
+                        <h2 id="alarmStatus" style="  line-height: 70px;"> 关注 </h2>
+                    </div>
+                    <div style="flex-direction: row">
+                        <h2>跟踪状态</h2>
+                    </div>
+                </div>
+            </div>
+            <!--	综合结果（结果展示）	-->
+            <div class="rightMid">
+                <h4 style="margin-left: 20px; margin-bottom: 20px;">指标说明和建议</h4>
+                <div>
+                    <h3 style="margin-left: 30px" id="annotationType"></h3>
+                    <h3 style="margin-left: 30px" id="annotation"></h3>
+                    <h3 style="margin-left: 30px" id="annotationSum"></h3>
+                </div>
+            </div>
+            <!--	具体指标	-->
+            <div class="rightBtm">
+                <h4 style="margin-left: 20px">具体指标</h4>
+                <div class="chart">
+                    <table id="chart2" style="margin-left: 10px;height: 100%;width: 100%;border-top: 2px solid #8ce7ed;
+    border-bottom: 2px solid #8ce7ed;">
+                    </table>
+                </div>
+                <div class="radarSide" id="radarSide">
+                    <div class="container">
+                        <span style="font-size: 15px;color: white;">紧张</span>
+                        <img id="myImage1" src="" alt="Image will be loaded here" width="300" height="100" style="height: 100%;" >
+                    </div>
+                    <div class="container">
+                        <span style="font-size: 15px;color: white;">压力</span>
+                        <img id="myImage2" src="" alt="Image will be loaded here" width="300" height="100" style="height: 100%;">
+                    </div>
+                    <div class="container">
+                        <span style="font-size: 15px;color: white;">焦虑</span>
+                        <img id="myImage3" src="" alt="Image will be loaded here" width="300" height="100" style="height: 100%;">
+                    </div>
+                    <div class="container">
+                        <span style="font-size: 15px;color: white;">疲劳</span>
+                        <img id="myImage4" src="" alt="Image will be loaded here" width="300" height="100" style="height: 100%;">
+                    </div>
+                    <div class="container">
+                        <span style="font-size: 15px;color: white;">平衡</span>
+                        <img id="myImage5" src="" alt="Image will be loaded here" width="300" height="100" style="height: 100%;">
+                    </div>
+                    <div class="container">
+                        <span style="font-size: 15px;color: white;">能量</span>
+                        <img id="myImage6" src="" alt="Image will be loaded here" width="300" height="100" style="height: 100%;" >
+                    </div>
+                    <div class="container">
+                        <span style="font-size: 15px;color: white;">稳定</span>
+                        <img id="myImage7" src="" alt="Image will be loaded here" width="300" height="100" style="height: 100%;">
+                    </div>
+                    <div class="container">
+                        <span style="font-size: 15px;color: white;">压抑</span>
+                        <img id="myImage8" src="" alt="Image will be loaded here" width="300" height="100" style="height: 100%;">
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="${ctxStatic}/js/echarts5.5.min.js"></script>
+<script src="/js/static/jquery/jquery-3.7.0.min.js"></script>
+<link rel="stylesheet" type="text/css" href="${ctxStatic}/css/daterangepicker.css">
+<script src="${ctxStatic}/js/moment.min.js"></script>
+<script src="${ctxStatic}/js/daterangepicker.js"></script>
+<!--<script src="/js/static/jquery/html2canvas.js"></script>-->
+<script src="/js/static/jquery/jsPdf.debug.js"></script>
+<!-- 引入layui的css文件-->
+<link href="${ctxStatic}/css/layui.css" rel="stylesheet">
+<!--layui的js文件-->
+<script src="${ctxStatic}/js/layui.js"></script>F
+<!--xm-select的js文件-->
+<script src="${ctxStatic}/js/xm-select.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.3.2/html2canvas.min.js"></script>
+
+<script src="${ctxStatic}/js/toastr.min.js"></script>
+<link href="${ctxStatic}/css/toastr.min.css" rel="stylesheet">
+
+<script>
+    let videoId;
+    var testNumber;
+    window.onload = function () {
+        // 获取url中的参数并添加到表格
+        $("#pname").val(getParameter("pname"))
+        $("#pgender").val(getParameter("pgender"))
+        $("#age").val(getParameter("age"))
+        $("#pidcard").val(getParameter("pidcard"))
+        $("#pposition").val(getParameter("ppositionName"))
+        //个人建模&创建表格
+        getSelfRage()
+        //创建表2 个人详情信息
+        creatChart2()
+        //加载数据结果
+        setTimeout(getPeopleRage, 300);
+        //获取群体建模
+        setTimeout(getResult, 500);
+        //获取指标说明和建议
+        // setTimeout(getSuggestion, 300);
+        //获取个人跟踪指数
+        setTimeout(getTrackingIndex, 300);
+        //通过设置时间显示信息
+        getInfoByTime()
+    }
+    toastr.options = {
+        positionClass: 'toast-bottom-right'
+    };
+    /**
+     * @Description: 进入页面 默认跟踪指数折线图
+     * @Author: ljh
+     * @Date: 2024/5/21 22:25
+     **/
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+            showChart('trackingIndex', document.getElementById('trackingBtn'));
+        }, 1000); // Delay for 1 second
+    });
+
+    // /**
+    //  * @Description: 指标说明和建议
+    //  * @Author: yzz
+    //  * @Date: 2024/10/19 15:25
+    //  **/
+    // var   psyChology =  document.getElementById('psychologyStatus').textContent;
+    // var intResult;
+    // if(psyChology === "正常"){ intResult =0 };
+    // if(psyChology === "一般"){ intResult =1 };
+    // if(psyChology === "关注"){ intResult =2 };
+    // $.ajax({
+    //         url: '${ctx}/subject/pdfExport/getSuggestionText',
+    //         type: 'GET',
+    //         data:{result:intResult},
+    //         // dataType: 'json',
+    //         success: function(response) {
+    //        console.log(response,'指标')
+    // },
+    //         error: function(xhr, status, error) {
+    //             console.log("part请求失败: " + error);
+    //         }
+    //     });
+
+
+    /**
+     * @Description: 获取list表单传输的数据
+     * @Author: lpf
+     * @Date: 2024/4/16 22:25
+     **/
+    function getParameter(name) {
+        //获取上一页的参数
+        var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)"); // 构建一个含有目标参数的正则表达式对象
+        var r = window.location.search.substr(1).match(reg); // 匹配目标参数
+        if (r != null) {
+            //清理参数中为null的值
+            if (decodeURI(r[2]) == "null") {  //在这里做了优化，因为为空时获取的是字符串null
+                return "";
+            }
+            return decodeURI(r[2]); // unescape()解码，返回参数值
+        } else {
+            return "";
+        }
+    }
+    const getPidCard = getParameter("pidcard")
+
+    /**
+     * @Description: 获取所有任务批次填入选项
+     * @Author: lpf ljh
+     * @Date: 2024/5/7 21:37
+     **/
+    // 发送 AJAX 请求获取任务编号
+    // 发送 AJAX 请求获取任务编号
+    $.ajax({
+        url: '${ctx}/test/testNumber/findTestNumbersByPidCard?pidCard='+ getPidCard,
+        type: 'GET',  // 根据实际情况可能需要调整请求类型
+        dataType: 'json',
+        success: function(data) {
+            var select = $('#taskSelection');
+            // 清空现有的选项
+            select.empty();
+            // 添加空的默认选项
+            select.append($('<option></option>').attr('value', '').text('请选择任务'));
+            // 添加新的选项
+            data.forEach(function(item) {
+                select.append($('<option></option>').attr('value', item.testNumber).text(item.testNumberName));
+            });
+        },
+        error: function() {
+            console.error('无法加载任务');
+        }
+    });
+
+    /**
+     * @Description: 根据时间、任务批次 选择结果
+     * @Author: lpf ljh
+     * @Date: 2024/4/16 22:31
+     **/
+    function getInfoByTime() {
+        var startDate = null;
+        var endDate = null;
+
+        $('#dateRangePicker').daterangepicker({
+            timePicker: true,
+            autoUpdateInput: false, // 禁止自动填充输入框
+            locale: {
+                format: 'YYYY-MM-DD HH:mm',
+                cancelLabel: '取消' // 提供清除按钮
+            }
+        });
+
+        // 设置输入框的占位符为“请选择时间”
+        $('#dateRangePicker').val('请选择时间');
+
+        $('#dateRangePicker').on('apply.daterangepicker', function(ev, picker) {
+            // 用户选择日期后更新变量
+            startDate = picker.startDate;
+            endDate = picker.endDate;
+            // 手动更新输入框的值
+            $(this).val(picker.startDate.format('YYYY-MM-DD HH:mm') + ' - ' + picker.endDate.format('YYYY-MM-DD HH:mm'));
+        });
+
+        $('#dateRangePicker').on('cancel.daterangepicker', function(ev, picker) {
+            // 用户点击清除按钮时重置日期
+            $(this).val('请选择时间');
+            startDate = null;
+            endDate = null;
+        });
+        // 在这里处理选择的startDate和endDate
+        document.getElementById('findSelfInfo').addEventListener('click', ()=>{
+            // 获取任务批次号，如果未选择则默认为null
+            var testNumber = document.getElementById('taskSelection').value || '';
+            $.ajax({
+                url: '${ctx}/emotion/emotionResult/findPerson?pidcard='+ getPidCard  +
+                    '&testNumber=' + testNumber +
+                    '&startDate='+ (startDate ? startDate.format('YYYY-MM-DD HH:mm') : 'null') +
+                    '&endDate='  + (endDate ? endDate.format('YYYY-MM-DD HH:mm') : 'null'),
+
+                dataType: "json",
+                type: "post",
+                processData: false,
+                contentType: false,
+                error: function () {
+                    toastr.error('失败 getSelfRage');
+                    return;
+                },
+                success: function (dataForm) {
+                    dataLength = dataForm.length;
+                    //重新加载综合结果（表格）
+                    creatChart1(dataForm)
+                }
+            })
+        });
+    };
+    /**
+     * @Description: 根据点击的按钮不同 显示不同的画布内容
+     * @Author: ljh
+     * @Date: 2024/5/21 22:25
+     **/
+    var dataLength ;// 详情页面echarts有无数据
+    function showChart(chartType,button) {
+        var div = document.createElement('div');
+        div.id = chartType;
+        div.style.width = '100%';
+        div.style.height = '100%';
+        if (dataLength === 0) {
+            document.querySelector('.sub-box2-div').innerHTML = '';
+            document.querySelector('.sub-box2-div').appendChild(div);
+            div.textContent = '暂无数据！';
+            div.style.fontSize = '30px';
+            div.style.display = 'flex';
+            div.style.justifyContent = 'center';
+            div.style.alignItems = 'center';
+        } else {
+            document.querySelector('.sub-box2-div').innerHTML = '';
+            document.querySelector('.sub-box2-div').appendChild(div);
+            var myChart = echarts.init(document.getElementById(chartType));
+            var option = {};
+            switch(chartType) {
+                case 'trackingIndex':
+                    option = {
+
+                        xAxis: {
+                            type: 'category',
+                            data: times,
+                            axisLabel: {
+                                color: 'white', // 设置X轴文字颜色为白色
+                                fontSize: 12 // 设置X轴文字字体大小为12px
+                            }
+                        },
+                        yAxis: {
+                            type: 'value',
+                            axisLabel: {
+                                color: 'white', // 设置Y轴文字颜色为白色
+                                fontSize: 12 // 设置Y轴文字字体大小为12px
+                            },
+                            min:  mintrackingIndexData10, // 设置yAxis的最小值
+                            // max: yAxistrackingIndexData10 // 设置yAxis的最大值
+                        },
+                        color: {
+                            type: 'linear',
+                            x: 0,
+                            y: 0,
+                            x2: 0,
+                            y2: 1,
+                            colorStops: [{
+                                offset: 0, color: '#39949b'// 0% 处的颜色
+                            }, {
+                                offset: 1, color: '#9b3953' // 100% 处的颜色
+                            }],
+                            global: false // 缺省为 false
+                        },
+                        series: [
+                            {
+                                name: '跟踪状态',
+                                data: trackingIndexData10,
+                                type: 'line',
+                                label: {
+                                    show: true,
+                                    position: "top",
+                                    textStyle: {
+                                        fontSize: 15,
+                                        textBorderColor : ' #39949b',
+                                        color: '#9afefe'
+                                    }
+                                }
+                            }
+                        ]
+                    };
+                    break;
+                case 'aggressionIndex':
+                    option = {
+
+                        xAxis: {
+                            type: 'category',
+                            data: times,
+                            axisLabel: {
+                                color: 'white', // 设置X轴文字颜色为白色
+                                fontSize: 12 // 设置X轴文字字体大小为12px
+                            }
+                        },
+                        yAxis: {
+                            type: 'value',
+                            axisLabel: {
+                                color: 'white', // 设置Y轴文字颜色为白色
+                                fontSize: 12 // 设置Y轴文字字体大小为12px
+                            },
+                            min:  minaggression10, // 设置yAxis的最小值
+                            max: yAxisaggression10 // 设置yAxis的最大值
+                        },
+                        color: {
+                            type: 'linear',
+                            x: 0,
+                            y: 0,
+                            x2: 0,
+                            y2: 1,
+                            colorStops: [{
+                                offset: 0, color: '#39949b'// 0% 处的颜色
+                            }, {
+                                offset: 1, color: '#9b3953' // 100% 处的颜色
+                            }],
+                            global: false // 缺省为 false
+                        },
+                        series: [
+                            {
+                                name: '紧张指数',
+                                data: aggression10,
+                                type: 'line',
+                                label: {
+                                    show: true,
+                                    position: "top",
+                                    textStyle: {
+                                        fontSize: 15,
+                                        textBorderColor : ' #39949b',
+                                        color: '#9afefe'
+                                    }
+                                }
+                            }
+                        ]
+
+                    };
+                    break;
+                case 'stressIndex':
+                    option = {
+
+                        xAxis: {
+                            type: 'category',
+                            data: times,
+                            axisLabel: {
+                                color: 'white', // 设置X轴文字颜色为白色
+                                fontSize: 12 // 设置X轴文字字体大小为12px
+                            }
+                        },
+                        yAxis: {
+                            type: 'value',
+                            axisLabel: {
+                                color: 'white', // 设置Y轴文字颜色为白色
+                                fontSize: 12 // 设置Y轴文字字体大小为12px
+                            },
+                            min:  minstress10, // 设置yAxis的最小值
+                            max: yAxisstress10 // 设置yAxis的最大值
+                        },
+                        color: {
+                            type: 'linear',
+                            x: 0,
+                            y: 0,
+                            x2: 0,
+                            y2: 1,
+                            colorStops: [{
+                                offset: 0, color: '#39949b'// 0% 处的颜色
+                            }, {
+                                offset: 1, color: '#9b3953' // 100% 处的颜色
+                            }],
+                            global: false // 缺省为 false
+                        },
+                        series: [
+                            {
+                                name: '压力指数',
+                                data:stress10,
+                                type: 'line',
+                                label: {
+                                    show: true,
+                                    position: "top",
+                                    textStyle: {
+                                        fontSize: 15,
+                                        textBorderColor : ' #39949b',
+                                        color: '#9afefe'
+                                    }
+                                }
+                            }
+                        ]
+
+                    };
+                    break;
+                case 'tensionIndex':
+                    option = {
+
+                        xAxis: {
+                            type: 'category',
+                            data: times,
+                            axisLabel: {
+                                color: 'white', // 设置X轴文字颜色为白色
+                                fontSize: 12 // 设置X轴文字字体大小为12px
+                            }
+                        },
+                        yAxis: {
+                            type: 'value',
+                            axisLabel: {
+                                color: 'white', // 设置Y轴文字颜色为白色
+                                fontSize: 12 // 设置Y轴文字字体大小为12px
+                            },
+                            min:  mintension10, // 设置yAxis的最小值
+                            max: yAxistension10 // 设置yAxis的最大值
+                        },
+                        color: {
+                            type: 'linear',
+                            x: 0,
+                            y: 0,
+                            x2: 0,
+                            y2: 1,
+                            colorStops: [{
+                                offset: 0, color: '#39949b'// 0% 处的颜色
+                            }, {
+                                offset: 1, color: '#9b3953' // 100% 处的颜色
+                            }],
+                            global: false // 缺省为 false
+                        },
+                        series: [
+                            {
+                                name: '焦虑指数',
+                                data: tension10,
+                                type: 'line',
+                                label: {
+                                    show: true,
+                                    position: "top",
+                                    textStyle: {
+                                        fontSize: 15,
+                                        textBorderColor : ' #39949b',
+                                        color: '#9afefe'
+                                    }
+                                }
+                            }
+                        ]
+                    };
+                    break;
+                case 'fatigueIndex':
+                    option = {
+
+                        xAxis: {
+                            type: 'category',
+                            data: times,
+                            axisLabel: {
+                                color: 'white', // 设置X轴文字颜色为白色
+                                fontSize: 12 // 设置X轴文字字体大小为12px
+                            }
+                        },
+                        yAxis: {
+                            type: 'value',
+                            axisLabel: {
+                                color: 'white', // 设置Y轴文字颜色为白色
+                                fontSize: 12 // 设置Y轴文字字体大小为12px
+                            },
+                            min:  minfatigue10, // 设置yAxis的最小值
+                            max: yAxisfatigue10 // 设置yAxis的最大值
+                        },
+                        color: {
+                            type: 'linear',
+                            x: 0,
+                            y: 0,
+                            x2: 0,
+                            y2: 1,
+                            colorStops: [{
+                                offset: 0, color: '#39949b'// 0% 处的颜色
+                            }, {
+                                offset: 1, color: '#9b3953' // 100% 处的颜色
+                            }],
+                            global: false // 缺省为 false
+                        },
+                        series: [
+                            {
+                                name: '疲劳指数',
+                                data: fatigue10,
+                                type: 'line',
+                                label: {
+                                    show: true,
+                                    position: "top",
+                                    textStyle: {
+                                        fontSize: 15,
+                                        textBorderColor : ' #39949b',
+                                        color: '#9afefe'
+                                    }
+                                }
+                            }
+                        ]
+                    };
+                    break;
+                case 'charmIndex':
+                    option = {
+
+                        xAxis: {
+                            type: 'category',
+                            data: times,
+                            axisLabel: {
+                                color: 'white', // 设置X轴文字颜色为白色
+                                fontSize: 12 // 设置X轴文字字体大小为12px
+                            }
+                        },
+                        yAxis: {
+                            type: 'value',
+                            axisLabel: {
+                                color: 'white', // 设置Y轴文字颜色为白色
+                                fontSize: 12 // 设置Y轴文字字体大小为12px
+                            },
+                            min:  mincharm10, // 设置yAxis的最小值
+                            max:  yAxischarm10 // 设置yAxis的最大值
+                        },
+                        color: {
+                            type: 'linear',
+                            x: 0,
+                            y: 0,
+                            x2: 0,
+                            y2: 1,
+                            colorStops: [{
+                                offset: 0, color: '#39949b'// 0% 处的颜色
+                            }, {
+                                offset: 1, color: '#9b3953' // 100% 处的颜色
+                            }],
+                            global: false // 缺省为 false
+                        },
+                        series: [
+                            {
+                                name: '平衡指数',
+                                data:  charm10,
+                                type: 'line',
+                                label: {
+                                    show: true,
+                                    position: "top",
+                                    textStyle: {
+                                        fontSize: 15,
+                                        textBorderColor : ' #39949b',
+                                        color: '#9afefe'
+                                    }
+                                }
+                            }
+                        ]
+                    };
+                    break;
+                case 'energyIndex':
+                    option = {
+
+                        xAxis: {
+                            type: 'category',
+                            data: times,
+                            axisLabel: {
+                                color: 'white', // 设置X轴文字颜色为白色
+                                fontSize: 12 // 设置X轴文字字体大小为12px
+                            }
+                        },
+                        yAxis: {
+                            type: 'value',
+                            axisLabel: {
+                                color: 'white', // 设置Y轴文字颜色为白色
+                                fontSize: 12 // 设置Y轴文字字体大小为12px
+                            },
+                            min:   minenergy10, // 设置yAxis的最小值
+                            max:  yAxisenergy10 // 设置yAxis的最大值
+                        },
+                        color: {
+                            type: 'linear',
+                            x: 0,
+                            y: 0,
+                            x2: 0,
+                            y2: 1,
+                            colorStops: [{
+                                offset: 0, color: '#39949b'// 0% 处的颜色
+                            }, {
+                                offset: 1, color: '#9b3953' // 100% 处的颜色
+                            }],
+                            global: false // 缺省为 false
+                        },
+                        series: [
+                            {
+                                name: '能量指数',
+                                data: energy10,
+                                type: 'line',
+                                label: {
+                                    show: true,
+                                    position: "top",
+                                    textStyle: {
+                                        fontSize: 15,
+                                        textBorderColor : ' #39949b',
+                                        color: '#9afefe'
+                                    }
+                                }
+                            }
+                        ]
+                    };
+                    break;
+                case 'regulationIndex':
+                    option = {
+
+                        xAxis: {
+                            type: 'category',
+                            data: times,
+                            axisLabel: {
+                                color: 'white', // 设置X轴文字颜色为白色
+                                fontSize: 12 // 设置X轴文字字体大小为12px
+                            }
+                        },
+                        yAxis: {
+                            type: 'value',
+                            axisLabel: {
+                                color: 'white', // 设置Y轴文字颜色为白色
+                                fontSize: 12 // 设置Y轴文字字体大小为12px
+                            },
+                            min:   minregulation10, // 设置yAxis的最小值
+                            max:  yAxisregulation10 // 设置yAxis的最大值
+                        },
+                        color: {
+                            type: 'linear',
+                            x: 0,
+                            y: 0,
+                            x2: 0,
+                            y2: 1,
+                            colorStops: [{
+                                offset: 0, color: '#39949b'// 0% 处的颜色
+                            }, {
+                                offset: 1, color: '#9b3953' // 100% 处的颜色
+                            }],
+                            global: false // 缺省为 false
+                        },
+                        series: [
+                            {
+                                name: '稳定指数',
+                                data: regulation10,
+                                type: 'line',
+                                label: {
+                                    show: true,
+                                    position: "top",
+                                    textStyle: {
+                                        fontSize: 15,
+                                        textBorderColor : ' #39949b',
+                                        color: '#9afefe'
+                                    }
+                                }
+                            }
+                        ]
+                    };
+                    break;
+                case 'depressionRageIndex':
+                    option = {
+
+                        xAxis: {
+                            type: 'category',
+                            data: times,
+                            axisLabel: {
+                                color: 'white', // 设置X轴文字颜色为白色
+                                fontSize: 12 // 设置X轴文字字体大小为12px
+                            }
+                        },
+                        yAxis: {
+                            type: 'value',
+                            axisLabel: {
+                                color: 'white', // 设置Y轴文字颜色为白色
+                                fontSize: 12 // 设置Y轴文字字体大小为12px
+                            },
+                            min:  mindepressionRage10, // 设置yAxis的最小值
+                            max:  yAxisdepressionRage10 // 设置yAxis的最大值
+                        },
+                        color: {
+                            type: 'linear',
+                            x: 0,
+                            y: 0,
+                            x2: 0,
+                            y2: 1,
+                            colorStops: [{
+                                offset: 0, color: '#39949b'// 0% 处的颜色
+                            }, {
+                                offset: 1, color: '#9b3953' // 100% 处的颜色
+                            }],
+                            global: false // 缺省为 false
+                        },
+                        series: [
+                            {
+                                name: '压抑指数',
+                                data: depressionRage10,
+                                type: 'line',
+                                label: {
+                                    show: true,
+                                    position: "top",
+                                    textStyle: {
+                                        fontSize: 15,
+                                        textBorderColor : ' #39949b',
+                                        color: '#9afefe'
+                                    }
+                                }
+                            }
+                        ]
+                    };
+                    break;
+            }
+            myChart.setOption(option);
+        }
+
+        // 点击的按钮 高亮ljh
+        var buttons = document.querySelectorAll('.sub-box2-btn button');
+        buttons.forEach(function(btn) {
+            btn.style.backgroundColor = ''; // Reset button color
+        });
+        button.style.backgroundColor = '#494640';
+    }
+    /**
+     * @Description: 首次获取最近一次个人详情数据
+     * @Author: lpf
+     * @Date: 2024/4/16 22:28
+     **/
+    let aggression = []
+    let stress = []
+    let tension = []
+    let fatigue = []
+    let charm = []
+    let energy = []
+    let regulation = []
+    let depressionRage = []
+    let aggression10 = []
+    let stress10 = []
+    let tension10 = []
+    let fatigue10 = []
+    let charm10 = []
+    let energy10 = []
+    let regulation10 = []
+    let depressionRage10 = []
+    let minaggression10 = 0
+    let yAxisaggression10= 0
+    let minstress10= 0
+    let yAxisstress10= 0
+    let mintension10= 0
+    let yAxistension10= 0
+    let minfatigue10= 0
+    let yAxischarm10= 0
+    let minenergy10= 0
+    let yAxisenergy10= 0
+    let minregulation10= 0
+    let yAxisregulation10= 0
+    let yAxisfatigue10= 0
+    let mincharm10= 0
+    let mindepressionRage10= 0
+    let yAxisdepressionRage10= 0
+    testNumber = document.getElementById('taskSelection').value;
+    //个人建模&创建表格
+    function getSelfRage() {
+        let a = 'null'
+        $.ajax({
+            url: '${ctx}/emotion/emotionResult/findPerson?pidcard=' + getPidCard + '&startDate=' +a + '&endDate='+ a + '&testNumber=' +testNumber ,
+            dataType: "json",
+            type: "post",
+            processData: false,
+            contentType: false,
+            error: function () {
+                toastr.error('失败 getSelfRage');
+                return;
+            },
+            success: function (dataForm) {
+                dataLength = dataForm.length;
+                videoId = dataForm[dataForm.length - 1].videoId;
+                for (let j = 0; j < dataForm.length; j++) {
+                    if(j<10){
+                        aggression10.push(dataForm[j].aggressionM)
+                        stress10.push(dataForm[j].stressM)
+                        tension10.push(dataForm[j].tensionM)
+                        fatigue10.push(dataForm[j].fatigue)
+                        charm10.push(dataForm[j].charmM)
+                        energy10.push(dataForm[j].energyM)
+                        regulation10.push(dataForm[j].regulationM)
+                        depressionRage10.push(dataForm[j].depressionM)
+                    }
+                    aggression.push(dataForm[j].aggressionM)
+                    stress.push(dataForm[j].stressM)
+                    tension.push(dataForm[j].tensionM)
+                    fatigue.push(dataForm[j].fatigue)
+                    charm.push(dataForm[j].charmM)
+                    energy.push(dataForm[j].energyM)
+                    regulation.push(dataForm[j].regulationM)
+                    depressionRage.push(dataForm[j].depressionM)
+                }
+                // 假设depressionRage10是已经定义并包含数据的数组
+                minaggression10 = Math.min(...aggression10)-5; // 计算最小值
+                let maxaggression10 = Math.max(...aggression10); // 计算最大值
+                yAxisaggression10 = maxaggression10 + 5; // 计算yAxis的最大值
+
+                minstress10 = Math.min(...stress10)-5; // 计算最小值
+                let maxstress10 = Math.max(...stress10); // 计算最大值
+                yAxisstress10 = maxstress10 + 5; // 计算yAxis的最大值
+
+                mintension10 = Math.min(...tension10)-5; // 计算最小值
+                let maxtension10 = Math.max(...tension10); // 计算最大值
+                yAxistension10 = maxtension10 + 5; // 计算yAxis的最大值
+
+                minfatigue10 = Math.min(...fatigue10)-5; // 计算最小值
+                let maxfatigue10 = Math.max(...fatigue10); // 计算最大值
+                yAxisfatigue10 = maxfatigue10 + 5; // 计算yAxis的最大值
+
+                mincharm10 = Math.min(...charm10)-5; // 计算最小值
+                let maxcharm10 = Math.max(...charm10); // 计算最大值
+                yAxischarm10 = maxcharm10 + 5; // 计算yAxis的最大值
+
+                minenergy10 = Math.min(...energy10)-5; // 计算最小值
+                let maxenergy10 = Math.max(...energy10); // 计算最大值
+                yAxisenergy10 = maxenergy10 + 5; // 计算yAxis的最大值
+
+                minregulation10 = Math.min(...regulation10)-5; // 计算最小值
+                let maxregulation10 = Math.max(...regulation10); // 计算最大值
+                yAxisregulation10 = maxregulation10 + 5; // 计算yAxis的最大值
+
+                mindepressionRage10 = Math.min(...depressionRage10)-5; // 计算最小值
+                let maxdepressionRage10 = Math.max(...depressionRage10); // 计算最大值
+                yAxisdepressionRage10 = maxdepressionRage10 + 5; // 计算yAxis的最大值
+
+
+
+                // console.log('aggression',aggression)
+                // console.log('stress',stress)
+                // console.log('tension ',tension )
+                // console.log('fatigue ',fatigue )
+                // console.log('charm ',charm )
+                // console.log('energy ',energy )
+                // console.log('regulation ',regulation )
+                // console.log('depressionRage ',depressionRage )
+
+                //加载表格1综合结果表格
+                creatChart1(dataForm)
+                //加载表格2综合结果表格
+                getSelfInfoChart2()
+                //加载综合结果
+                let i = dataForm.length -1
+                if (dataForm[i].psychologyStatus === 0){
+                    document.getElementById('psychologyStatus').innerHTML = '正常'
+                }else if (dataForm[i].psychologyStatus === 1) {
+                    document.getElementById('psychologyStatus').innerHTML = '一般'
+                }else if (dataForm[i].psychologyStatus === 2){
+                    document.getElementById('psychologyStatus').innerHTML = '关注'
+                }
+
+                /**
+                 * @Description: 指标说明和建议
+                 * @Author: yzz
+                 * @Date: 2024/10/19 15:25
+                 **/
+                var   psyChology =  document.getElementById('psychologyStatus').textContent;
+                var intResult;
+                if(psyChology === "正常"){ intResult =0 };
+                if(psyChology === "一般"){ intResult =1 };
+                if(psyChology === "关注"){ intResult =2 };
+                $.ajax({
+                    url: '${ctx}/subject/pdfExport/getSuggestionText',
+                    type: 'GET',
+                    data:{result:intResult},
+                    // dataType: 'json',
+                    success: function(response) {
+                        //综合指标正常
+                        document.getElementById('annotationType').textContent = response;
+                        console.log(response,'指标')
+                    },
+                    error: function(xhr, status, error) {
+                        console.log("part请求失败: " + error);
+                    }
+                });
+
+
+
+
+                // $.ajax({
+                //     url: '${ctx}/subject/pdfExport/getSuggestionText3',
+                //     type: 'GET',
+                //     data:{result:intResult2},
+                //     // dataType: 'json',
+                //     success: function(response) {
+                //         //综合指标正常
+                //         document.getElementById('annotationSum').textContent = response;
+                //         console.log(response,'指标')
+                //     },
+                //     error: function(xhr, status, error) {
+                //         console.log("part请求失败: " + error);
+                //     }
+                // });
+
+                if (dataForm[i].alarmStatus === 0){
+                    document.getElementById('alarmStatus').innerHTML = '未跟踪'
+                }else if (dataForm[i].alarmStatus === 1) {
+                    document.getElementById('alarmStatus').innerHTML = '正常'
+                }else if (dataForm[i].alarmStatus === 2){
+                    document.getElementById('alarmStatus').innerHTML = '一般'
+                }else if (dataForm[i].alarmStatus === 3){
+                    document.getElementById('alarmStatus').innerHTML = '关注'
+                }
+
+                var intResult1;
+                var alarm
+                alarm =  document.getElementById('alarmStatus').textContent;
+                console.log(document.getElementById('alarmStatus').textContent)
+                if(alarm ==='未跟踪'){
+                    intResult1 = 3;
+                    suggestion2(intResult1)
+                    document.getElementById('annotation').innerHTML = "";
+                }
+                if(alarm ==='正常'){
+                    intResult1 = 0;
+                    suggestion2(intResult1)
+                }
+                if(alarm ==='一般'){
+                    intResult1 = 1;
+                    suggestion2(intResult1)
+                }if(alarm ==='关注'){
+                    intResult1 = 2;
+                    suggestion2(intResult1)
+                }
+function suggestion2(intResult1){
+    $.ajax({
+        url: '${ctx}/subject/pdfExport/getSuggestionText2',
+        type: 'GET',
+        data:{result:intResult1},
+        // dataType: 'json',
+        success: function(response) {
+            //综合指标正常
+            document.getElementById('annotation').innerHTML = response;
+            console.log(response,'指标')
+        },
+        error: function(xhr, status, error) {
+            console.log("part请求失败: " + error);
+        }
+    });
+
+
+}
+
+                // var   alarm =  document.getElementById('alarmStatus').innerHTML;
+                // var intResult1;
+                // console.log(alarm)
+                // if(alarm === "正常"){
+                //     intResult1 =0
+                //     document.getElementById('annotation').innerHTML = "个体跟踪指数正常";
+                // }
+                // if(alarm === "一般"){
+                //     intResult1 =1
+                //     document.getElementById('annotation').innerHTML = "个体跟踪指数稍高，建议注意休息，保持关注";
+                // }
+                // if(alarm === "关注"){
+                //     intResult1 =2
+                //     document.getElementById('annotation').innerHTML = "个体跟踪指数较高，建议进行回访或咨询专业心理医生";
+                // }
+                // if(alarm === "未跟踪"){
+                //     intResult1 =3
+                //     document.getElementById('annotation').innerHTML = "未跟踪";
+                // }
+                // $.ajax({
+                //     url: '${ctx}/subject/pdfExport/getSuggestionText2',
+                //     type: 'GET',
+                //     data:{result:intResult1},
+                //     // dataType: 'json',
+                //     success: function(response) {
+                //         //综合指标正常
+                //         document.getElementById('annotation').textContent = response;
+                //         console.log(response,'指标')
+                //     },
+                //     error: function(xhr, status, error) {
+                //         console.log("part请求失败: " + error);
+                //     }
+                // });
+
+                // var intResult2;
+                if(intResult===0 && intResult1===0){
+                    intResult2 =0;
+                    suggestion3(intResult2)
+                }
+                if(intResult===0 && intResult1===1){
+                    intResult2 =1;
+                    suggestion3(intResult2)
+                }
+                if(intResult===0 && intResult1===2){
+                    intResult2 =2;
+                    suggestion3(intResult2)
+                }
+                if(intResult===1 && intResult1===0){
+                    intResult2 =3;
+                    suggestion3(intResult2)
+                }
+                if(intResult===1 && intResult1===1){
+                    intResult2 =4;
+                    suggestion3(intResult2)
+                }
+                if(intResult===1 && intResult1===2){
+                    intResult2 =5;
+                    suggestion3(intResult2)
+                }
+                if(intResult===2 && intResult1===0){
+                    intResult2 =6;
+                    suggestion3(intResult2)
+                }
+                if(intResult===2 && intResult1===1){
+                    intResult2 =7;
+                    suggestion3(intResult2)
+                }
+                if(intResult===2 && intResult1===2){
+                    intResult2 =8;
+                    suggestion3(intResult2)
+                }
+                if(intResult===0 && intResult1===3){
+                    intResult2 =9;
+                    suggestion3(intResult2)
+                }
+                if(intResult===1 && intResult1===3){
+                    intResult2 =9;
+                    suggestion3(intResult2)
+                }
+                if(intResult===2 && intResult1===3){
+                    intResult2 =9;
+                    suggestion3(intResult2)
+                }
+
+
+                function suggestion3(intResult2){
+                    $.ajax({
+                        url: '${ctx}/subject/pdfExport/getSuggestionText3',
+                        type: 'GET',
+                        data:{result:intResult2},
+                        // dataType: 'json',
+                        success: function(response) {
+                            //综合指标正常
+                            document.getElementById('annotationSum').innerHTML = response;
+                            console.log(response,'指标')
+                        },
+                        error: function(xhr, status, error) {
+                            console.log("part请求失败: " + error);
+                        }
+                    });
+
+
+                }
+
+            }
+        })
+    }
+
+    /**
+     * @Description: 创建表格1 综合结果（表格）
+     * @Author: lpf
+     * @Date: 2024/4/16 22:29
+     **/
+    function creatChart1(dataForm) {
+        var table1 = document.getElementById("chart1");
+        var str = "<tr style='margin-bottom: 3px;'>";
+        str += "<td style='font-weight: bold; width: 30%;color: rgba(154, 254, 254, 0.89);font-size: 16px;'>时间</td>";
+        str += "<td style='font-weight: bold; width: 20%;color: rgba(154, 254, 254, 0.89);font-size: 16px;'>任务批次</td>";
+        str += "<td style='font-weight: bold; width: 15%;color: rgba(154, 254, 254, 0.89);font-size: 16px;'>心理状态</td>";
+        str += "<td style='font-weight: bold; width: 25%;color: rgba(154, 254, 254, 0.89);font-size: 16px;'>跟踪状态</td>";
+        str += "<td style='font-weight: bold; width: 10%;color: rgba(154, 254, 254, 0.89);font-size: 16px;'>详情</td>";
+        str += "</tr>";
+        for (let m = 0; m < dataForm.length; m++) {
+            let displayText;
+            if (dataForm[m].psychologyStatus === 0){
+                displayText = '正常'
+            }else if (dataForm[m].psychologyStatus === 1) {
+                displayText = '一般'
+            }else if (dataForm[m].psychologyStatus === 2){
+                displayText = '关注'
+            }
+            //跟踪状态 还得再改
+            let trackingStatus = '未跟踪';
+            if(dataForm[m].alarmStatus === 0) trackingStatus = '未跟踪';
+            if(dataForm[m].alarmStatus === 1) trackingStatus = '正常';
+            if(dataForm[m].alarmStatus === 2) trackingStatus = '一般';
+            if(dataForm[m].alarmStatus === 3) trackingStatus = '关注';
+            str += "<tr style='margin-bottom: 3px;'>";
+            str += "<td style='width: 30%'>" + dataForm[m].createdAt + "</td>";
+            str += "<td style='width: 20%'>" + dataForm[m].testNumberName + "</td>";
+            str += "<td style='width: 15%'>" + displayText + "</td>";
+            str += "<td style='width: 25%'>" + trackingStatus + "</td>";
+            str += '<td style="width: 10%; color:#008ad4; cursor: pointer" id="moreInfo-' + m + '">详情</td>';
+            str += "</tr>";
+        }
+        table1.innerHTML = str;
+
+        for (let m = 0; m < dataForm.length; m++) {
+            document.getElementById('moreInfo-' + m).addEventListener("click", (event) => {
+                let index = event.target.id.split('-')[1];
+                getResult(dataForm[index]);
+            });
+        }
+    }
+    /**
+     * @Description: 绘制具体指标表格
+     * @Author: lpf ljh
+     * @Date: 2024/4/16 21:56
+     **/
+    function creatChart2() {
+        var table2 = document.getElementById("chart2");
+        //第四步：creatTable()函数接收，进行传参（写上传参的值）
+        var str2 = "";
+        //表格行元素的开始标记<tr>
+        str2 = str2 + "<tr>";
+        str2 = str2 + "<td style='font-weight: bold;border-bottom: 2px solid #8ce7ed;'>" + "项目" + "</td>";
+        str2 = str2 + "<td style='font-weight: bold;border-bottom: 2px solid #8ce7ed;'>" + "群体建模范围" + "</td>";
+        str2 = str2 + "<td style='font-weight: bold;border-bottom: 2px solid #8ce7ed;'>" + "心理测评值" + "</td>";
+        str2 = str2 + "<td style='font-weight: bold;border-bottom: 2px solid #8ce7ed;'>" + "判定" + "</td>";
+        str2 = str2 + "<td style='font-weight: bold;border-bottom: 2px solid #8ce7ed;'>" + "个体建模范围" + "</td>";
+        str2 = str2 + "<td style='font-weight: bold;border-bottom: 2px solid #8ce7ed;'>" + "跟踪偏离指数" + "</td>";
+        str2 = str2 + "</tr>";
+        table2.innerHTML = str2;
+        str2 = str2 + "<tr>";
+        str2 = str2 + "<td class='getMeaning' id='aggression_GetMeaning'>" + "紧张" + "</td>";
+        str2 = str2 + "<td id='aggressionRage'>暂无</td>";
+        str2 = str2 + "<td id='aggressionScore'>暂无</td>";
+        str2 = str2 + "<td id='aggressionResult'>暂无</td>";
+        str2 = str2 + "<td id='aggressionSelf'>-</td>";
+        str2 = str2 + "<td id='aggressionLeft'>-</td>";
+        str2 = str2 + "</tr>";
+        table2.innerHTML = str2;
+        str2 = str2 + "<tr>";
+        str2 = str2 + "<td class='getMeaning' id='stress_GetMeaning'>" + "压力" + "</td>";
+        str2 = str2 + "<td id='stressRage'>暂无</td>";
+        str2 = str2 + "<td id='stressScore'>暂无</td>";
+        str2 = str2 + "<td id='stressResult'>暂无</td>";
+        str2 = str2 + "<td id='stressSelf'>-</td>";
+        str2 = str2 + "<td id='stressLeft'>-</td>";
+        str2 = str2 + "</tr>";
+        table2.innerHTML = str2;
+        str2 = str2 + "<tr>";
+        str2 = str2 + "<td class='getMeaning' id='tension_GetMeaning' >" + "焦虑" + "</td>";
+        str2 = str2 + "<td id='tensionRage'>暂无</td>";
+        str2 = str2 + "<td id='tensionScore'>暂无</td>";
+        str2 = str2 + "<td id='tensionResult'>暂无</td>";
+        str2 = str2 + "<td id='tensionSelf'>-</td>";
+        str2 = str2 + "<td id='tensionLeft'>-</td>";
+        str2 = str2 + "</tr>";
+        table2.innerHTML = str2;
+        str2 = str2 + "<tr>";
+        str2 = str2 + "<td class='getMeaning' id='fatigue_GetMeaning'>" + "疲劳" + "</td>";
+        str2 = str2 + "<td id='fatigueRage'>暂无</td>";
+        str2 = str2 + "<td id='fatigueScore'>暂无</td>";
+        str2 = str2 + "<td id='fatigueResult'>暂无</td>";
+        str2 = str2 + "<td id='fatigueSelf'>-</td>";
+        str2 = str2 + "<td id='fatigueLeft'>-</td>";
+        str2 = str2 + "</tr>";
+        table2.innerHTML = str2;
+        str2 = str2 + "<tr>";
+        str2 = str2 + "<td class='getMeaning' id='charm_GetMeaning'>" + "平衡" + "</td>";
+        str2 = str2 + "<td id='charmRage'>暂无</td>";
+        str2 = str2 + "<td id='charmScore'>暂无</td>";
+        str2 = str2 + "<td id='charmResult'>暂无</td>";
+        str2 = str2 + "<td id='charmSelf'>-</td>";
+        str2 = str2 + "<td id='charmLeft'>-</td>";
+        str2 = str2 + "</tr>";
+        table2.innerHTML = str2;
+        str2 = str2 + "<tr>";
+        str2 = str2 + "<td class='getMeaning' id='energy_GetMeaning'>" + "能量" + "</td>";
+        str2 = str2 + "<td id='energyRage'>暂无</td>";
+        str2 = str2 + "<td id='energyScore'>暂无</td>";
+        str2 = str2 + "<td id='energyResult'>暂无</td>";
+        str2 = str2 + "<td id='energySelf'>-</td>";
+        str2 = str2 + "<td id='energyLeft'>-</td>";
+        str2 = str2 + "</tr>";
+        table2.innerHTML = str2;
+        str2 = str2 + "<tr>";
+        str2 = str2 + "<td class='getMeaning' id='regulation_GetMeaning'>" + "稳定" + "</td>";
+        str2 = str2 + "<td id='regulationRage'>暂无</td>";
+        str2 = str2 + "<td id='regulationScore'>暂无</td>";
+        str2 = str2 + "<td id='regulationResult'>暂无</td>";
+        str2 = str2 + "<td id='regulationSelf'>-</td>";
+        str2 = str2 + "<td id='regulationLeft'>-</td>";
+        str2 = str2 + "</tr>";
+        table2.innerHTML = str2;
+        str2 = str2 + "<tr>";
+        str2 = str2 + "<td class='getMeaning' id='depression_GetMeaning'>" + "压抑" + "</td>";
+        str2 = str2 + "<td id='depressionRage'>暂无</td>";
+        str2 = str2 + "<td id='depressionScore'>暂无</td>";
+        str2 = str2 + "<td id='depressionResult'>暂无</td>";
+        str2 = str2 + "<td id='depressionSelf'>-</td>";
+        str2 = str2 + "<td id='depressionLeft'>-</td>";
+        str2 = str2 + "</tr>";
+        table2.innerHTML = str2;
+
+        // ljh 鼠标悬停
+        var getMeaningElements = document.querySelectorAll('.getMeaning');
+        getMeaningElements.forEach(function(element) {
+            element.addEventListener('mouseover', function(event) {
+                var meaning = getMeaningById(this.id);
+                var meaningDiv = document.createElement('div');
+                meaningDiv.className = 'meaningDiv';
+                var meaningPara = document.createElement('p');
+                meaningPara.style.color = '#2c2828';
+                meaningPara.textContent = meaning;
+                meaningDiv.appendChild(meaningPara);
+                var rect = this.getBoundingClientRect();
+                let rWidth = rect.width;
+                let rHeight = rect.height;
+                meaningDiv.style.left =  rect.left + rWidth + 'px';
+                meaningDiv.style.top =  rect.top + rHeight + 'px';
+                meaningDiv.style.position = 'absolute';
+                meaningDiv.style.backgroundColor = '#f0f0f0';
+                meaningDiv.style.padding = '5px';
+                meaningDiv.style.border = '1px solid #ccc';
+                document.body.appendChild(meaningDiv);
+            });
+
+            element.addEventListener('mouseout', function() {
+                var meaningDiv = document.querySelector('.meaningDiv');
+                if (meaningDiv) {
+                    meaningDiv.remove();
+                }
+            });
+        });
+
+        // ljh 根据不同悬停点 显示不同内容
+        function getMeaningById(id) {
+            switch (id) {
+                case 'aggression_GetMeaning':
+                    return "紧张指数表征个体的情绪兴奋活跃程度，指数过高可能表现为情绪亢奋、躁动、易激惹，或者有明显的活动增多及精力旺盛，严重者可能会产生情感爆发，甚至导致自伤或者伤人等偏极端行为。";
+                case 'stress_GetMeaning':
+                    return "压力指数是表征压力源对个体身心状态稳定性所施加的影响强度。这种影响可能与个体内外环境条件与其自身应对能力的失衡有关，可能出现一系列心理生理反应，例如心率加快、血压升高、呼吸急促、激素分泌增加等。压力指数过高时，个体的身心状态面临失衡或崩溃的风险，可能产生对压力源的持续回避、负面情绪状态的显著增加，以及社会适应能力的显著下降。 另一方面，如果指数过低，可能会表现为缺乏动力。";
+                case 'tension_GetMeaning':
+                    return "焦虑指数是表征个体对于危及生命安全、前途命运等重大问题,以及难以预测、难以应对的事件的关注程度;其中可能含有着急、挂念、忧愁、不安、烦躁等多种情绪成分。焦虑指数较高，常有强烈的主观痛苦感，或严重的社会功能受损，可能伴有明显的自主神经系统功能紊乱和运动性不安。当焦虑情绪强度超出了现实威胁的实际水平,或者持续时间过长时就会变成病理性焦虑。";
+                case 'fatigue_GetMeaning':
+                    return "长期慢性压力会产生睡眠不足、睡眠质量差等问题，导致疲劳度高。若长期处于疲劳状态，会有更大的可能性引发抑郁和焦虑。";
+                case 'charm_GetMeaning':
+                    return "平衡指数表征个体对自身能力的信任和确定程度。是一种积极、有效地表达自我价值、自我尊重、自我理解的意识特征和心理状态。平衡指数影响着学习、竞赛、就业、成就等多方面的个体心理和行为。平衡指数较低，可能经常自我怀疑，做决定时瞻前顾后、犹豫不决，总是害怕做错事说错话，遇事时首先考虑迎合别人的意志、附和别人的意见，而不敢表达自己的意见，自我评价较低，总是在意他人对自己的评价和看法。";
+                case 'energy_GetMeaning':
+                    return "指人的身体能量或活力状态。能量指数低会觉得身体累、活力不足，可能出现生理上的疲惫和大脑认知效率的降低，这可能因疾病、饮食、睡眠不足引起，也可能因被测试人员所处的环境或某些事件引起。能量指数高表明当前身体活力度较高,可能精力旺盛,做事积极有动力,大脑很活跃,感觉自己能同时完成很多事情,但长时间高强度进行身体和心理活动容易导致能量的过度消耗，不利于身心健康。";
+                case 'regulation_GetMeaning':
+                    return "稳定指数是表征个体改变自己的心身状态以适应环境要求的能力。个体通过自我调节能力，内省和控制自身的情绪状态，同时洞悉他人的情绪状态; 在此基础上，评估自己行为的正确性和客观程度，使得自己的行为尽可能达到预期效果。稳定指数较低，对自身情绪的管理和控制能力可能较为薄弱，稳定性低可能会因为压力大、焦虑程度高导致自身情绪不稳定，也可能因为长期处于疲劳和压抑状态导致缺失足够的能量来掌控自身情绪状态。";
+                case 'depression_GetMeaning':
+                    return "抑制指数是表征个体心身状态被外界或内心力量所压抑和限制的程度。个体的心身能量需要维持在相对稳定的范围内，遭受过度压制，或者缺乏必要的限制手段，都可能产生诸多情绪及身体状态方面的异常问题。";
+                default:
+                    return "";
+            }
+        }
+    }
+
+    /**
+     * @Description: 加载具体指标表格中个体建模范围
+     * @Author: lpf
+     * @Date: 2024/4/16 21:56
+     **/
+    var arr1 = [];
+    var arr2 = [];
+    //建模状态
+    var modelStatus;
+    function getSelfInfoChart2() {
+        $.ajax({
+            url: '${ctx}/subject/subjectInformation/findPerson?pidcard=' + getPidCard,
+            dataType: "json",
+            type: "post",
+            processData: false,
+            contentType: false,
+            error: function () {
+                toastr.error('失败 getSelfRage');
+                return;
+            },
+            success: function (dataForm) {
+                console.log('dataForm与ARR',dataForm);
+                modelStatus = dataForm[0].modelingStatus;
+                //个体建模范围
+                //ljh
+                // 将min数据存入arr1数组
+                arr1.push(dataForm[0].tensionBmin);
+                arr1.push(dataForm[0].fatigueBmin);
+                arr1.push(dataForm[0].charmBmin);
+                arr1.push(dataForm[0].energyBmin);
+                arr1.push(dataForm[0].regulationBmin);
+                arr1.push(dataForm[0].depressionBmin);
+                arr1.push(dataForm[0].aggressionBmin);
+                arr1.push(dataForm[0].stressBmin);
+
+                // 将max数据存入arr2数组
+                arr2.push(dataForm[0].tensionBmax);
+                arr2.push(dataForm[0].fatigueBmax);
+                arr2.push(dataForm[0].charmBmax);
+                arr2.push(dataForm[0].energyBmax);
+                arr2.push(dataForm[0].regulationBmax);
+                arr2.push(dataForm[0].depressionBmax);
+                arr2.push(dataForm[0].aggressionBmax);
+                arr2.push(dataForm[0].stressBmax);
+
+                // console.log('arr1',arr1)
+                // console.log('arr2',arr2)
+                if(modelStatus !== 1){
+                    document.getElementById('aggressionSelf').innerHTML =  '-'
+                    document.getElementById('charmSelf').innerHTML = '-'
+                    document.getElementById('depressionSelf').innerHTML =  '-'
+                    document.getElementById('energySelf').innerHTML =  '-'
+                    document.getElementById('fatigueSelf').innerHTML = '-'
+                    document.getElementById('tensionSelf').innerHTML = '-'
+                    document.getElementById('regulationSelf').innerHTML = '-'
+                    document.getElementById('stressSelf').innerHTML = '-'
+                }else{
+                    document.getElementById('aggressionSelf').innerHTML = (dataForm[0].aggressionBmin+0.0).toFixed(1) + '-' + (dataForm[0].aggressionBmax+0.0).toFixed(1)
+                    document.getElementById('charmSelf').innerHTML = (dataForm[0].charmBmin+0.0).toFixed(1) + '-' + (dataForm[0].charmBmax+0.0).toFixed(1)
+                    document.getElementById('depressionSelf').innerHTML = (dataForm[0].depressionBmin+0.0).toFixed(1) + '-' + (dataForm[0].depressionBmax+0.0).toFixed(1)
+                    document.getElementById('energySelf').innerHTML = (dataForm[0].energyBmin+0.0).toFixed(1) + '-' + (dataForm[0].energyBmax+0.0).toFixed(1)
+                    document.getElementById('fatigueSelf').innerHTML = (dataForm[0].fatigueBmin+0.0).toFixed(1) + '-' + (dataForm[0].fatigueBmax+0.0).toFixed(1)
+                    document.getElementById('tensionSelf').innerHTML = (dataForm[0].tensionBmin+0.0).toFixed(1) + '-' + (dataForm[0].tensionBmax+0.0).toFixed(1)
+                    document.getElementById('regulationSelf').innerHTML = (dataForm[0].regulationBmin+0.0).toFixed(1) + '-' + (dataForm[0].regulationBmax+0.0).toFixed(1)
+                    document.getElementById('stressSelf').innerHTML = (dataForm[0].stressBmin+0.0).toFixed(1) + '-' + (dataForm[0].stressBmax+0.0).toFixed(1)
+                }
+
+            }
+        })
+    }
+
+    /**
+     * @Description: 加载心理测评值以及判定结果
+     * @Author: lpf  ljh
+     *
+     * @Date: 2024/4/16 22:16
+     **/
+
+    var selfDataLength;
+
+    function getResult(dataForm) {
+        if (dataForm){
+            videoId = dataForm.videoId;
+            getSecondScore(dataForm)
+        }else {
+            $.ajax({
+                url: '${ctx}/emotion/emotionResult/findMentalStateByPidcard?pidcard=' + getPidCard, //525
+                dataType: "json",
+                type: "post",
+                processData: false,
+                contentType: false,
+                error: function () {
+                    toastr.error('失败 getResult');
+                    return;
+                },
+                success: function (dataForm) {
+                    console.log(dataForm,'g个人')
+                    selfDataLength = dataForm.length;
+                    //获取个人心理测评值结果以及雷达图数据显示
+                    getMentalStateByPidcard(dataForm)
+                }
+            })
+        }
+    }
+
+    /**
+     * @Description: first获取个人心理测评值结果以及雷达图数据显示
+     * @Author: lpf
+     * @Date: 2024/4/16 22:22
+     **/
+    function getMentalStateByPidcard(dataForm) {
+
+        //心理测评值
+        document.getElementById('aggressionScore').innerHTML = (dataForm[0].aggressionM+0.0).toFixed(1)
+        document.getElementById('charmScore').innerHTML = (dataForm[0].charmM+0.0).toFixed(1)
+        document.getElementById('depressionScore').innerHTML = (dataForm[0].depressionM+0.0).toFixed(1)
+        document.getElementById('energyScore').innerHTML = (dataForm[0].energyM+0.0).toFixed(1)
+        document.getElementById('fatigueScore').innerHTML = (dataForm[0].fatigue+0.0).toFixed(1)
+        document.getElementById('tensionScore').innerHTML = (dataForm[0].tensionM+0.0).toFixed(1)
+        document.getElementById('regulationScore').innerHTML = (dataForm[0].regulationM+0.0).toFixed(1)
+        document.getElementById('stressScore').innerHTML = (dataForm[0].stressM+0.0).toFixed(1)
+
+        let selfData = []
+        //获取值
+        selfData.push(dataForm[0].tensionM)
+        selfData.push(dataForm[0].fatigue)
+        selfData.push(dataForm[0].charmM)
+        selfData.push(dataForm[0].energyM)
+        selfData.push(dataForm[0].regulationM)
+        selfData.push(dataForm[0].depressionM)
+        selfData.push(dataForm[0].aggressionM)
+        selfData.push(dataForm[0].stressM)
+        // console.log('selfData',selfData)
+        // // 更新雷达图数据为selfData中的数据
+        // optionRadarSide.series[2].data[0].value = selfData;
+        // // 更新雷达图配置
+        // radarSide.setOption(optionRadarSide);
+        for(var i=0;i<8;i++){
+
+            if(i===6){
+                generateImages( groupRange1[i],groupRange2[i],selfData[6],'myImage1')
+            }
+            if(i===7){
+                generateImages( groupRange1[i],groupRange2[i],selfData[7],'myImage2')
+            }
+            if(i===0){
+                generateImages( groupRange1[i],groupRange2[i],selfData[0],'myImage3')
+            }
+            if(i===1){
+                generateImages( groupRange1[i],groupRange2[i],selfData[1],'myImage4')
+            }
+            if(i===2){
+                generateImages( groupRange1[i],groupRange2[i],selfData[2],'myImage5')
+            }
+            if(i===3){
+                generateImages( groupRange1[i],groupRange2[i],selfData[3],'myImage6')
+            }
+            if(i===4){
+                generateImages( groupRange1[i],groupRange2[i],selfData[4],'myImage7')
+            }
+            if(i===5){
+                generateImages( groupRange1[i],groupRange2[i],selfData[5],'myImage8')
+            }
+
+        }
+        //心理测评结果小于群体建模范围为低，在之间为中，大于为高。从而得出判定结果 更新10.19
+        if(groupRange1[6] > dataForm[0].aggressionM){
+            document.getElementById('aggressionResult').innerHTML = '<span style="color: red;">低</span>';
+        }
+        if(groupRange1[6] <= dataForm[0].aggressionM && dataForm[0].aggressionM <=groupRange2[6]){
+            document.getElementById('aggressionResult').innerHTML = '<span style="color: green;">正常</span>';
+
+        }
+        if(dataForm[0].aggressionM > groupRange2[6]){
+            document.getElementById('aggressionResult').innerHTML = '<span style="color: red;">高</span>';
+        }
+
+        if(groupRange1[2] >dataForm[0].charmM){
+            document.getElementById('charmResult').innerHTML = '<span style="color: red;">低</span>'
+        }
+        if(groupRange1[2] <= dataForm[0].charmM && dataForm[0].charmM <= groupRange2[2]){
+            document.getElementById('charmResult').innerHTML = '<span style="color: green;">正常</span>'
+        }
+        if(dataForm[0].charmM > groupRange2[2]){
+            document.getElementById('charmResult').innerHTML = '<span style="color: red;">高</span>'
+        }
+
+
+
+        if(groupRange1[5] > dataForm[0].depressionM){
+            document.getElementById('depressionResult').innerHTML = '<span style="color: red;">低</span>'
+        }
+        if(groupRange1[5] <= dataForm[0].depressionM && dataForm[0].depressionM <= groupRange2[5]){
+            document.getElementById('depressionResult').innerHTML = '<span style="color: green;">正常</span>'
+        }
+        if(dataForm[0].depressionM > groupRange2[5]){
+            document.getElementById('depressionResult').innerHTML = '<span style="color: red;">高</span>'
+        }
+
+
+
+
+        if(groupRange1[3] >dataForm[0].energyM){
+            document.getElementById('energyResult').innerHTML = '<span style="color: red;">低</span>'
+        }
+        if(groupRange1[3] <= dataForm[0].energyM && dataForm[0].energyM <= groupRange2[3]){
+            document.getElementById('energyResult').innerHTML = '<span style="color: green;">正常</span>'
+        }
+        if(dataForm[0].energyM > groupRange2[3]){
+            document.getElementById('energyResult').innerHTML = '<span style="color: red;">高</span>'
+        }
+
+
+
+
+        if(groupRange1[1] >dataForm[0].fatigue){
+            document.getElementById('fatigueResult').innerHTML = '<span style="color: red;">低</span>'
+        }
+        if(groupRange1[1] <= dataForm[0].fatigue && dataForm[0].fatigue <= groupRange2[1]){
+            document.getElementById('fatigueResult').innerHTML = '<span style="color: green;">正常</span>'
+        }
+        if(dataForm[0].fatigue > groupRange2[1]){
+            document.getElementById('fatigueResult').innerHTML = '<span style="color: red;">高</span>'
+        }
+
+
+
+
+        if(groupRange1[0] >dataForm[0].tensionM){
+            document.getElementById('tensionResult').innerHTML = '<span style="color: red;">低</span>'
+        }
+        if(groupRange1[0] <= dataForm[0].tensionM && dataForm[0].tensionM <= groupRange2[0]){
+            document.getElementById('tensionResult').innerHTML = '<span style="color: green;">正常</span>'
+        }
+        if(dataForm[0].tensionM > groupRange2[0]){
+            document.getElementById('tensionResult').innerHTML = '<span style="color: red;">高</span>'
+        }
+
+
+
+
+        if(groupRange1[4] >dataForm[0].regulationM){
+            document.getElementById('regulationResult').innerHTML = '<span style="color: red;">低</span>'
+        }
+        if(groupRange1[4] <= dataForm[0].regulationM && dataForm[0].regulationM <= groupRange2[4]){
+            document.getElementById('regulationResult').innerHTML = '<span style="color: green;">正常</span>'
+        }
+        if(dataForm[0].regulationM > groupRange2[4]){
+            document.getElementById('regulationResult').innerHTML = '<span style="color: red;">高</span>'
+        }
+
+
+
+        if(groupRange1[7] >dataForm[0].stressM){
+            document.getElementById('stressResult').innerHTML = '<span style="color: red;">低</span>'
+        }
+        if(groupRange1[7] <= dataForm[0].stressM && dataForm[0].stressM <= groupRange2[7]){
+            document.getElementById('stressResult').innerHTML = '<span style="color: green;">正常</span>'
+        }
+        if(dataForm[0].stressM > groupRange2[7]){
+            document.getElementById('stressResult').innerHTML ='<span style="color: red;">高</span>'
+        }
+
+
+
+        //判定结果
+        // if (dataForm[0].aggressionStatus === 0) {
+        //     document.getElementById('aggressionResult').innerHTML = '未跟踪'
+        // } else if (dataForm[0].aggressionStatus === 1) {
+        //     document.getElementById('aggressionResult').innerHTML = '低'
+        // } else if (dataForm[0].aggressionStatus === 2) {
+        //     document.getElementById('aggressionResult').innerHTML = '中'
+        // } else if (dataForm[0].aggressionStatus === 3) {
+        //     document.getElementById('aggressionResult').innerHTML = '高'
+        // }
+        //
+        // if (dataForm[0].charmStatus === 0) {
+        //     document.getElementById('charmResult').innerHTML = '未跟踪'
+        // } else if (dataForm[0].charmStatus === 1) {
+        //     document.getElementById('charmResult').innerHTML = '低'
+        // } else if (dataForm[0].charmStatus === 2) {
+        //     document.getElementById('charmResult').innerHTML = '中'
+        // } else if (dataForm[0].charmStatus === 3) {
+        //     document.getElementById('charmResult').innerHTML = '高'
+        // }
+        //
+        // if (dataForm[0].depressionStatus === 0) {
+        //     document.getElementById('depressionResult').innerHTML = '未跟踪'
+        // } else if (dataForm[0].depressionStatus === 1) {
+        //     document.getElementById('depressionResult').innerHTML = '低'
+        // } else if (dataForm[0].depressionStatus === 2) {
+        //     document.getElementById('depressionResult').innerHTML = '中'
+        // } else if (dataForm[0].depressionStatus === 3) {
+        //     document.getElementById('depressionResult').innerHTML = '高'
+        // }
+        //
+        // if (dataForm[0].energyStatus === 0) {
+        //     document.getElementById('energyResult').innerHTML = '未跟踪'
+        // } else if (dataForm[0].energyStatus === 1) {
+        //     document.getElementById('energyResult').innerHTML = '低'
+        // } else if (dataForm[0].energyStatus === 2) {
+        //     document.getElementById('energyResult').innerHTML = '中'
+        // } else if (dataForm[0].energyStatus === 3) {
+        //     document.getElementById('energyResult').innerHTML = '高'
+        // }
+        //
+        // if (dataForm[0].fatigueStatus === 0) {
+        //     document.getElementById('fatigueResult').innerHTML = '未跟踪'
+        // } else if (dataForm[0].fatigueStatus === 1) {
+        //     document.getElementById('fatigueResult').innerHTML = '低'
+        // } else if (dataForm[0].fatigueStatus === 2) {
+        //     document.getElementById('fatigueResult').innerHTML = '中'
+        // } else if (dataForm[0].fatigueStatus === 3) {
+        //     document.getElementById('fatigueResult').innerHTML = '高'
+        // }
+        //
+        // if (dataForm[0].regulationStatus === 0) {
+        //     document.getElementById('regulationResult').innerHTML = '未跟踪'
+        // } else if (dataForm[0].regulationStatus === 1) {
+        //     document.getElementById('regulationResult').innerHTML = '低'
+        // } else if (dataForm[0].regulationStatus === 2) {
+        //     document.getElementById('regulationResult').innerHTML = '中'
+        // } else if (dataForm[0].regulationStatus === 3) {
+        //     document.getElementById('regulationResult').innerHTML = '高'
+        // }
+        //
+        // if (dataForm[0].stressStatus === 0) {
+        //     document.getElementById('stressResult').innerHTML = '未跟踪'
+        // } else if (dataForm[0].stressStatus === 1) {
+        //     document.getElementById('stressResult').innerHTML = '低'
+        // } else if (dataForm[0].stressStatus === 2) {
+        //     document.getElementById('stressResult').innerHTML = '中'
+        // } else if (dataForm[0].stressStatus === 3) {
+        //     document.getElementById('stressResult').innerHTML = '高'
+        // }
+        //
+        // if (dataForm[0].tensionStatus === 0) {
+        //     document.getElementById('tensionResult').innerHTML = '未跟踪'
+        // } else if (dataForm[0].tensionStatus === 1) {
+        //     document.getElementById('tensionResult').innerHTML = '低'
+        // } else if (dataForm[0].tensionStatus === 2) {
+        //     document.getElementById('tensionResult').innerHTML = '中'
+        // } else if (dataForm[0].tensionStatus === 3) {
+        //     document.getElementById('tensionResult').innerHTML = '高'
+        // }
+    }
+
+    /**
+     * @Description: 点击详情获取个人心理测评结果以及雷达图数据显示
+     * @Author: lpf
+     * @Date: 2024/4/17 9:49
+     **/
+    function getSecondScore(dataForm) {
+        // console.log('有无arr信息',dataForm)
+        //更新心理状态和跟踪状态
+        if (dataForm.psychologyStatus === 0){
+            document.getElementById('psychologyStatus').innerHTML = '正常'
+        }else if (dataForm.psychologyStatus === 1) {
+            document.getElementById('psychologyStatus').innerHTML = '一般'
+        }else if (dataForm.psychologyStatus === 2){
+            document.getElementById('psychologyStatus').innerHTML = '关注'
+        }
+
+        if (dataForm.alarmStatus === 0){
+            document.getElementById('alarmStatus').innerHTML = '未跟踪'
+        }else if (dataForm.alarmStatus === 1) {
+            document.getElementById('alarmStatus').innerHTML = '正常'
+        }else if (dataForm.alarmStatus === 2){
+            document.getElementById('alarmStatus').innerHTML = '一般'
+        }else if (dataForm.alarmStatus === 3){
+            document.getElementById('alarmStatus').innerHTML = '关注'
+        }
+        document.getElementById('aggressionScore').innerHTML = (dataForm.aggressionM+0.0).toFixed(1)
+        document.getElementById('charmScore').innerHTML = (dataForm.charmM+0.0).toFixed(1)
+        document.getElementById('depressionScore').innerHTML = (dataForm.depressionM+0.0).toFixed(1)
+        document.getElementById('energyScore').innerHTML = (dataForm.energyM+0.0).toFixed(1)
+        document.getElementById('fatigueScore').innerHTML = (dataForm.fatigue+0.0).toFixed(1)
+        document.getElementById('tensionScore').innerHTML = (dataForm.tensionM+0.0).toFixed(1)
+        document.getElementById('regulationScore').innerHTML = (dataForm.regulationM+0.0).toFixed(1)
+        document.getElementById('stressScore').innerHTML = (dataForm.stressM+0.0).toFixed(1)
+        //心理测评值
+        // document.getElementById('aggressionScore').innerHTML = dataForm.aggressionM
+        // document.getElementById('charmScore').innerHTML = dataForm.charmM
+        // document.getElementById('depressionScore').innerHTML = dataForm.depressionM
+        // document.getElementById('energyScore').innerHTML = dataForm.energyM
+        // document.getElementById('fatigueScore').innerHTML = dataForm.fatigue
+        // document.getElementById('tensionScore').innerHTML = dataForm.tensionM
+        // document.getElementById('regulationScore').innerHTML = dataForm.regulationM
+        // document.getElementById('stressScore').innerHTML = dataForm.stressM
+
+        let selfData =  []
+        //获取值
+        selfData.push(dataForm.tensionM)
+        selfData.push(dataForm.fatigue)
+        selfData.push(dataForm.charmM)
+        selfData.push(dataForm.energyM)
+        selfData.push(dataForm.regulationM)
+        selfData.push(dataForm.depressionM)
+        selfData.push(dataForm.aggressionM)
+        selfData.push(dataForm.stressM)
+        // console.log('selfData2',selfData)
+        // 更新雷达图数据为selfData中的数据
+
+        // optionRadarSide.series[2].data[0].value = selfData;
+        // // 更新雷达图配置
+        // radarSide.setOption(optionRadarSide);
+
+        for(var i=0;i<8;i++){
+
+            if(i===6){
+                generateImages( groupRange1[i],groupRange2[i],selfData[6],'myImage1')
+            }
+            if(i===7){
+                generateImages( groupRange1[i],groupRange2[i],selfData[7],'myImage2')
+            }
+            if(i===0){
+                generateImages( groupRange1[i],groupRange2[i],selfData[0],'myImage3')
+            }
+            if(i===1){
+                generateImages( groupRange1[i],groupRange2[i],selfData[1],'myImage4')
+            }
+            if(i===2){
+                generateImages( groupRange1[i],groupRange2[i],selfData[2],'myImage5')
+            }
+            if(i===3){
+                generateImages( groupRange1[i],groupRange2[i],selfData[3],'myImage6')
+            }
+            if(i===4){
+                generateImages( groupRange1[i],groupRange2[i],selfData[4],'myImage7')
+            }
+            if(i===5){
+                generateImages( groupRange1[i],groupRange2[i],selfData[5],'myImage8')
+            }
+
+        }
+
+
+        //心理测评结果小于群体建模范围为低，在之间为中，大于为高。从而得出判定结果 更新10.19
+        if(groupRange1[6] > dataForm.aggressionM){
+            document.getElementById('aggressionResult').innerHTML =  '<span style="color: red;">低</span>';
+        }
+        if(groupRange1[6] <= dataForm.aggressionM && dataForm.aggressionM <=groupRange2[6]){
+            document.getElementById('aggressionResult').innerHTML =  '<span style="color: green;">正常</span>';
+        }
+        if(dataForm.aggressionM > groupRange2[6]){
+            document.getElementById('aggressionResult').innerHTML = '<span style="color: red;">高</span>'
+        }
+
+        if(groupRange1[2] >dataForm.charmM){
+            document.getElementById('charmResult').innerHTML = '<span style="color: red;">低</span>';
+        }
+        if(groupRange1[2] <= dataForm.charmM && dataForm.charmM <= groupRange2[2]){
+            document.getElementById('charmResult').innerHTML =  '<span style="color: green;">正常</span>';
+        }
+        if(dataForm.charmM > groupRange2[2]){
+            document.getElementById('charmResult').innerHTML = '<span style="color: red;">高</span>';
+        }
+
+
+
+        if(groupRange1[5] > dataForm.depressionM){
+            document.getElementById('depressionResult').innerHTML = '<span style="color: red;">低</span>';
+        }
+        if(groupRange1[5] <= dataForm.depressionM && dataForm.depressionM <= groupRange2[5]){
+            document.getElementById('depressionResult').innerHTML = '<span style="color: green;">正常</span>';
+        }
+        if(dataForm.depressionM > groupRange2[5]){
+            document.getElementById('depressionResult').innerHTML ='<span style="color: red;">高</span>';
+        }
+
+
+
+
+        if(groupRange1[3] >dataForm.energyM){
+            document.getElementById('energyResult').innerHTML = '<span style="color: red;">低</span>';
+        }
+        if(groupRange1[3] <= dataForm.energyM && dataForm.energyM <= groupRange2[3]){
+            document.getElementById('energyResult').innerHTML = '<span style="color: green;">正常</span>';
+        }
+        if(dataForm.energyM > groupRange2[3]){
+            document.getElementById('energyResult').innerHTML = '<span style="color: red;">高</span>';
+        }
+
+
+
+
+        if(groupRange1[1] >dataForm.fatigue){
+            document.getElementById('fatigueResult').innerHTML = '<span style="color: red;">低</span>';
+        }
+        if(groupRange1[1] <= dataForm.fatigue && dataForm.fatigue <= groupRange2[1]){
+            document.getElementById('fatigueResult').innerHTML = '<span style="color: green;">正常</span>';
+        }
+        if(dataForm.fatigue > groupRange2[1]){
+            document.getElementById('fatigueResult').innerHTML = '<span style="color: red;">高</span>';
+        }
+
+
+
+
+        if(groupRange1[0] >dataForm.tensionM){
+            document.getElementById('tensionResult').innerHTML = '<span style="color: red;">低</span>';
+        }
+        if(groupRange1[0] <= dataForm.tensionM && dataForm.tensionM <= groupRange2[0]){
+            document.getElementById('tensionResult').innerHTML = '<span style="color: green;">正常</span>';
+        }
+        if(dataForm.tensionM > groupRange2[0]){
+            document.getElementById('tensionResult').innerHTML ='<span style="color: red;">高</span>';
+        }
+
+
+
+
+        if(groupRange1[4] >dataForm.regulationM){
+            document.getElementById('regulationResult').innerHTML = '<span style="color: red;">低</span>';
+        }
+        if(groupRange1[4] <= dataForm.regulationM && dataForm.regulationM <= groupRange2[4]){
+            document.getElementById('regulationResult').innerHTML = '<span style="color: green;">正常</span>';
+        }
+        if(dataForm.regulationM > groupRange2[4]){
+            document.getElementById('regulationResult').innerHTML ='<span style="color: red;">高</span>';
+        }
+
+
+
+        if(groupRange1[7] >dataForm.stressM){
+            document.getElementById('stressResult').innerHTML ='<span style="color: red;">低</span>';
+        }
+        if(groupRange1[7] <= dataForm.stressM && dataForm.stressM <= groupRange2[7]){
+            document.getElementById('stressResult').innerHTML = '<span style="color: green;">正常</span>';
+        }
+        if(dataForm.stressM > groupRange2[7]){
+            document.getElementById('stressResult').innerHTML = '<span style="color: red;">高</span>';
+        }
+
+
+
+        //判定结果
+        // if (dataForm.aggressionStatus === 0) {
+        //     document.getElementById('aggressionResult').innerHTML = '未跟踪'
+        // } else if (dataForm.aggressionStatus === 1) {
+        //     document.getElementById('aggressionResult').innerHTML = '低'
+        // } else if (dataForm.aggressionStatus === 2) {
+        //     document.getElementById('aggressionResult').innerHTML = '中'
+        // } else if (dataForm.aggressionStatus === 3) {
+        //     document.getElementById('aggressionResult').innerHTML = '高'
+        // }
+        //
+        // if (dataForm.charmStatus === 0) {
+        //     document.getElementById('charmResult').innerHTML = '未跟踪'
+        // } else if (dataForm.charmStatus === 1) {
+        //     document.getElementById('charmResult').innerHTML = '低'
+        // } else if (dataForm.charmStatus === 2) {
+        //     document.getElementById('charmResult').innerHTML = '中'
+        // } else if (dataForm.charmStatus === 3) {
+        //     document.getElementById('charmResult').innerHTML = '高'
+        // }
+        //
+        // if (dataForm.depressionStatus === 0) {
+        //     document.getElementById('depressionResult').innerHTML = '未跟踪'
+        // } else if (dataForm.depressionStatus === 1) {
+        //     document.getElementById('depressionResult').innerHTML = '低'
+        // } else if (dataForm.depressionStatus === 2) {
+        //     document.getElementById('depressionResult').innerHTML = '中'
+        // } else if (dataForm.depressionStatus === 3) {
+        //     document.getElementById('depressionResult').innerHTML = '高'
+        // }
+        //
+        // if (dataForm.energyStatus === 0) {
+        //     document.getElementById('energyResult').innerHTML = '未跟踪'
+        // } else if (dataForm.energyStatus === 1) {
+        //     document.getElementById('energyResult').innerHTML = '低'
+        // } else if (dataForm.energyStatus === 2) {
+        //     document.getElementById('energyResult').innerHTML = '中'
+        // } else if (dataForm.energyStatus === 3) {
+        //     document.getElementById('energyResult').innerHTML = '高'
+        // }
+        //
+        // if (dataForm.fatigueStatus === 0) {
+        //     document.getElementById('fatigueResult').innerHTML = '未跟踪'
+        // } else if (dataForm.fatigueStatus === 1) {
+        //     document.getElementById('fatigueResult').innerHTML = '低'
+        // } else if (dataForm.fatigueStatus === 2) {
+        //     document.getElementById('fatigueResult').innerHTML = '中'
+        // } else if (dataForm.fatigueStatus === 3) {
+        //     document.getElementById('fatigueResult').innerHTML = '高'
+        // }
+        //
+        // if (dataForm.regulationStatus === 0) {
+        //     document.getElementById('regulationResult').innerHTML = '未跟踪'
+        // } else if (dataForm.regulationStatus === 1) {
+        //     document.getElementById('regulationResult').innerHTML = '低'
+        // } else if (dataForm.regulationStatus === 2) {
+        //     document.getElementById('regulationResult').innerHTML = '中'
+        // } else if (dataForm.regulationStatus === 3) {
+        //     document.getElementById('regulationResult').innerHTML = '高'
+        // }
+        //
+        // if (dataForm.stressStatus === 0) {
+        //     document.getElementById('stressResult').innerHTML = '未跟踪'
+        // } else if (dataForm.stressStatus === 1) {
+        //     document.getElementById('stressResult').innerHTML = '低'
+        // } else if (dataForm.stressStatus === 2) {
+        //     document.getElementById('stressResult').innerHTML = '中'
+        // } else if (dataForm.stressStatus === 3) {
+        //     document.getElementById('stressResult').innerHTML = '高'
+        // }
+        //
+        // if (dataForm.tensionStatus === 0) {
+        //     document.getElementById('tensionResult').innerHTML = '未跟踪'
+        // } else if (dataForm.tensionStatus === 1) {
+        //     document.getElementById('tensionResult').innerHTML = '低'
+        // } else if (dataForm.tensionStatus === 2) {
+        //     document.getElementById('tensionResult').innerHTML = '中'
+        // } else if (dataForm.tensionStatus === 3) {
+        //     document.getElementById('tensionResult').innerHTML = '高'
+        // }
+    }
+    /**
+     * @Description: 导出pdf
+     * @Author: lpf
+     * @Date: 2024/5/18 10:26
+     **/
+        // 选择图片///ljh第一次失败
+        // 创建一个FormData对象
+    let formData = new FormData();
+    //
+    // $('#downloadPDF').click(function() {
+    //     htmlToPdf();
+    // });
+
+    //yzzs0708
+
+    //导出报告
+    var exportInfoElement = document.getElementById('downloadPDF')
+    // 添加点击事件监听器
+    exportInfoElement.addEventListener('click', function () {
+
+        // // 禁用超链接防止重复提交下载 disabled和events必须一起使用
+        // $(".PreventDuplication").attr("disabled", true).css("pointer-events", "none");
+        // let xhr = new XMLHttpRequest();
+        // xhr.open('POST', '${ctx}/subject/pdfExport/exportPdfFile', true);
+        // xhr.responseType = 'blob';
+        //
+        // // 准备发送的数据
+        let formData = new FormData();
+        formData.append('videoId', videoId);
+        // formData.append('pidCard', getPidCard);
+        // 处理响应结果
+        // xhr.onload = function () {
+        //     if (this.status === 200) {
+        //         var blob = new Blob([this.response], {type: 'application/pdf'});
+        //         var link = document.createElement('a');
+        //         link.href = window.URL.createObjectURL(blob);
+        //         link.download = videoId + '-' + '导出报告.pdf';
+        //         link.click();
+        //         //下载完成恢复超链接
+        //         $(".PreventDuplication").attr("disabled", false).css("pointer-events", "auto");
+        //         setTimeout(function () {
+        //             document.getElementById('downloadPDF').innerHTML = '<i class=" icon-link" style="cursor: pointer">导出本次报告</i>'
+        //         }, 1100)
+        //         document.getElementById('downloadPDF').innerHTML = '<i class=" icon-link" id="fade" style="cursor: pointer">导出成功</i>'
+        //         $('#fade').fadeOut(1000)
+        //     }
+        // };
+        // xhr.send(formData);
+        // url: '${ctx}/subject/pdfExport/exportPdfFile?pidcard=' + getPidCard, //525
+        $.ajax({
+            type: "POST",
+            url: '${ctx}/subject/pdfExport/exportPdfFile?videoId=' +videoId ,
+            // dataType: "json",
+
+            success: function(response) {
+                toastr.success('导出成功！');
+            },
+            error: function(xhr, status, error) {
+                console.log("请求失败: " + error);
+            }
+        });
+    })
+
+    //yzze0708
+
+    function htmlToPdf() {
+        $(".PreventDuplication").attr("disabled", true).css("pointer-events", "none");
+        let xhr = new XMLHttpRequest();
+        xhr.open('POST', '${ctx}/subject/pdfExport/exportPdfFile', true);
+        xhr.responseType = 'blob';
+
+        // 准备发送的数据
+        let formData = new FormData();
+        formData.append('videoId', videoId);
+
+        xhr.onload = function() {
+            if (this.status === 200) {
+                toastr.success("下载完成");
+            } else {
+                toastr.error("下载失败，请重试");
+            }
+            $(".PreventDuplication").attr("disabled", false).css("pointer-events", "auto");
+        };
+
+        xhr.send(formData);
+    }
+
+    /**
+     * @Description: 获取群体建模范围方法
+     * @Author: lpf  ljh
+     * @Date: 2024/4/16 22:24
+     **/
+    var groupRange1=[];
+    var groupRange2=[];
+    function getPeopleRage() {
+        //群体建模范围  525
+        $.ajax({
+            url: '${ctx}/emotion/emotionParam/findIndicators',
+            dataType: "json",
+            type: "post",
+            processData: false,
+            contentType: false,
+            error: function () {
+                toastr.error('失败 getPeopleRage');
+                return;
+            },
+            success: function (dataForm) {
+                console.log("群体建模",dataForm)
+                // 将min数据存入arr1数组
+                groupRange1.push(dataForm[0].tensionBmin);
+                groupRange1.push(dataForm[0].fatigueBmin);
+                groupRange1.push(dataForm[0].charmBmin);
+                groupRange1.push(dataForm[0].energyBmin);
+                groupRange1.push(dataForm[0].regulationBmin);
+                groupRange1.push(dataForm[0].depressionBmin);
+                groupRange1.push(dataForm[0].aggressionBmin);
+                groupRange1.push(dataForm[0].stressBmin);
+
+                // 将max数据存入arr2数组
+                groupRange2.push(dataForm[0].tensionBmax);
+                groupRange2.push(dataForm[0].fatigueBmax);
+                groupRange2.push(dataForm[0].charmBmax);
+                groupRange2.push(dataForm[0].energyBmax);
+                groupRange2.push(dataForm[0].regulationBmax);
+                groupRange2.push(dataForm[0].depressionBmax);
+                groupRange2.push(dataForm[0].aggressionBmax);
+                groupRange2.push(dataForm[0].stressBmax+0.0);
+                document.getElementById('aggressionRage').innerHTML = (dataForm[0].aggressionBmin+0.0).toFixed(1) + '-' + (dataForm[0].aggressionBmax+0.0).toFixed(1)
+                document.getElementById('charmRage').innerHTML = (dataForm[0].charmBmin+0.0).toFixed(1) + '-' + (dataForm[0].charmBmax+0.0).toFixed(1)
+                document.getElementById('depressionRage').innerHTML = (dataForm[0].depressionBmin+0.0).toFixed(1) + '-' + (dataForm[0].depressionBmax+0.0).toFixed(1)
+                document.getElementById('energyRage').innerHTML = (dataForm[0].energyBmin+0.0).toFixed(1)+ '-' + (dataForm[0].energyBmax+0.0).toFixed(1)
+                document.getElementById('fatigueRage').innerHTML = (dataForm[0].fatigueBmin+0.0).toFixed(1) + '-' + (dataForm[0].fatigueBmax+0.0).toFixed(1)
+                document.getElementById('tensionRage').innerHTML = (dataForm[0].tensionBmin+0.0).toFixed(1) + '-' + (dataForm[0].tensionBmax+0.0).toFixed(1)
+                document.getElementById('regulationRage').innerHTML = (dataForm[0].regulationBmin+0.0).toFixed(1) + '-' + (dataForm[0].regulationBmax+0.0).toFixed(1)
+                document.getElementById('stressRage').innerHTML = (dataForm[0].stressBmin+0.0) .toFixed(1)+ '-' + (dataForm[0].stressBmax+0.0).toFixed(1)
+            }
+        })
+    }
+
+    /**
+     * @Description: 获取指标说明和建议
+     * @Author: lpf
+     * @Date: 2024/4/16 15:38
+     **/
+    // function getSuggestion() {
+    //     $.ajax({
+    //         url: '${ctx}/emotion/emotionResult/obtainIndicatorDescription',
+    //         dataType: "json",
+    //         type: "POST",
+    //         error: function () {
+    //             alert('失败');
+    //             return;
+    //         },
+    //         success: function (dataForm) {
+    //             console.log(dataForm)
+    //         }
+    //     })
+    // }
+
+
+    /**
+     * @Description: 获取个人跟踪指数 折线图
+     * @Author: lpf
+     * @Date: 2024/4/16 16:00
+     **/
+    var times = [];
+    var trackingIndexData = [];
+    var trackingIndexData10 = [];
+    var mintrackingIndexData10=0;
+    // var yAxistrackingIndexData10;
+    function getTrackingIndex() {
+        $.ajax({
+            url: '${ctx}/emotion/emotionResult/findTrackingByPidcard?pidcard=' + getPidCard,
+            dataType: "json",
+            type: "POST",
+            error: function () {
+                toastr.error('失败');
+                return;
+            },
+            success: function (dataForm) {
+                trackingIndexData = dataForm; // Assign dataForm to trackingIndexData
+                if (dataForm.length < 10){
+                    for (let i = 0; i <dataForm.length ; i++) {
+                        trackingIndexData10[i]=dataForm[i];
+                        times.push( '第' + (i+1) + '次')
+                    }
+                    mintrackingIndexData10 = Math.min(...trackingIndexData10); // 计算最小值
+                }
+            }
+        })
+    }
+
+    //个人数据雷达图 ljh
+    // var radarSide = echarts.init(document.getElementById('radarSide'));
+    // var optionRadarSide = {
+    //     radar: {
+    //         splitArea: {
+    //             areaStyle: {
+    //                 shadowColor: "#49c6d0",
+    //                 shadowBlur: 0.5
+    //             }
+    //         },
+    //         axisName: {
+    //             color: "#49c6d0",
+    //             fontSize: 14
+    //         },
+    //         shape: "circle",
+    //         // axisLabel: {show : true},
+    //         // shape: 'circle',
+    //         indicator: [
+    //             {name: '焦虑', max: 0, min: 100},
+    //             {name: '疲劳', max: 0, min: 100},
+    //             {name: '自信', max: 0, min: 100},
+    //             {name: '活力', max: 0, min: 100},
+    //             {name: '自控', max: 0, min: 100},
+    //             {name: '压抑', max: 0, min: 100},
+    //             {name: '激动', max: 0, min: 100},
+    //             {name: '压力', max: 0, min: 100},
+    //         ]
+    //     },
+    //     color: [{
+    //         type: 'radial',
+    //         x: 0.5,
+    //         y: 0.5,
+    //         r: 0.5,
+    //         colorStops: [{
+    //             offset: 0, color: '#49c6d0'// 0% 处的颜色
+    //         }, {
+    //             offset: 1, color: '#49c6d0' // 100% 处的颜色
+    //         }],
+    //         global: false // 缺省为 false
+    //     }],
+    //     //ljh
+    //     series: [
+    //         {
+    //             type: 'radar',
+    //             data: [
+    //                 {
+    //                     value: arr2,
+    //                     name:'上限数据',
+    //                     itemStyle: {
+    //                         color: '#08422c' ,// 设置第2个数据项的颜色
+    //                     },
+    //                     // areaStyle: {
+    //                     //     color: new echarts.graphic.RadialGradient(0.1, 0.1, 0.1, [
+    //                     //         {
+    //                     //             color: '#1ba881',
+    //                     //             offset: 0
+    //                     //         },
+    //                     //         {
+    //                     //             color: '#1ba881',
+    //                     //             offset: 1
+    //                     //         }
+    //                     //     ])
+    //                     // },
+    //                     areaStyle: {
+    //                         opacity: 0 // 隐藏上限数据区域
+    //                     }
+    //
+    //                 }
+    //             ]
+    //         },
+    //
+    //         {
+    //             type: 'radar',
+    //             data: [
+    //                 {
+    //                     value:arr1,
+    //                     name:'下限数据',
+    //                     itemStyle: {
+    //                         color: '#4df5c1' ,// 设置第一个数据项的颜色为蓝色
+    //                     },
+    //                     // areaStyle: {
+    //                     //     color: new echarts.graphic.RadialGradient(0.1, 0.1, 0.1, [
+    //                     //         {
+    //                     //             color: 'rgb(255,255,255)',
+    //                     //             offset: 0
+    //                     //         },
+    //                     //         {
+    //                     //             color: 'rgb(255,255,255)',
+    //                     //             offset: 1
+    //                     //         }
+    //                     //     ])
+    //                     // },
+    //                     areaStyle: {
+    //                         opacity: 0 // 隐藏上限数据区域
+    //                     }
+    //subject_information
+    //                 }
+    //             ]
+    //         },
+    //         {
+    //             type: 'radar',
+    //             data: [
+    //                 {
+    //                     value: [],
+    //                     name:'个人数据',
+    //                     itemStyle: {
+    //                         color: '#003bff' // 设置第3个数据项的颜色
+    //                     },
+    //                     label: {
+    //                         normal: {
+    //                             show: true,
+    //                             formatter: function (params) {
+    //                                 return params.value;
+    //                             }
+    //                         },
+    //                         textStyle: {
+    //                             fontSize: 10,
+    //                             textBorderColor : ' #39949b',
+    //                             color: '#9afefe'
+    //                         }
+    //                     }
+    //                 }
+    //             ]
+    //         },
+    //
+    //
+    //     ]
+    // };
+    var min = 10;
+    var max = 60;
+    var result = 45;
+    // generateImages(min,max,result);
+    function generateImages( min,max,result,image){
+        $.ajax({
+            url: '${ctx}/subject/pdfExport/fenweitu',
+            // dataType: "json",
+            type: "POST",
+            data:{
+                min:min,
+                max:max,
+                result:result
+            },
+            error: function () {
+                toastr.error('失败');
+                return;
+            },
+            success: function (response) {
+                // 更新 <img> 元素的 src 属性
+                document.getElementById(image).src = "data:image/jpeg;base64," + response;
+
+            }
+        })
+    }
+</script>
+</body>
+
+
+</html>

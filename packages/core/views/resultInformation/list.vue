@@ -100,6 +100,7 @@ const untestedList = ref<any[]>([]);
 const searchForm: FormProps = {
   baseColProps: { md: 8, lg: 6 },
   labelWidth: 90,
+  showAdvancedButton: false,
   schemas: [
     {
       label: '编号',
@@ -129,7 +130,7 @@ const searchForm: FormProps = {
       fieldLabel: 'ppositionName',
     },
     {
-      label: '跟踪预警状态',
+      label: '状态',
       field: 'alarmStatus',
       component: 'Select',
       componentProps: {
@@ -292,7 +293,7 @@ const untestedColumns = [
   { title: '部别', dataIndex: 'ppositionName', key: 'ppositionName' },
 ];
 
-const [registerTable, { reload, getSelectRows }] = useTable({
+const [registerTable, { reload, getSelectRows, getSelectRowKeys, setSelectedRowKeys, clearSelectedRowKeys, getDataSource }] = useTable({
   api: getResultInformationList,
   beforeFetch: (params: any) => {
     // 按照HTML页面的传参逻辑，确保所有参数都被传递
@@ -306,7 +307,7 @@ const [registerTable, { reload, getSelectRows }] = useTable({
     params.ppositionName = params.ppositionName || '';
     // 部别代码
     params.pposition = params.pposition || '';
-    // 跟踪预警状态
+    // 状态
     params.alarmStatus = params.alarmStatus || '';
     // 综合心理
     params.psychologyStatus = params.psychologyStatus || '';
@@ -342,6 +343,8 @@ const [registerTable, { reload, getSelectRows }] = useTable({
   useSearchForm: true,
   pagination: true,
   canResize: true,
+  rowKey: 'videoId',
+  clickToRowSelect: false,
   rowSelection: {
     type: 'checkbox',
   },
@@ -359,7 +362,7 @@ watch(
 // 详情
 function handleDetail(record: ResultInformationItem) {
   router.push({
-    path: '/subject/subjectInformation/form',
+    path: '/emotion/xiangqing',
     query: {
       sid: record.mid,
       pname: record.pname,
@@ -580,11 +583,104 @@ async function handleBatchDelete() {
 
 // 全选
 function handleSelectAll() {
-  showMessage('请使用表格左上角的全选复选框', 'info');
+  const allData = getDataSource() || [];
+  const selectedKeys = getSelectRowKeys() || [];
+  
+  // 如果没有数据，直接返回
+  if (allData.length === 0) {
+    showMessage('暂无数据', 'warning');
+    return;
+  }
+  
+  // 获取所有行的键（使用 videoId 作为唯一标识）
+  const allKeys = allData.map((item: any) => item.videoId).filter((key: any) => key != null) as string[];
+  
+  // 将选中的键转换为字符串数组以便比较
+  const selectedKeysStr = selectedKeys.map((key) => String(key));
+  
+  // 判断是否已全选（比较选中键的数量和所有键的数量）
+  const isAllSelected = selectedKeysStr.length === allKeys.length && 
+                        allKeys.every((key: string) => selectedKeysStr.includes(key));
+  
+  if (isAllSelected) {
+    // 如果已全选，则取消全选
+    clearSelectedRowKeys();
+  } else {
+    // 如果未全选，则全选所有行
+    setSelectedRowKeys(allKeys);
+  }
 }
 </script>
 
 <style lang="less" scoped>
+// 确保整个表格容器自适应宽度，不出现滚动条
+:deep(.jeesite-basic-table) {
+  width: 100%;
+  max-width: 100%;
+  overflow: visible;
+  
+  // 表格主体自适应宽度
+  .ant-table-wrapper {
+    width: 100%;
+    max-width: 100%;
+    overflow: visible;
+  }
+  
+  .ant-table {
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .ant-table-container {
+    width: 100%;
+    max-width: 100%;
+    overflow: visible;
+  }
+  
+  // 表格内容区域自适应
+  .ant-table-body {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+// 确保表单区域自适应剩余宽度，不出现滚动条
+:deep(.jeesite-basic-table-form-container) {
+  width: 100%;
+  overflow: visible;
+  display: block;
+  position: relative;
+  
+  .ant-form {
+    width: 100%;
+    display: block;
+  }
+  
+  // 允许表单行换行，自适应容器宽度
+  .ant-row {
+    flex-wrap: wrap; // 允许换行
+    width: 100%;
+    display: flex;
+  }
+  
+  // 表单项自适应宽度
+  .ant-form-item {
+    flex: 1 1 auto; // 允许表单项自适应
+    min-width: 0; // 允许缩小
+  }
+  
+  // 确保表单项内的输入框自适应
+  .ant-form-item-control-input {
+    min-width: 0;
+    width: 100%;
+  }
+  
+  // 表单操作按钮区域自适应
+  .ant-form-item:last-child {
+    flex: 0 0 auto; // 操作按钮不缩放
+  }
+}
+
 :deep(.ant-table-tbody) {
   .odd-row {
     box-shadow: inset 0px 0px 13px #4487d5;

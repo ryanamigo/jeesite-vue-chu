@@ -314,11 +314,12 @@ const restoreFilterFromStorage = () => {
       if (parsed.data) {
         // 恢复筛选条件（按照HTML逻辑：空字符串或null都转为null，空数组保持空数组）
         // 注意：页面首次加载时，gender字段不恢复，使用默认值null
+        // 注意：页面首次加载时，部别字段不恢复，保持默认值null，以显示placeholder（和其他筛选框一样）
         filterParams.value = {
           startTime: parsed.data.startTime && parsed.data.startTime.trim() !== '' ? parsed.data.startTime : '',
           endTime: parsed.data.endTime && parsed.data.endTime.trim() !== '' ? parsed.data.endTime : '',
-          companyCode: parsed.data.companyCode || null,
-          companyName: parsed.data.companyName || null,
+          companyCode: null, // 首次加载时不恢复，保持null以显示placeholder
+          companyName: null, // 首次加载时不恢复，保持null以显示placeholder
           testNumbers: (() => {
             const rawTest = parsed.data.testNumbers;
             if (Array.isArray(rawTest) && rawTest.length > 0) {
@@ -389,10 +390,10 @@ const handleQuery = async () => {
     await fetchTopStatistics();
     await fetchChartData();
     
-    toast.success('查询成功');
+    createMessage.success('查询成功');
   } catch (error) {
     const errorMsg = error?.message || error?.toString() || '未知错误';
-    toast.error(`查询失败：${errorMsg}`);
+    createMessage.error(`查询失败：${errorMsg}`);
     console.error('查询错误：', error);
   } finally {
     loading?.close();
@@ -526,7 +527,7 @@ const fetchTaskList = async () => {
     }));
   } catch (error) {
     const errorMsg = error?.message || error?.toString() || '未知错误';
-    toast.error(`任务列表加载失败：${errorMsg}`);
+    createMessage.error(`任务列表加载失败：${errorMsg}`);
     console.error('任务列表加载错误：', error);
   }
 };
@@ -731,6 +732,11 @@ const initCharts = () => {
 const getChartOptions = (chartType = 'left') => {
   return {
     maintainAspectRatio: false,
+    // 添加动画配置，使图表更新更丝滑
+    animation: {
+      duration: 600, // 动画时长600ms，更流畅
+      easing: 'easeOutQuart', // 缓动函数，更平滑的过渡效果
+    },
     plugins: {
       datalabels: {
         display: function(context) {
@@ -745,6 +751,10 @@ const getChartOptions = (chartType = 'left') => {
         color: 'white',
         font: {
           size: 12
+        },
+        // 数据标签动画配置
+        animation: {
+          duration: 500
         }
       },
       legend: {
@@ -847,25 +857,22 @@ const updateChartData = async (chart, data) => {
     }
   }
   
-  // 更新图表数据集（使用原始 chart 实例）
-  rawChart.data.datasets[0].data = data1;
-  rawChart.data.datasets[1].data = data2;
-  rawChart.data.datasets[2].data = data3;
-  
-  // 先更新一次图表（按照HTML逻辑：先更新数据，调用update）
-  rawChart.update('none');
-  
-  // 计算Y轴范围
+  // 计算Y轴范围（在更新数据前计算，避免重复计算）
   var maxData = Math.max.apply(null, data);
   var yvalue = Math.ceil(maxData / 10) * 10;
   if (yvalue < 5) {
     yvalue = 5;
   }
   
-  // 更新Y轴范围并再次更新图表（按照HTML逻辑：updateYAxisRange函数会再次调用update）
+  // 同时更新数据和Y轴范围，只调用一次update，使用动画模式
+  rawChart.data.datasets[0].data = data1;
+  rawChart.data.datasets[1].data = data2;
+  rawChart.data.datasets[2].data = data3;
   rawChart.options.scales.y.min = 0;
   rawChart.options.scales.y.max = yvalue;
-  rawChart.update('none'); // 按照HTML逻辑，这里需要再次调用update
+  
+  // 使用 'active' 模式启用平滑动画过渡，而不是 'none'
+  rawChart.update('active');
 };
 
 const fetchChartData = async () => {
@@ -889,59 +896,79 @@ const fetchChartData = async () => {
   };
   
   try {
-    // 左侧图表处理：添加局部try-catch，不影响右侧
-    try {
-      const leftRes = await getLeftChartData(requestParams);
-      console.log('左侧接口完整响应：', leftRes);
-      console.log('左侧接口返回数据：', leftRes.data); 
-      
-      // 处理响应数据：可能是res.data，也可能是res本身（数组格式）
-      let leftData = leftRes;
-      if (leftRes && typeof leftRes === 'object' && 'data' in leftRes) {
-        leftData = leftRes.data;
+    // 并行加载两个图表数据，提升加载速度
+    const [leftRes, rightRes] = await Promise.allSettled([
+      getLeftChartData(requestParams),
+      getRightChartData(requestParams)
+    ]);
+    
+    // 处理左侧图表数据
+    if (leftRes.status === 'fulfilled') {
+      try {
+        const leftResponse = leftRes.value;
+        console.log('左侧接口完整响应：', leftResponse);
+        console.log('左侧接口返回数据：', leftResponse.data); 
+        
+        // 处理响应数据：可能是res.data，也可能是res本身（数组格式）
+        let leftData = leftResponse;
+        if (leftResponse && typeof leftResponse === 'object' && 'data' in leftResponse) {
+          leftData = leftResponse.data;
+        }
+        
+        // 严格检查数据格式（必须是数组）
+        if (Array.isArray(leftData) && leftChart.value) {
+          console.log('准备更新左侧图表，数据：', leftData); 
+          // 使用 nextTick 确保DOM更新完成后再更新图表，使动画更流畅
+          await nextTick();
+          await updateChartData(leftChart.value, leftData);
+          console.log('左侧图表更新完成'); 
+        } else {
+          console.warn('左侧接口返回数据格式不正确（非数组）:', leftData);
+        }
+      } catch (leftError) {
+        console.error('左侧图表处理出错：', leftError);
+        const errorMsg = leftError?.message || leftError?.toString() || '未知错误';
+        createMessage.error(`左侧图表数据加载失败：${errorMsg}`);
       }
-      
-      // 严格检查数据格式（必须是数组）
-      if (Array.isArray(leftData) && leftChart.value) {
-        console.log('准备更新左侧图表，数据：', leftData); 
-        await updateChartData(leftChart.value, leftData);
-        console.log('左侧图表更新完成，准备调用右侧接口'); 
-      } else {
-        console.warn('左侧接口返回数据格式不正确（非数组）:', leftData);
-      }
-    } catch (leftError) {
-      console.error('左侧图表处理出错：', leftError);
-      const errorMsg = leftError?.message || leftError?.toString() || '未知错误';
-      toast.error(`左侧图表数据加载失败：${errorMsg}`);
-      // 左侧出错不阻断右侧
+    } else {
+      console.error('左侧图表请求失败：', leftRes.reason);
+      createMessage.error(`左侧图表数据加载失败：${leftRes.reason?.message || leftRes.reason}`);
     }
     
-    // 右侧图表处理（现在即使左侧出错，这里仍会执行）
-    try {
-      const rightRes = await getRightChartData(requestParams);
-      console.log('右侧接口完整响应：', rightRes);
-      console.log('右侧接口返回数据：', rightRes.data); 
-      
-      // 处理响应数据：可能是res.data，也可能是res本身（数组格式）
-      let rightData = rightRes;
-      if (rightRes && typeof rightRes === 'object' && 'data' in rightRes) {
-        rightData = rightRes.data;
+    // 处理右侧图表数据
+    if (rightRes.status === 'fulfilled') {
+      try {
+        const rightResponse = rightRes.value;
+        console.log('右侧接口完整响应：', rightResponse);
+        console.log('右侧接口返回数据：', rightResponse.data); 
+        
+        // 处理响应数据：可能是res.data，也可能是res本身（数组格式）
+        let rightData = rightResponse;
+        if (rightResponse && typeof rightResponse === 'object' && 'data' in rightResponse) {
+          rightData = rightResponse.data;
+        }
+        
+        if (Array.isArray(rightData) && rightChart.value) {
+          console.log('准备更新右侧图表，数据：', rightData);
+          // 使用 nextTick 确保DOM更新完成后再更新图表，使动画更流畅
+          await nextTick();
+          await updateChartData(rightChart.value, rightData);
+          console.log('右侧图表更新完成');
+        } else {
+          console.warn('右侧接口返回数据格式不正确（非数组）:', rightData);
+        }
+      } catch (rightError) {
+        console.error('右侧图表处理出错：', rightError);
+        const errorMsg = rightError?.message || rightError?.toString() || '未知错误';
+        createMessage.error(`右侧图表数据加载失败：${errorMsg}`);
       }
-      
-      if (Array.isArray(rightData) && rightChart.value) {
-        console.log('准备更新右侧图表，数据：', rightData);
-        await updateChartData(rightChart.value, rightData);
-      } else {
-        console.warn('右侧接口返回数据格式不正确（非数组）:', rightData);
-      }
-    } catch (rightError) {
-      console.error('右侧图表处理出错：', rightError);
-      const errorMsg = rightError?.message || rightError?.toString() || '未知错误';
-      toast.error(`右侧图表数据加载失败：${errorMsg}`);
+    } else {
+      console.error('右侧图表请求失败：', rightRes.reason);
+      createMessage.error(`右侧图表数据加载失败：${rightRes.reason?.message || rightRes.reason}`);
     }
   } catch (error) {
     const errorMsg = error?.message || error?.toString() || '未知错误';
-    toast.error(`图表数据加载失败：${errorMsg}`);
+    createMessage.error(`图表数据加载失败：${errorMsg}`);
     console.error('图表数据加载错误：', error);
   }
 };
@@ -1001,7 +1028,7 @@ onMounted(async () => {
     }
   } catch (error) {
     const errorMsg = error?.message || error?.toString() || '未知错误';
-    toast.error(`页面加载失败：${errorMsg}`);
+    createMessage.error(`页面加载失败：${errorMsg}`);
     console.error('页面加载错误：', error);
   } finally {
     loading?.close();
@@ -1038,7 +1065,10 @@ body {
 .content {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
   background: url('/js/static/image/win2.jpg') no-repeat center center;
 }
 
@@ -1090,7 +1120,7 @@ body {
   flex-wrap: nowrap;
   gap: 8px;
   padding-right: 10px;
-  overflow-x: auto;
+  overflow-x: hidden;
 }
 .filter-item {
   display: flex;
@@ -1241,11 +1271,68 @@ body {
 }
 
 /* 部别和任务筛选框的 placeholder 颜色，与时间筛选框一致 */
+.dept-filter :deep(.ant-tree-select-selection-placeholder) {
+  color: #999 !important; /* 修改这里的颜色值即可改变"请选择部别"的提示颜色 */
+  opacity: 1 !important;
+}
 .dept-filter :deep(.ant-select-selection-placeholder),
-.dept-filter :deep(.ant-tree-select-selection-placeholder),
 .task-filter :deep(.ant-select-selection-placeholder) {
   color: #999 !important;
   opacity: 1 !important;
+}
+
+/* 部别筛选框选中后的文字颜色，与其他筛选框一致（黑色） */
+.dept-filter :deep(.ant-tree-select-selection-item),
+.dept-filter :deep(.ant-select-selection-item) {
+  color: #333 !important;
+}
+
+.dept-filter :deep(.ant-tree-select-selection-item-content),
+.dept-filter :deep(.ant-select-selection-item-content) {
+  color: #333 !important;
+}
+
+/* 部别筛选框选中后的文字颜色（当有值时） */
+.dept-filter :deep(.ant-tree-select-selection-search),
+.dept-filter :deep(.ant-select-selection-search) {
+  color: #333 !important;
+}
+
+.dept-filter :deep(.ant-tree-select-selection-selected-value),
+.dept-filter :deep(.ant-select-selection-selected-value) {
+  color: #333 !important;
+}
+
+/* 部别筛选框选择器内所有文字颜色（通用设置） */
+.dept-filter :deep(.ant-tree-select-selector),
+.dept-filter :deep(.ant-select-selector) {
+  color: #333 !important;
+}
+
+.dept-filter :deep(.ant-tree-select-selector .ant-tree-select-selection-item),
+.dept-filter :deep(.ant-select-selector .ant-select-selection-item) {
+  color: #333 !important;
+}
+
+/* 确保部别筛选框内的文字是黑色 */
+.dept-filter :deep(.ant-tree-select) {
+  color: #333 !important;
+}
+
+.dept-filter :deep(.ant-tree-select .ant-tree-select-selector) {
+  color: #333 !important;
+}
+
+/* 部别筛选框内所有文字元素都设置为黑色 */
+.dept-filter :deep(.ant-tree-select-selector *),
+.dept-filter :deep(.ant-select-selector *) {
+  color: #333 !important;
+}
+
+/* 部别筛选框输入框文字颜色 */
+.dept-filter :deep(.ant-tree-select input),
+.dept-filter :deep(.ant-select input) {
+  color: #333 !important;
 }
 
 /* 任务多选框内已选标签样式，参照原HTML页面（蓝色背景#1e9fff，白色文字） */
@@ -1282,7 +1369,7 @@ body {
 .task-filter :deep(.ant-select-selector) {
   display: flex !important;
   align-items: center;
-  overflow-x: auto;
+  overflow-x: hidden;
   white-space: nowrap;
   padding-right: 24px !important;
 }

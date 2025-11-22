@@ -45,7 +45,6 @@
               :columns="resultColumns"
               :data-source="resultTableData"
               row-key="id"
-              :scroll="{ y: 200 }"
               :pagination="false"
               @row-click="handleRowClick"
             >
@@ -430,13 +429,14 @@ const convertAlarmStatus = (status: number): string => {
   if (status === 1) return '正常';
   if (status === 2) return '一般';
   if (status === 3) return '关注';
-  return '待跟踪';
+  return '未跟踪';
 };
 
 // 初始化表格2（具体指标表格）表头
 const initIndexTable = () => {
   // 对应HTML的creatChart2，初始化表格数据结构
-  const indexNames = ['焦虑', '疲劳', '平衡', '能量', '稳定', '压抑', '紧张', '压力'];
+  // 顺序与雷达图一致：紧张、压力、焦虑、疲劳、平衡、能量、稳定、压抑
+  const indexNames = ['紧张', '压力', '焦虑', '疲劳', '平衡', '能量', '稳定', '压抑'];
   indexTableData.value = indexNames.map((name, index) => ({
     index,
     name,
@@ -445,7 +445,7 @@ const initIndexTable = () => {
     result: '暂无',
     selfRange: '-',
     deviation: '-',
-    key: ['tension', 'fatigue', 'charm', 'energy', 'regulation', 'depression', 'aggression', 'stress'][index],
+    key: ['aggression', 'stress', 'tension', 'fatigue', 'charm', 'energy', 'regulation', 'depression'][index],
   }));
 };
 
@@ -787,15 +787,19 @@ const updateIndexTableDataWithMentalState = (data: any) => {
     return;
   }
 
-  const indexNames = ['焦虑', '疲劳', '平衡', '能量', '稳定', '压抑', '紧张', '压力'];
-  const indexKeys = ['tension', 'fatigue', 'charm', 'energy', 'regulation', 'depression', 'aggression', 'stress'];
+  // 顺序与雷达图一致：紧张、压力、焦虑、疲劳、平衡、能量、稳定、压抑
+  const indexNames = ['紧张', '压力', '焦虑', '疲劳', '平衡', '能量', '稳定', '压抑'];
+  const indexKeys = ['aggression', 'stress', 'tension', 'fatigue', 'charm', 'energy', 'regulation', 'depression'];
+  // 对应groupRange1的索引映射（与雷达图的groupIndex一致）
+  const groupIndexMap = [6, 7, 0, 1, 2, 3, 4, 5];
   
   indexTableData.value = indexNames.map((name, index) => {
     const key = indexKeys[index];
-    const groupMin = groupRange1.value[index];
-    const groupMax = groupRange2.value[index];
-    const selfMin = modelStatus.value === 1 && selfRange1.value.length > index ? selfRange1.value[index] : null;
-    const selfMax = modelStatus.value === 1 && selfRange2.value.length > index ? selfRange2.value[index] : null;
+    const groupIdx = groupIndexMap[index]; // 使用映射索引
+    const groupMin = groupRange1.value[groupIdx];
+    const groupMax = groupRange2.value[groupIdx];
+    const selfMin = modelStatus.value === 1 && selfRange1.value.length > groupIdx ? selfRange1.value[groupIdx] : null;
+    const selfMax = modelStatus.value === 1 && selfRange2.value.length > groupIdx ? selfRange2.value[groupIdx] : null;
     
     let score = '-';
     let result = '-';
@@ -1028,18 +1032,22 @@ const updateIndexTableData = () => {
     return;
   }
 
-  const indexNames = ['焦虑', '疲劳', '平衡', '能量', '稳定', '压抑', '紧张', '压力'];
-  const indexKeys = ['tension', 'fatigue', 'charm', 'energy', 'regulation', 'depression', 'aggression', 'stress'];
+  // 顺序与雷达图一致：紧张、压力、焦虑、疲劳、平衡、能量、稳定、压抑
+  const indexNames = ['紧张', '压力', '焦虑', '疲劳', '平衡', '能量', '稳定', '压抑'];
+  const indexKeys = ['aggression', 'stress', 'tension', 'fatigue', 'charm', 'energy', 'regulation', 'depression'];
+  // 对应groupRange1的索引映射（与雷达图的groupIndex一致）
+  const groupIndexMap = [6, 7, 0, 1, 2, 3, 4, 5];
   
   // 如果有当前选中的详情数据，使用它；否则使用最后一条数据
   const currentDetail = currentDetailData.value;
   
   indexTableData.value = indexNames.map((name, index) => {
     const key = indexKeys[index];
-    const groupMin = groupRange1.value[index];
-    const groupMax = groupRange2.value[index];
-    const selfMin = modelStatus.value === 1 && selfRange1.value.length > index ? selfRange1.value[index] : null;
-    const selfMax = modelStatus.value === 1 && selfRange2.value.length > index ? selfRange2.value[index] : null;
+    const groupIdx = groupIndexMap[index]; // 使用映射索引
+    const groupMin = groupRange1.value[groupIdx];
+    const groupMax = groupRange2.value[groupIdx];
+    const selfMin = modelStatus.value === 1 && selfRange1.value.length > groupIdx ? selfRange1.value[groupIdx] : null;
+    const selfMax = modelStatus.value === 1 && selfRange2.value.length > groupIdx ? selfRange2.value[groupIdx] : null;
     
     let score = '-';
     let result = '-';
@@ -1705,9 +1713,7 @@ $prefixCls: 'psychology-detail';
 
       &.top-card {
         height: 50%;
-        overflow: auto;
-        &::-webkit-scrollbar { width: 6px; height: 6px; }
-        &::-webkit-scrollbar-thumb { background: rgba(154, 254, 254, 0.3); border-radius: 3px; }
+        overflow: hidden;
       }
 
       &.bottom-card { 
@@ -1757,13 +1763,16 @@ $prefixCls: 'psychology-detail';
         background: transparent;
         .ant-table-thead > tr > th {
           background: rgba(15, 66, 111, 0.5);
-          color: rgba(255, 255, 255, 0.84);
+          color: rgba(154, 254, 254, 0.89);
           border-bottom: 1px solid rgba(154, 254, 254, 0.2);
+          padding: 4px 8px;
         }
         .ant-table-tbody > tr > td {
           background: transparent;
           color: rgba(255, 255, 255, 0.7);
           border-bottom: 1px solid rgba(154, 254, 254, 0.1);
+          padding: 4px 8px;
+          line-height: 18px;
         }
         .ant-table-tbody > tr:hover > td { background: rgba(154, 254, 254, 0.1); }
       }
@@ -1901,7 +1910,8 @@ $prefixCls: 'psychology-detail';
       }
 
       .rightBtm {
-        height: 50%; // 对应HTML的.rightBtm height: 50%
+        height: 55%; // 对应HTML的.rightBtm height: 50%
+        margin-top: -20px; // 向上收紧与指标说明的间距
         .card-title {
           color: rgba(154, 254, 254, 0.89);
           font-size: 20px; // 对应HTML的h4 font-size: 20px
@@ -1917,8 +1927,8 @@ $prefixCls: 'psychology-detail';
       .chart {
         flex-direction: column;
         display: flex;
-        width: 60%; // 对应HTML的width: 60%
-        height: 90%; // 对应HTML的height: 90%
+        width: 55%; // 收缩表格宽度，为热力图留出空间
+        height: 100%; // 对应HTML的height: 90%
         float: left; // 对应HTML的float: left
             .index-table {
             padding: 0;
@@ -1930,6 +1940,8 @@ $prefixCls: 'psychology-detail';
               border: none; // 移除默认边框
               border-top: 2px solid #8ce7ed; // 对应HTML的border-top: 2px solid #8ce7ed
               border-bottom: 2px solid #8ce7ed; // 对应HTML的border-bottom: 2px solid #8ce7ed
+              border-left: 2px solid #8ce7ed; // 左侧蓝色边框
+              border-right: 2px solid #8ce7ed; // 右侧蓝色边框
               
               // 表格容器
               .ant-table-container {
@@ -1991,27 +2003,29 @@ $prefixCls: 'psychology-detail';
       .radarSide {
         flex-direction: column;
         display: flex;
-        width: 40%; // 对应HTML的width: 40%
+        width: 45%; // 加宽热力图区域
         flex: 1;
-        height: 90%; // 对应HTML的height: 90%
+        height: 100%; // 对应HTML的height: 90%
         float: left; // 对应HTML的float: left
         margin-top: -2%; // 对应HTML的margin-top: -2%
         
         .radar-item.container {
           display: flex;
           align-items: center; // 对应HTML的align-items: center
-          height: 14%; // 对应HTML的height: 14%
-          margin-left: 12%; // 对应HTML的margin-left: 12%
+          height: 11%; // 对应HTML的height: 14%
+          width: 80%; // 确保容器占满宽度
+          margin-left: 6%; // 减少左侧留白，让文字更靠近图像
           
           .radar-label { 
             font-size: 15px; // 对应HTML的font-size: 15px
             color: white; // 对应HTML的color: white
-            margin-right: 8px;
+            margin-right: 4px; // 缩短文字和热力图的距离
+            flex-shrink: 0; // 防止标签被压缩
           }
           .radar-img {
-            width: 300px; // 对应HTML的width="300"
-            height: 100%; // 对应HTML的style="height: 100%"
-            object-fit: contain; 
+            flex: 1; // 让图片自动填充剩余空间
+            width: auto; // 改为自动宽度，配合flex使用
+            height: 100%; 
             border-radius: 0;
             background: transparent;
           }

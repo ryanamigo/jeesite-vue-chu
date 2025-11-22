@@ -1,6 +1,6 @@
 import { ThemeEnum } from '../enums/appEnum';
 
-export const darkMode = ThemeEnum.LIGHT;
+export const darkMode = ThemeEnum.DARK;
 
 // header preset color
 export const HEADER_PRESET_BG_COLOR_LIST: string[] = [

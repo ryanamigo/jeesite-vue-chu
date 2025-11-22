@@ -152,9 +152,9 @@ export const useUserStore = defineStore('app-user', {
         const currentRoute = router.currentRoute.value;
         let path = currentRoute.query.redirect;
         if (path !== '/') {
-          path = path || res.user?.homePath || PageEnum.BASE_HOME;
+          path = path || res.user?.homePath || '/screendisplay/index';
         } else {
-          path = res.user?.homePath || PageEnum.BASE_HOME;
+          path = res.user?.homePath || '/screendisplay/index';
         }
         await router.replace(decodeURIComponent(path as string));
       }

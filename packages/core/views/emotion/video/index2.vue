@@ -32,24 +32,25 @@
         <option v-for="item in taskList" :key="item.id" :value="item.testNumber">{{item.testNumberName}}</option>
       </select>
       <div style="margin-top: 10px;">
-        <!-- 普通用户展示的后端返回数据表格状态 -->
+        <!-- 普通用户（现在显示：被试列表，表头：名字/状态） -->
         <div v-if="showYourFeature">
-          <div style="display:flex; justify-content: space-between; align-items: center; margin: 6px 10% 8px 10%;">
-            <span style="color:#91f2f4;">人员状态数据</span>
-            <button class="clear-data-btn" @click="clearResultRows">清空数据</button>
+          <div style="display:flex; justify-content: space-between; align-items: center; margin: 6px 10% 8px 10%; gap: 8px;">
+            <!-- <span style="color:#91f2f4;">被试状态数据</span> -->
+            <div></div>
           </div>
           <div style="margin: 0 10%; border: 1px solid #3c8dbc;">
+            <div v-if="testHeaders.length === 0" style="padding:10px; color:#9db6c7;">暂无数据</div>
             <table style="width:100%; border-collapse: collapse; color:#d7e4ed; font-size: 13px;">
-              <thead style="background: #0d2a55; position: sticky; top: 0;">
+              <thead style="background: #0d2a55;">
                 <tr>
-                  <th style="border-bottom:1px solid #3c8dbc; padding:6px; text-align:left; width: 45%;">指标</th>
-                  <th style="border-bottom:1px solid #3c8dbc; padding:6px; text-align:left;">值</th>
+                  <th style="border-bottom:1px solid #3c8dbc; padding:6px; text-align:center; width:50%;">名字</th>
+                  <th style="border-bottom:1px solid #3c8dbc; padding:6px; text-align:center; width:50%;">状态</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="label in metricLabels" :key="label" style="background: rgba(9,32,70,0.5);">
-                  <td style="border-bottom:1px solid #163b73; padding:6px;">{{ label }}</td>
-                  <td style="border-bottom:1px solid #163b73; padding:6px;">{{ getMetricValue(label) }}</td>
+                <tr v-for="(row, idx) in testRows" :key="idx" style="background: rgba(9,32,70,0.5);">
+                  <td style="border-bottom:1px solid #163b73; padding:6px;">{{ row?.pname }}</td>
+                  <td style="border-bottom:1px solid #163b73; padding:6px;">{{ row?.recordStatus }}</td>
                 </tr>
               </tbody>
             </table>
@@ -57,28 +58,28 @@
         </div>
       </div>
       <div v-if="showTestFeature" style="margin-top: 10px;">
-        <!-- 测试用户显示：被试列表（带状态） -->
-        <div style="display:flex; justify-content: space-between; align-items: center; margin: 6px 10% 8px 10%; gap: 8px;">
-          <!-- <span style="color:#91f2f4;">被试状态数据</span> -->
-          <div>
-            <!-- <button class="clear-data-btn" style="margin-right:8px;" @click="loadTestSubjects">刷新数据</button> -->
-            <!-- <button class="clear-data-btn" @click="clearTestData">清空数据</button> -->
-          </div>
+        <!-- 测试用户（现在显示：10行指标 + 清空数据按钮） -->
+        <div style="display:flex; justify-content: center; align-items: center; margin: 6px 10% 8px 10%;">
+          <span style="color:#91f2f4;font-size: 20px;">人员状态数据</span>
         </div>
         <div style="margin: 0 10%; border: 1px solid #3c8dbc;">
-          <div v-if="testHeaders.length === 0" style="padding:10px; color:#9db6c7;">暂无数据</div>
           <table style="width:100%; border-collapse: collapse; color:#d7e4ed; font-size: 13px;">
-            <thead style="background: #0d2a55;">
+            <thead style="background: #0d2a55; position: sticky; top: 0;">
               <tr>
-                <th v-for="h in testHeaders" :key="h" style="border-bottom:1px solid #3c8dbc; padding:6px; text-align:left;">{{ h }}</th>
+                <th style="border-bottom:1px solid #3c8dbc; padding:6px; text-align:center; width: 45%;">指标</th>
+                <th style="border-bottom:1px solid #3c8dbc; padding:6px; text-align:center;">值</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(row, idx) in testRows" :key="idx" style="background: rgba(9,32,70,0.5);">
-                <td v-for="h in testHeaders" :key="h" style="border-bottom:1px solid #163b73; padding:6px;">{{ row?.[h] }}</td>
+              <tr v-for="label in metricLabels" :key="label" style="background: rgba(9,32,70,0.5);">
+                <td style="border-bottom:1px solid #163b73; padding:6px; text-align:center;">{{ label }}</td>
+                <td style="border-bottom:1px solid #163b73; padding:6px; text-align:center;">{{ getMetricValue(label) }}</td>
               </tr>
             </tbody>
           </table>
+        </div>
+        <div style="display:flex; justify-content: center; margin: 8px 10% 0 10%;">
+          <button class="clear-data-btn" style="background-color:rgb(5 148 183);border-color:#0b5ed7;color:#fff;" @click="clearResultRows">清空数据</button>
         </div>
       </div>
       <!-- 更新数据 -->
@@ -425,11 +426,9 @@ const renderVideoStatus = async () => {
     } else {
       container.innerHTML = '暂无数据';
     }
-    // 若为测试用户，选择任务后联动刷新测试列表
+    // 联动刷新被试列表（普通用户与测试用户都需要）
     try {
-      if (showTestFeature.value) {
-        await loadTestSubjects();
-      }
+      await loadTestSubjects();
     } catch {}
   } catch (e) {
     notifyError('获取视频状态失败');
@@ -1544,10 +1543,20 @@ onMounted(async () => {
   const progressBar = getEl('progressBar');
   if (progressBar) progressBar.innerHTML = '<div id="progressFill"></div>';
 
-  // 测试用户：加载被试状态列表
-  if (showTestFeature.value) {
-    await loadTestSubjects();
-  }
+  // 若未选择任务且有任务，默认选中第一个任务
+  await nextTick();
+  try {
+    const taskSelect = document.getElementById('taskSelection') as HTMLSelectElement | null;
+    if (taskSelect && !taskSelect.value && taskList.value && taskList.value.length > 0) {
+      const first = taskList.value[0];
+      if (first?.testNumber) {
+        taskSelect.value = String(first.testNumber);
+      }
+    }
+  } catch {}
+
+  // 加载被试状态列表（普通用户与测试用户都需要）
+  await loadTestSubjects();
 });
 
 onBeforeUnmount(() => {

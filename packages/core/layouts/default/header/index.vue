@@ -26,19 +26,11 @@
 
     <!-- action  -->
     <div :class="`${prefixCls}-action`">
-      <AppSearch v-if="getShowSearch" class="switch-corp" />
-
-      <OnlineCount class="online-count" />
-
-      <Notify v-if="getShowNotice" class="notify-item" />
-
       <ErrorAction v-if="getUseErrorHandle" class="error-action" />
 
       <FullScreen v-if="getShowFullScreen" class="fullscreen-item" />
 
       <UserDropDown :theme="getHeaderTheme" />
-
-      <SettingDrawer v-if="getShowSetting" />
     </div>
   </ALayoutHeader>
 </template>
@@ -47,9 +39,7 @@
   import { propTypes } from '@jeesite/core/utils/propTypes';
   import { Layout } from 'ant-design-vue';
   import { AppLogo } from '@jeesite/core/components/Application';
-  import { AppSearch } from '@jeesite/core/components/Application';
   import { MenuModeEnum, MenuSplitTyeEnum } from '@jeesite/core/enums/menuEnum';
-  import { SettingButtonPositionEnum } from '@jeesite/core/enums/appEnum';
   import { useHeaderSetting } from '@jeesite/core/hooks/setting/useHeaderSetting';
   import { useMenuSetting } from '@jeesite/core/hooks/setting/useMenuSetting';
   import { useRootSetting } from '@jeesite/core/hooks/setting/useRootSetting';
@@ -62,13 +52,10 @@
   import LayoutMenu from '../menu/index.vue';
   import LayoutTrigger from '../trigger/index.vue';
   import {
-    UserDropDown,
     LayoutBreadcrumb,
     FullScreen,
-    Notify,
     ErrorAction,
-    OnlineCount,
-    SettingDrawer,
+    UserDropDown,
   } from './components';
 
   export default defineComponent({
@@ -79,13 +66,9 @@
       LayoutTrigger,
       LayoutBreadcrumb,
       LayoutMenu,
-      UserDropDown,
       FullScreen,
-      Notify,
-      AppSearch,
       ErrorAction,
-      OnlineCount,
-      SettingDrawer,
+      UserDropDown,
     },
     props: {
       fixed: propTypes.bool,
@@ -101,17 +84,15 @@
       });
       const { getShowTopMenu, getShowHeaderTrigger, getSplit, getIsMixMode, getMenuWidth, getIsMixSidebar } =
         useMenuSetting();
-      const { getUseErrorHandle, getShowSettingButton, getSettingButtonPosition } = useRootSetting();
+      const { getUseErrorHandle } = useRootSetting();
 
       const {
         getHeaderTheme,
         getShowFullScreen,
-        getShowNotice,
         getShowContent,
         getShowBread,
         getShowHeaderLogo,
         getShowHeader,
-        getShowSearch,
       } = useHeaderSetting();
 
       const { getShowLocalePicker } = useLocale();
@@ -134,18 +115,6 @@
         const userStore = useUserStore();
         const { hasPermission } = usePermission();
         return userStore.getPageCacheByKey('useCorpModel', false) && hasPermission('sys:corpAdmin:edit');
-      });
-
-      const getShowSetting = computed(() => {
-        if (!unref(getShowSettingButton)) {
-          return false;
-        }
-        const settingButtonPosition = unref(getSettingButtonPosition);
-
-        if (settingButtonPosition === SettingButtonPositionEnum.AUTO) {
-          return unref(getShowHeader);
-        }
-        return settingButtonPosition === SettingButtonPositionEnum.HEADER;
       });
 
       const getLogoWidth = computed(() => {
@@ -180,13 +149,9 @@
         getShowTopMenu,
         getShowLocalePicker,
         getShowFullScreen,
-        getShowNotice,
         getUseErrorHandle,
         getLogoWidth,
         getIsMixSidebar,
-        getShowSettingButton,
-        getShowSetting,
-        getShowSearch,
         getUseCorpModel,
       };
     },

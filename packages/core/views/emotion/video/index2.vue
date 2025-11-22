@@ -56,6 +56,31 @@
           </div>
         </div>
       </div>
+      <div v-if="showTestFeature" style="margin-top: 10px;">
+        <!-- 测试用户显示：被试列表（带状态） -->
+        <div style="display:flex; justify-content: space-between; align-items: center; margin: 6px 10% 8px 10%; gap: 8px;">
+          <!-- <span style="color:#91f2f4;">被试状态数据</span> -->
+          <div>
+            <!-- <button class="clear-data-btn" style="margin-right:8px;" @click="loadTestSubjects">刷新数据</button> -->
+            <!-- <button class="clear-data-btn" @click="clearTestData">清空数据</button> -->
+          </div>
+        </div>
+        <div style="margin: 0 10%; border: 1px solid #3c8dbc;">
+          <div v-if="testHeaders.length === 0" style="padding:10px; color:#9db6c7;">暂无数据</div>
+          <table style="width:100%; border-collapse: collapse; color:#d7e4ed; font-size: 13px;">
+            <thead style="background: #0d2a55;">
+              <tr>
+                <th v-for="h in testHeaders" :key="h" style="border-bottom:1px solid #3c8dbc; padding:6px; text-align:left;">{{ h }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(row, idx) in testRows" :key="idx" style="background: rgba(9,32,70,0.5);">
+                <td v-for="h in testHeaders" :key="h" style="border-bottom:1px solid #163b73; padding:6px;">{{ row?.[h] }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
       <!-- 更新数据 -->
       <!-- <div id="findVideoStatusByDate">
         <div id="videoStatusTree"></div>
@@ -66,7 +91,7 @@
     </div>
 
     <!-- 中 -->
-    <div class="child" style="color: #91f2f4">
+    <div class="child" :class="{ disabledPanel: activePanel !== 'video' }" style="color: #91f2f4">
       <!-- 顶部标题 -->
       <div class="img-container" style="display: flex;">
         <img id="videoImg" class="infoImg" src="/js/static/image/综合数据.png" style="display: block; max-width: 100%" />
@@ -76,6 +101,7 @@
         <div id="statusInfo" class="text-overlay"></div>
       </div>
       <div id="progressBar"></div>
+      <div v-if="activePanel !== 'video'" class="panel-mask"></div>
       <video class="video" autoplay id="video" ref="videoRef"></video>
       <video class="video video2" autoplay id="video2" style="display: none"></video>
       <button @click="startRecording" :disabled="startBtnDisabled" class="startButton" id="start-btn" style="display: none;">开始录制</button>
@@ -141,7 +167,7 @@
 </template>
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, nextTick, computed } from 'vue';
-import { faceRecognitionBySnapshot, getCompanyTreeData, getTasksData, getVideoStatus,insertOrModifyInformation, judgePerson, adjustingTheAngle, insertVideoInformation } from '../../../api/emption/vedio';
+import { faceRecognitionBySnapshot, getCompanyTreeData, getTasksData, getVideoStatus,insertOrModifyInformation, judgePerson, adjustingTheAngle, insertVideoInformation, getVideoSubjectsWithStatus } from '../../../api/emption/vedio';
 import { useGlobSetting } from '@jeesite/core/hooks/setting';
 import { log } from 'console';
 import { useUserStore } from '@jeesite/core/store/modules/user';
@@ -164,9 +190,64 @@ const showYourFeature = computed(() => {
   return false
 });
 
+// 测试用户可见
+const showTestFeature = computed(() => userStore.getUserInfo?.remarks === '测试用户');
+
 // 普通用户展示的后端返回数据表格状态
 const resultRows = ref<any[]>([]);
 const tableHeaders = ref<string[]>([]);
+
+// 测试用户：被试列表（带状态）数据（仅显示 pname 与 recordStatus）
+const testRows = ref<any[]>([]);
+const testHeaders = ref<string[]>([]);
+const TEST_HEADERS: string[] = ['pname', 'recordStatus'];
+
+const clearTestData = () => {
+  testRows.value = [];
+  testHeaders.value = [];
+};
+
+const loadTestSubjects = async () => {
+  try {
+    // 读取当前任务批次作为查询参数
+    const taskSelect = document.getElementById('taskSelection') as HTMLSelectElement | null;
+    const testNumber = taskSelect?.value || undefined;
+    const resp = await getVideoSubjectsWithStatus(
+      testNumber ? { testNumber } : undefined
+    );
+    console.log(resp.videoSubjectWithStatusList)
+    // 常见返回结构兼容（严格按优先级选择一个来源）
+    let list: any = [] as any[];
+    const r: any = resp as any;
+    if (Array.isArray(r?.videoSubjectWithStatusList)) {
+      list = r.videoSubjectWithStatusList;
+    } else if (Array.isArray(r)) {
+      list = r;
+    } else if (Array.isArray(r?.data)) {
+      list = r.data;
+    } else if (Array.isArray(r?.list)) {
+      list = r.list;
+    } else if (Array.isArray(r?.rows)) {
+      list = r.rows;
+    } else if (Array.isArray(r?.records)) {
+      list = r.records;
+    } else if (Array.isArray(r?.result)) {
+      list = r.result;
+    } else if (r && typeof r === 'object') {
+      list = [r];
+    }
+
+    // 仅保留需要显示的两列
+    testHeaders.value = TEST_HEADERS;
+    testRows.value = (list || []).map((row: any) => ({
+      pname: row?.pname ?? row?.name ?? '',
+      recordStatus: row?.recordStatus ?? row?.status ?? '',
+    }));
+  } catch (e) {
+    testRows.value = [];
+    testHeaders.value = [];
+  }
+};
 
 // 任务过滤：根据用户角色过滤 test 任务
 const isTestTask = (item: any) => {
@@ -262,6 +343,8 @@ const getInput = (id: string) => document.getElementById(id) as HTMLInputElement
 
 const videoRef = ref<HTMLVideoElement | null>(null);
 const snapshotCanvasRef = ref<HTMLCanvasElement | null>(null);
+// 当前激活面板：video 或 info（互斥）
+const activePanel = ref<'video' | 'info'>('info');
 
 const notifyWarn = (msg: string) => {
   try { (window as any).toastr?.warning(msg); } catch {}
@@ -342,6 +425,12 @@ const renderVideoStatus = async () => {
     } else {
       container.innerHTML = '暂无数据';
     }
+    // 若为测试用户，选择任务后联动刷新测试列表
+    try {
+      if (showTestFeature.value) {
+        await loadTestSubjects();
+      }
+    } catch {}
   } catch (e) {
     notifyError('获取视频状态失败');
   }
@@ -429,6 +518,31 @@ const setStyles = (elementId: string, backgroundColor: string, borderRadius: str
   if (!el) return;
   (el as HTMLElement).style.backgroundColor = backgroundColor;
   (el as HTMLElement).style.borderRadius = borderRadius;
+};
+
+// 统一切换激活面板（互斥）
+const setActivePanel = (panel: 'video' | 'info') => {
+  activePanel.value = panel;
+  if (panel === 'video') {
+    setStyles('selfName', 'rgb(5, 148, 183)', '5px');
+    setStyles('infoCollection', '', '');
+  } else {
+    setStyles('selfName', '', '');
+    setStyles('infoCollection', 'rgb(5, 148, 183)', '5px');
+    // 非视频面板：确保倒计时与录制完全停止
+    try {
+      if (countdownTimerId) { clearInterval(countdownTimerId); countdownTimerId = null; }
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        recordingInterrupted = 1;
+        mediaRecorder.stop();
+      }
+    } catch {}
+    try {
+      if (mediaRecorder2 && mediaRecorder2.state === 'recording') mediaRecorder2.stop();
+    } catch {}
+    stopSnapshotInterval();
+    stopAdjustingTheAngle();
+  }
 };
 
 const autoReadIDCard = () => {
@@ -977,6 +1091,14 @@ const startCountdown = (duration: number) => {
       statusInfo.innerHTML = formattedTime;
     }
 
+    // 若“视频录制”未被选中，则立即停止倒计时与录制
+    if (activePanel.value !== 'video') {
+      if (countdownTimerId) { clearInterval(countdownTimerId); countdownTimerId = null; }
+      try { if (mediaRecorder && mediaRecorder.state === 'recording') { recordingInterrupted = 1; mediaRecorder.stop(); } } catch {}
+      try { if (mediaRecorder2 && mediaRecorder2.state === 'recording') mediaRecorder2.stop(); } catch {}
+      return;
+    }
+
     if (--timer < 0) {
       if (countdownTimerId) {
         clearInterval(countdownTimerId);
@@ -1138,7 +1260,7 @@ const recordingEnds = () => {
   // 如果是自动录制模式，重新启动信息匹配
   if (recordingMode === 'automaticRecording') {
     // 恢复“视频录制”面板为选中状态，便于 informationMatching 的前置条件通过
-    setStyles('selfName', 'rgb(5, 148, 183)', '5px');
+    setActivePanel('video');
     setTimeout(() => {
       informationMatching();
     }, 1000);
@@ -1150,6 +1272,10 @@ const startRecording = () => {
   // 若上一次录制已结束但尚未点击“清空数据”，拦截
   if (mustClickClearDataBeforeNextRecord) {
     notifyWarn('请先点击“清空数据”，然后再开始录制');
+    return;
+  }
+  // 未选中“视频录制”面板时禁用
+  if (activePanel.value !== 'video') {
     return;
   }
   if (selfName && (selfName as HTMLElement).style.backgroundColor === 'rgb(5, 148, 183)') {
@@ -1277,9 +1403,10 @@ const handleSnapshot = () => {
 };
 
 const onClickSelfName = () => {
+  // 若已是视频录制面板，直接返回，避免重复样式与逻辑
+  if (activePanel.value === 'video') return;
   const taskSel = document.getElementById('taskSelection') as HTMLSelectElement;
-  setStyles('infoCollection', '', '');
-  setStyles('selfName', 'rgb(5, 148, 183)', '5px');
+  setActivePanel('video');
   const saveBtn = getEl('saveInfoButton') as HTMLButtonElement;
   if (saveBtn) saveBtn.disabled = true;
   const mode = (document.getElementById('recordingMode') as HTMLSelectElement)?.value;
@@ -1312,8 +1439,26 @@ const onClickSelfName = () => {
 
 const onClickInfoCollection = () => {
   stopSnapshotInterval();
-  setStyles('selfName', '', '');
-  setStyles('infoCollection', 'rgb(5, 148, 183)', '5px');
+  // 停止自动人脸轮询
+  if (startinformationMatching) { window.clearInterval(startinformationMatching); startinformationMatching = null; }
+  // 停止姿态检测循环
+  isstart = false;
+  stopAdjustingTheAngle();
+  // 若存在录制进行中，立刻停止并清理倒计时
+  try {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      recordingInterrupted = 1; // 本次不保存
+      if (countdownTimerId) { clearInterval(countdownTimerId); countdownTimerId = null; }
+      mediaRecorder.stop();
+    }
+  } catch {}
+  try {
+    if (mediaRecorder2 && mediaRecorder2.state === 'recording') {
+      mediaRecorder2.stop();
+    }
+  } catch {}
+  // 若已是信息采集面板，直接返回，避免重复样式与逻辑
+  if (activePanel.value !== 'info') setActivePanel('info');
   const saveBtn = getEl('saveInfoButton') as HTMLButtonElement;
   if (saveBtn) saveBtn.disabled = false;
   const startBtn = getEl('start-btn') as HTMLButtonElement;
@@ -1383,6 +1528,8 @@ onMounted(async () => {
   } catch {}
 
   await nextTick();
+  // 默认选中“信息采集”
+  setActivePanel('info');
   formData2 = new FormData();
   await startMediaDevices();
   informationMatching();
@@ -1396,6 +1543,11 @@ onMounted(async () => {
 
   const progressBar = getEl('progressBar');
   if (progressBar) progressBar.innerHTML = '<div id="progressFill"></div>';
+
+  // 测试用户：加载被试状态列表
+  if (showTestFeature.value) {
+    await loadTestSubjects();
+  }
 });
 
 onBeforeUnmount(() => {

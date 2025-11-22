@@ -16,6 +16,7 @@ export const faceRecognitionBySnapshot = (blob: Blob) => {
   });
 };
 
+//任务列表
 export const getTasksData = () => {
   return defHttp.post({
     url:adminPath+"/test/testNumber/findTestNumberByLimit",
@@ -38,6 +39,7 @@ export const insertOrModifyInformation = (formData: FormData) =>{
     },
   })
 }
+//获取部门树
 export const getCompanyTreeData = () =>{
   return defHttp.get({
     url:adminPath + "/sys/company/treeData",
@@ -74,5 +76,13 @@ export const insertVideoInformation = (formData: FormData) => {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
+  })
+}
+
+// 获取被试及其视频状态（测试用户使用）
+export const getVideoSubjectsWithStatus = (params?: Record<string, any>) => {
+  return defHttp.get({
+    url: adminPath + '/emotion/emotionVideo/getVideoSubjectsWithStatus',
+    params,
   })
 }
